@@ -1,0 +1,124 @@
+// ─── Instrument Classification ───────────────────────────────────────────────
+
+export type InstrumentCategory = 'string' | 'percussion' | 'wind';
+
+export interface InstrumentProfile {
+  name: string;
+  localName: string;
+  ethnoLinguisticGroup: string;
+  hornbostelSachs: string;
+  culturalPurpose: string;
+  category: InstrumentCategory;
+  description: string;
+  region: string;
+}
+
+// ─── Audio / Acoustic Profile ─────────────────────────────────────────────────
+
+export interface ScaleNote {
+  note: string;
+  frequency: number;
+  lane: number;
+}
+
+export interface AcousticProfile {
+  fundamentalFreqMin: number;
+  fundamentalFreqMax: number;
+  timbre: string;
+  decayTime: number;
+  attackTime: number;
+  tuningSystem: string;
+  scaleNotes: ScaleNote[];
+  synthesisType: 'string' | 'fm-gong' | 'flute' | 'membrane-drum' | 'brass' | 'synth-lead';
+}
+
+// ─── Input / Lane Mapping ─────────────────────────────────────────────────────
+
+export interface Lane {
+  id: number;
+  label: string;
+  frequency: number;
+  keyBinding: string;
+  touchZone?: { x: number; y: number; w: number; h: number };
+}
+
+export interface InputMapping {
+  laneCount: number;
+  orientation: 'vertical' | 'horizontal';
+  lanes: Lane[];
+}
+
+// ─── Fused Active Instrument (Phase 5 output) ─────────────────────────────────
+
+export interface ActiveInstrumentProfile {
+  instrument: InstrumentProfile;
+  acoustic: AcousticProfile;
+  inputMapping: InputMapping;
+  imageBase64: string;
+  imageMimeType: string;
+  isFallback?: boolean;
+  fallbackReason?: 'not-instrument' | 'error';
+}
+
+// ─── Gameplay ─────────────────────────────────────────────────────────────────
+
+export interface Note {
+  id: string;
+  time: number;       // scheduled time in seconds from song start
+  lane: number;       // 0-indexed lane
+  type: 'tap' | 'hold';
+  duration?: number;  // for hold notes, in seconds
+  isHolding?: boolean; // true while the key is pressed
+  stopSound?: () => void;
+  hit: boolean;
+  missed: boolean;
+}
+
+export type HitJudgement = 'perfect' | 'good' | 'miss';
+
+export interface HitResult {
+  judgement: HitJudgement;
+  noteId: string;
+  delta: number; // ms early (negative) or late (positive)
+}
+
+export interface GameplayState {
+  score: number;
+  combo: number;
+  multiplier: number;
+  weaveProgress: number; // 0–100
+  currentStreak: number;
+  totalNotes: number;
+  perfectCount: number;
+  goodCount: number;
+  missCount: number;
+  isPlaying: boolean;
+  isPaused: boolean;
+  isFinished: boolean;
+  isFreePlay: boolean;
+  songTimeSeconds: number;
+}
+
+// ─── Pipeline ─────────────────────────────────────────────────────────────────
+
+export type PipelinePhase =
+  | 'idle'
+  | 'phase1-vision'
+  | 'phase2-acoustic'
+  | 'phase3-mapping'
+  | 'phase4-guardrail'
+  | 'phase5-fuse'
+  | 'complete'
+  | 'error';
+
+export interface PipelineStatus {
+  phase: PipelinePhase;
+  label: string;
+  detail: string;
+  progress: number; // 0–100
+  error?: string;
+}
+
+// ─── App Views ────────────────────────────────────────────────────────────────
+
+export type AppView = 'setup' | 'pipeline' | 'gameplay' | 'results';
