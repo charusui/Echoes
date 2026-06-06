@@ -66,7 +66,7 @@ export function StringRhythm({ profile, notes, gameState, onLaneHit, activeLanes
     let mappedLaneId: number | undefined;
     profile.acoustic.scaleNotes.forEach((n, idx) => {
        if (idx === index) {
-          mappedLaneId = mapping.lanes[n.lane ?? 0]?.id;
+          mappedLaneId = mapping.lanes[idx]?.id ?? idx;
        }
     });
 
@@ -83,43 +83,63 @@ export function StringRhythm({ profile, notes, gameState, onLaneHit, activeLanes
     }
   }, [profile.acoustic, mapping.lanes, notes, gameState.songTimeSeconds, onLaneHit]);
 
-  const lastNoteIdxRef = useRef<number | null>(null);
+  const lastTouchedIndicesRef = useRef<Set<number>>(new Set());
 
   const handleTouchMove = useCallback((e: React.TouchEvent | React.MouseEvent) => {
-    let clientX, clientY;
     if ('touches' in e) {
-      const touch = e.touches[0];
-      if (!touch) return;
-      clientX = touch.clientX;
-      clientY = touch.clientY;
-    } else {
-      if (e.buttons !== 1) { lastNoteIdxRef.current = null; return; } // only swipe if mouse down
-      clientX = e.clientX;
-      clientY = e.clientY;
-    }
-    
-    const element = document.elementFromPoint(clientX, clientY);
-    if (!element) return;
-    
-    const segment = element.closest('.note-segment');
-    if (segment) {
-      const idxAttr = segment.getAttribute('data-note-idx');
-      const freqAttr = segment.getAttribute('data-note-freq');
-      if (idxAttr && freqAttr) {
-        const idx = parseInt(idxAttr, 10);
-        const freq = parseFloat(freqAttr);
-        if (idx !== lastNoteIdxRef.current) {
-          pluckString(idx, freq);
-          lastNoteIdxRef.current = idx;
+      const currentTouches = new Set<number>();
+      
+      // Iterate over ALL active fingers for true multi-touch swiping!
+      for (let i = 0; i < e.touches.length; i++) {
+        const touch = e.touches[i];
+        const el = document.elementFromPoint(touch.clientX, touch.clientY);
+        const noteEl = el?.closest('.note-segment');
+        
+        if (noteEl) {
+          const idxStr = noteEl.getAttribute('data-note-idx');
+          const freqStr = noteEl.getAttribute('data-note-freq');
+          if (idxStr && freqStr) {
+            const idx = parseInt(idxStr, 10);
+            const freq = parseFloat(freqStr);
+            
+            currentTouches.add(idx);
+            
+            // If this specific finger wasn't touching this string in the last frame, pluck it!
+            if (!lastTouchedIndicesRef.current.has(idx)) {
+              pluckString(idx, freq);
+            }
+          }
         }
       }
+      
+      // Update the active touches for the next frame
+      lastTouchedIndicesRef.current = currentTouches;
     } else {
-      lastNoteIdxRef.current = null;
+      // Mouse drag support
+      if (e.buttons !== 1) { 
+        lastTouchedIndicesRef.current.clear(); 
+        return; 
+      }
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const noteEl = el?.closest('.note-segment');
+      if (noteEl) {
+        const idxStr = noteEl.getAttribute('data-note-idx');
+        const freqStr = noteEl.getAttribute('data-note-freq');
+        if (idxStr && freqStr) {
+          const idx = parseInt(idxStr, 10);
+          const freq = parseFloat(freqStr);
+          if (!lastTouchedIndicesRef.current.has(idx)) {
+            pluckString(idx, freq);
+            lastTouchedIndicesRef.current.clear();
+            lastTouchedIndicesRef.current.add(idx);
+          }
+        }
+      }
     }
   }, [pluckString]);
 
   const handleTouchEnd = useCallback(() => {
-    lastNoteIdxRef.current = null;
+    lastTouchedIndicesRef.current.clear();
   }, []);
 
   useEffect(() => {
@@ -140,63 +160,7 @@ export function StringRhythm({ profile, notes, gameState, onLaneHit, activeLanes
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [profile.acoustic.scaleNotes, pluckString]);
 
-  // --- Rendering Rhythm Notes Overlay ---
-  const renderRhythmNotes = () => {
-    return notes.map(note => {
-      if (note.hit || (note.missed && gameState.songTimeSeconds - note.time > 1)) return null;
-
-      const timeDiff = note.time - gameState.songTimeSeconds;
-      
-      // Approach Circle Window: Show circles 1.5 seconds before they are meant to be hit
-      if (timeDiff < -1 || timeDiff > 1.5) return null;
-
-      // Scale goes from 3.0 down to 1.0
-      const approachScale = Math.max(1, 1 + (timeDiff / 1.5) * 2);
-      const opacity = timeDiff > 1.0 ? 1 - ((timeDiff - 1.0) / 0.5) : 1;
-
-      // Find the physical string column for this lane
-      let physicalStringIdx = 0;
-      let fretIdx = 0;
-      let totalFrets = 1;
-
-      // Map the note's ID to its visual index (0, 1, 2...)
-      const visualLaneIdx = mapping.lanes.findIndex(l => l.id === note.lane);
-      const safeLaneIdx = visualLaneIdx !== -1 ? visualLaneIdx : Number(note.lane) || 0;
-
-      if (safeLaneIdx < stringsByLane.length) {
-         physicalStringIdx = safeLaneIdx;
-         const laneNotes = stringsByLane[safeLaneIdx];
-         fretIdx = Math.floor(laneNotes.length / 2);
-         totalFrets = laneNotes.length;
-      }
-
-      const stringWidth = 100 / stringsByLane.length;
-      const leftPos = `${(physicalStringIdx * stringWidth) + (stringWidth / 2)}%`;
-      const topPos = `${((fretIdx + 0.5) / totalFrets) * 100}%`;
-
-      const isPerfectWindow = Math.abs(timeDiff) <= 0.2;
-
-      return (
-        <div
-          key={note.id}
-          className="absolute z-50 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-          style={{ left: leftPos, top: topPos, opacity }}
-        >
-          <div className={`w-10 h-10 rounded-full transition-colors ${
-            note.missed ? 'bg-danger/80' : isPerfectWindow ? 'bg-[#66FCF1] shadow-[0_0_20px_#66FCF1]' : 'bg-pale-pink shadow-[0_0_10px_rgba(240,221,224,0.8)]'
-          }`} />
-          {!note.missed && (
-            <div 
-              className={`absolute inset-0 rounded-full border-4 transition-colors ${
-                isPerfectWindow ? 'border-[#66FCF1]' : 'border-crimson shadow-[0_0_10px_rgba(218,45,70,0.5)]'
-              }`}
-              style={{ transform: `scale(${approachScale})` }}
-            />
-          )}
-        </div>
-      );
-    });
-  };
+  // Note: renderRhythmNotes is removed because we now render the approach circles directly inside the fret bubbles!
 
   return (
     <div 
@@ -227,12 +191,20 @@ export function StringRhythm({ profile, notes, gameState, onLaneHit, activeLanes
             <div className="relative w-full h-full flex flex-col z-20">
               {notesOnString.map((note) => {
                 const isActive = activeStrings.has(note.originalIdx);
+                
+                // Find any falling rhythm notes targeting this specific fret
+                const fallingNotes = notes.filter(n => {
+                  const visualLaneIdx = mapping.lanes.findIndex(l => l.id === n.lane);
+                  const targetOriginalIdx = visualLaneIdx !== -1 ? visualLaneIdx : Number(n.lane) || 0;
+                  return targetOriginalIdx === note.originalIdx;
+                });
+
                 return (
                   <div
                     key={note.originalIdx}
                     data-note-idx={note.originalIdx}
                     data-note-freq={note.frequency}
-                    className="flex-1 w-full flex items-center justify-center cursor-pointer transition-colors note-segment"
+                    className="flex-1 w-full flex items-center justify-center cursor-pointer transition-colors note-segment relative"
                     onMouseEnter={(e) => { if (e.buttons === 1) pluckString(note.originalIdx, note.frequency); }}
                     onTouchStart={(e) => { 
                       e.preventDefault(); 
@@ -244,10 +216,33 @@ export function StringRhythm({ profile, notes, gameState, onLaneHit, activeLanes
                       lastNoteIdxRef.current = note.originalIdx;
                     }}
                   >
-                    <div className={`font-space-mono text-[10px] md:text-sm font-bold bg-obsidian px-1 sm:px-4 py-1 rounded-full border transition-all pointer-events-none ${
-                      isActive ? 'text-[#FED56B] border-[#FED56B] shadow-[0_0_10px_rgba(254,213,107,0.5)] scale-110' : 'text-light-gray/60 border-light-gray/20'
+                    {/* Text Bubble - acting as the absolute positioning anchor */}
+                    <div className={`shrink-0 relative z-10 font-space-mono text-[10px] md:text-xs font-bold leading-none bg-obsidian p-1 w-14 h-14 md:w-16 md:h-16 aspect-square flex flex-col items-center justify-center text-center rounded-full border transition-all ${
+                      isActive ? 'text-[#FED56B] border-[#FED56B] shadow-[inset_0_0_10px_rgba(254,213,107,0.5)] scale-110' : 'text-light-gray/60 border-light-gray/20'
                     }`}>
-                      {note.note}
+                      <span className="pointer-events-none relative z-20">{note.note}</span>
+
+                      {/* OSU Approach Circles glued directly inside the text bubble! */}
+                      {fallingNotes.map(n => {
+                        if (n.hit || (n.missed && gameState.songTimeSeconds - n.time > 1)) return null;
+
+                        const timeDiff = n.time - gameState.songTimeSeconds;
+                        if (timeDiff < -1 || timeDiff > 1.5) return null;
+
+                        const approachScale = Math.max(1, 1 + (timeDiff / 1.5) * 2);
+                        const opacity = timeDiff > 1.0 ? 1 - ((timeDiff - 1.0) / 0.5) : 1;
+                        const isPerfectWindow = Math.abs(timeDiff) <= 0.2;
+
+                        return (
+                          <div 
+                            key={n.id}
+                            className={`absolute -inset-[1px] rounded-full border-[3px] md:border-[4px] transition-colors pointer-events-none z-0 ${
+                              n.missed ? 'border-danger/80' : isPerfectWindow ? 'border-[#66FCF1] shadow-[0_0_15px_#66FCF1]' : 'border-crimson shadow-[0_0_10px_rgba(218,45,70,0.5)]'
+                            }`}
+                            style={{ opacity, transform: `scale(${approachScale})` }}
+                          />
+                        );
+                      })}
                     </div>
                   </div>
                 );
@@ -257,9 +252,7 @@ export function StringRhythm({ profile, notes, gameState, onLaneHit, activeLanes
         ))}
       </div>
 
-      <div className="absolute inset-0 pointer-events-none z-30">
-        {renderRhythmNotes()}
-      </div>
+      {/* Rhythm Notes are now rendered directly inside the clickable fret segments! */}
 
       {!gameState.isPlaying && !gameState.isFinished && (
         <div className="absolute inset-0 flex items-center justify-center bg-obsidian/80 z-50 pointer-events-none">

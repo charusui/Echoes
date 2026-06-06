@@ -34,11 +34,15 @@ export function GameBoard({ profile, onQuit, onFinish }: GameBoardProps) {
     if (onFinish) onFinish(state);
   }, [onFinish]);
 
-  const { notes, gameState, startGame, hitLane } = useRhythmGame(profile.inputMapping, handleFinishGame);
+  const totalLanesOverride = profile.instrument.category === 'string' ? profile.acoustic.scaleNotes.length : undefined;
+  const { notes, gameState, startGame, hitLane } = useRhythmGame(profile.inputMapping, handleFinishGame, totalLanesOverride);
 
   const triggerLane = useCallback((laneId: number) => {
+    const isString = profile.instrument.category === 'string';
+    const isValidStringLane = isString && laneId >= 0 && laneId < profile.acoustic.scaleNotes.length;
     const lane = profile.inputMapping.lanes.find(l => l.id === laneId);
-    if (!lane) return;
+    
+    if (!lane && !isValidStringLane) return;
     
     // Register visual rhythm hit
     const hitResult = hitLane(laneId);
@@ -104,7 +108,7 @@ export function GameBoard({ profile, onQuit, onFinish }: GameBoardProps) {
               <Play size={16} fill="currentColor" /> START
             </button>
           )}
-          {onFinish && (
+          {onFinish && !gameState.isFinished && (
             <button
               onClick={() => onFinish(gameState)}
               className="px-4 h-10 rounded-xl bg-pale-pink/10 border border-pale-pink/30 text-pale-pink font-space-mono text-sm active:scale-95 transition-transform hover:bg-pale-pink/20"
@@ -112,15 +116,30 @@ export function GameBoard({ profile, onQuit, onFinish }: GameBoardProps) {
               SKIP
             </button>
           )}
-          <button
-            onClick={onQuit}
-            className="w-10 h-10 rounded-xl bg-danger/10 border border-danger/30 flex items-center justify-center text-danger active:scale-90 transition-transform hover:bg-danger/20"
-            title="Exit Instrument"
-          >
-            <X size={20} />
-          </button>
         </div>
       </div>
+
+      {/* Actions */}
+      {gameState.isFinished && (
+        <div className="p-4 bg-obsidian border-t border-light-gray/10 flex flex-col gap-3 z-10 relative">
+          {onRestart && (
+            <button
+              onClick={onRestart}
+              className="w-full py-4 rounded-xl font-space-mono font-bold tracking-widest text-obsidian bg-gradient-to-r from-light-gray to-light-gray/80 hover:scale-[1.02] transition-transform flex items-center justify-center gap-2"
+            >
+              <RotateCcw className="w-5 h-5" />
+              PLAY AGAIN
+            </button>
+          )}
+          <button
+            onClick={onQuit}
+            className="w-full py-4 rounded-xl font-space-mono font-bold tracking-widest text-light-gray bg-obsidian border-2 border-light-gray/20 hover:border-light-gray/50 transition-colors flex items-center justify-center gap-2"
+          >
+            <Home className="w-5 h-5" />
+            RETURN TO MAP
+          </button>
+        </div>
+      )}
 
       {/* Disclaimers if any */}
       {profile.isFallback && (

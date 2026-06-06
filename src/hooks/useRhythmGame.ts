@@ -3,7 +3,7 @@ import type { Note, GameplayState, InputMapping, HitJudgement, HitResult } from 
 import { HIT_WINDOWS, SCORE_VALUES, MULTIPLIER_THRESHOLDS, SONG_DURATION } from '../constants';
 import { generateProceduralChart } from '../services/chartGenerator';
 
-export function useRhythmGame(mapping: InputMapping, onFinish: (state: GameplayState) => void) {
+export function useRhythmGame(mapping: InputMapping, onFinish: (state: GameplayState) => void, totalLanesOverride?: number) {
   const [notes, setNotes] = useState<Note[]>([]);
   const [gameState, setGameState] = useState<GameplayState>({
     score: 0,
@@ -28,7 +28,7 @@ export function useRhythmGame(mapping: InputMapping, onFinish: (state: GameplayS
 
   // Initialize
   useEffect(() => {
-    const chart = generateProceduralChart(mapping);
+    const chart = generateProceduralChart(mapping, totalLanesOverride);
     setNotes(chart);
     notesRef.current = chart;
     
@@ -37,7 +37,7 @@ export function useRhythmGame(mapping: InputMapping, onFinish: (state: GameplayS
       stateRef.current = newState;
       return newState;
     });
-  }, [mapping]);
+  }, [mapping, totalLanesOverride]);
 
   // Start the game loop
   const startGame = useCallback(() => {
