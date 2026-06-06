@@ -35,10 +35,11 @@ export function PercussionEngine({ profile }: PercussionEngineProps) {
   }, [profile.acoustic.scaleNotes, expectedDrums]);
 
   const strikePad = useCallback((index: number, frequency: number) => {
-    // Ensure audio context is running synchronously
     audioEngine.resumeSync();
     // Fire and forget sound with natural decay
     audioEngine.playNote(profile.acoustic, frequency);
+    
+    window.dispatchEvent(new CustomEvent('instrument-strike'));
 
     // Trigger visual shockwave
     setActivePads(prev => {
@@ -79,8 +80,8 @@ export function PercussionEngine({ profile }: PercussionEngineProps) {
   return (
     <div className="flex-1 w-full flex flex-col items-center py-12 px-8 overflow-y-auto select-none touch-none">
       <div className="text-center mb-12">
-        <h2 className="font-orbitron text-2xl font-black text-teal glow-cyan mb-2">PERCUSSION ENGINE</h2>
-        <p className="text-silver/60 font-space-mono text-sm">Tap, click, or use QWER/ASDF to strike.</p>
+        <h2 className="font-orbitron text-2xl font-black text-pale-pink glow-crimson mb-2">PERCUSSION ENGINE</h2>
+        <p className="text-light-gray/60 font-space-mono text-sm">Tap, click, or use QWER/ASDF to strike.</p>
       </div>
 
       <div className="flex flex-wrap justify-center gap-4 md:gap-10 w-full max-w-4xl px-2 md:px-4 py-8">
@@ -103,7 +104,7 @@ export function PercussionEngine({ profile }: PercussionEngineProps) {
                       key={note.originalIdx}
                       onMouseDown={(e) => { e.stopPropagation(); strikePad(note.originalIdx, note.frequency); }}
                       onTouchStart={(e) => { e.stopPropagation(); e.preventDefault(); strikePad(note.originalIdx, note.frequency); }}
-                      className="absolute rounded-full outline-none focus:outline-none transition-all flex items-center justify-center border-2 border-teal/40 bg-charcoal/80 shadow-xl hover:bg-teal/20"
+                      className="absolute rounded-full outline-none focus:outline-none transition-all flex items-center justify-center border-2 border-pale-pink/40 bg-dark-slate/80 shadow-xl hover:bg-pale-pink/20"
                       style={{ 
                         width: `${sizePercent}%`, 
                         height: `${sizePercent}%`,
@@ -118,7 +119,7 @@ export function PercussionEngine({ profile }: PercussionEngineProps) {
                       {/* Only show the note name if it's a single zone, or if it's the innermost to avoid clutter, 
                           but user wants letters/hints. Let's show key hint in the center of each zone if possible, or just on the drum. */}
                       {totalZones === 1 && (
-                        <span className="font-orbitron font-bold text-silver/80 text-sm md:text-lg">
+                        <span className="font-orbitron font-bold text-light-gray/80 text-sm md:text-lg">
                           {note.note}
                         </span>
                       )}
@@ -132,8 +133,8 @@ export function PercussionEngine({ profile }: PercussionEngineProps) {
                 {notesOnDrum.map((note) => {
                   const keyHint = ['Q', 'W', 'E', 'R', 'A', 'S', 'D', 'F', 'Z', 'X', 'C', 'V'][note.originalIdx];
                   return (
-                    <div key={note.originalIdx} className="font-space-mono text-[10px] md:text-xs font-bold text-silver/40 bg-obsidian px-2 py-1 rounded border border-silver/10 text-center">
-                      <div className="text-silver/20 mb-1">{note.note}</div>
+                    <div key={note.originalIdx} className="font-space-mono text-[10px] md:text-xs font-bold text-light-gray/40 bg-obsidian px-2 py-1 rounded border border-light-gray/10 text-center">
+                      <div className="text-light-gray/20 mb-1">{note.note}</div>
                       [ {keyHint || note.originalIdx + 1} ]
                     </div>
                   );

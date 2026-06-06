@@ -1,15 +1,18 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { Camera, Upload, ChevronRight } from 'lucide-react';
+import { Camera, Upload, ChevronRight, ChevronLeft } from 'lucide-react';
+
+import type { ScanMode } from '../types';
 
 interface ScannerProps {
-  onImageReady: (base64: string, mimeType: string) => void;
+  onImageReady: (base64: string, mimeType: string, mode: ScanMode) => void;
+  onBack: () => void;
 }
 
-export function Scanner({ onImageReady }: ScannerProps) {
+export function Scanner({ onImageReady, onBack }: ScannerProps) {
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [capturedData, setCapturedData] = useState<{ base64: string; mimeType: string } | null>(null);
+  const [capturedData, setCapturedData] = useState<{ base64: string; mimeType: string; mode: ScanMode } | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -55,7 +58,7 @@ export function Scanner({ onImageReady }: ScannerProps) {
     const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
     const base64 = dataUrl.split(',')[1];
     setPreviewUrl(dataUrl);
-    setCapturedData({ base64, mimeType: 'image/jpeg' });
+    setCapturedData({ base64, mimeType: 'image/jpeg', mode: 'camera' });
     stopCamera();
   }, [stopCamera]);
 
@@ -68,7 +71,7 @@ export function Scanner({ onImageReady }: ScannerProps) {
       const dataUrl = e.target?.result as string;
       const base64 = dataUrl.split(',')[1];
       setPreviewUrl(dataUrl);
-      setCapturedData({ base64, mimeType: file.type });
+      setCapturedData({ base64, mimeType: file.type, mode: 'upload' });
     };
     reader.readAsDataURL(file);
   }, []);
@@ -97,7 +100,7 @@ export function Scanner({ onImageReady }: ScannerProps) {
 
   const handleScan = useCallback(() => {
     if (!capturedData) return;
-    onImageReady(capturedData.base64, capturedData.mimeType);
+    onImageReady(capturedData.base64, capturedData.mimeType, capturedData.mode);
   }, [capturedData, onImageReady]);
 
   return (
@@ -105,33 +108,41 @@ export function Scanner({ onImageReady }: ScannerProps) {
 
       {/* Header */}
       <div className="w-full max-w-md text-center mb-10">
-        <div className="text-teal text-xs font-space-mono tracking-widest mb-3 uppercase">
+        <div className="text-pale-pink text-xs font-space-mono tracking-widest mb-3 uppercase">
           ✦ AI Game On! Hackathon ✦
         </div>
-        <h1 className="font-orbitron text-3xl font-black text-cyan mb-2 tracking-wider glow-cyan leading-tight">
+        <h1 className="font-orbitron text-3xl font-black text-crimson mb-2 tracking-wider glow-crimson leading-tight">
           ECHOES OF THE<br />ANCESTORS
         </h1>
-        <p className="text-silver/60 text-sm font-space-mono leading-relaxed">
+        <p className="text-light-gray/60 text-sm font-space-mono leading-relaxed">
           Point your camera at a traditional<br />
           Philippine instrument to begin
         </p>
       </div>
 
+      {/* Back Button */}
+      <button 
+        onClick={onBack}
+        className="absolute top-6 left-6 w-10 h-10 rounded-full bg-dark-slate/80 border border-light-gray/20 flex items-center justify-center text-light-gray active:scale-95 z-50"
+      >
+        <ChevronLeft size={24} />
+      </button>
+
       {/* Camera / Upload Zone */}
       <div className="w-full max-w-md mb-6">
-        <div className="glass-card rounded-2xl border border-teal/20 overflow-hidden">
+        <div className="glass-card rounded-2xl border border-pale-pink/20 overflow-hidden">
 
           {/* Image Preview */}
           {previewUrl && !cameraActive && (
             <div className="relative">
               <img src={previewUrl} alt="Captured instrument" className="w-full object-cover max-h-72" />
               {/* Cyan border overlay */}
-              <div className="absolute inset-0 border-4 border-cyan/30 rounded-t-2xl pointer-events-none" />
+              <div className="absolute inset-0 border-4 border-crimson/30 rounded-t-2xl pointer-events-none" />
               {/* Corner brackets */}
-              <div className="absolute top-3 left-3 w-5 h-5 border-t-2 border-l-2 border-cyan pointer-events-none" />
-              <div className="absolute top-3 right-3 w-5 h-5 border-t-2 border-r-2 border-cyan pointer-events-none" />
-              <div className="absolute bottom-3 left-3 w-5 h-5 border-b-2 border-l-2 border-cyan pointer-events-none" />
-              <div className="absolute bottom-3 right-3 w-5 h-5 border-b-2 border-r-2 border-cyan pointer-events-none" />
+              <div className="absolute top-3 left-3 w-5 h-5 border-t-2 border-l-2 border-crimson pointer-events-none" />
+              <div className="absolute top-3 right-3 w-5 h-5 border-t-2 border-r-2 border-crimson pointer-events-none" />
+              <div className="absolute bottom-3 left-3 w-5 h-5 border-b-2 border-l-2 border-crimson pointer-events-none" />
+              <div className="absolute bottom-3 right-3 w-5 h-5 border-b-2 border-r-2 border-crimson pointer-events-none" />
               <button
                 id="retake-btn"
                 onClick={() => { setPreviewUrl(null); setCapturedData(null); }}
@@ -139,7 +150,7 @@ export function Scanner({ onImageReady }: ScannerProps) {
               >
                 RETAKE
               </button>
-              <div className="absolute bottom-3 left-3 bg-obsidian/80 border border-cyan/30 text-cyan text-xs font-space-mono px-3 py-1 rounded-lg">
+              <div className="absolute bottom-3 left-3 bg-obsidian/80 border border-crimson/30 text-crimson text-xs font-space-mono px-3 py-1 rounded-lg">
                 ✓ Ready to analyze
               </div>
             </div>
@@ -151,12 +162,12 @@ export function Scanner({ onImageReady }: ScannerProps) {
               <video ref={videoRef} className="w-full max-h-72 object-cover" playsInline muted autoPlay />
               {/* Viewfinder overlay */}
               <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute inset-8 border-2 border-dashed border-cyan/60 rounded-xl" />
-                <div className="absolute top-10 left-10 w-5 h-5 border-t-2 border-l-2 border-cyan" />
-                <div className="absolute top-10 right-10 w-5 h-5 border-t-2 border-r-2 border-cyan" />
-                <div className="absolute bottom-20 left-10 w-5 h-5 border-b-2 border-l-2 border-cyan" />
-                <div className="absolute bottom-20 right-10 w-5 h-5 border-b-2 border-r-2 border-cyan" />
-                <div className="absolute inset-x-0 bottom-14 text-center text-cyan/60 text-xs font-space-mono">
+                <div className="absolute inset-8 border-2 border-dashed border-crimson/60 rounded-xl" />
+                <div className="absolute top-10 left-10 w-5 h-5 border-t-2 border-l-2 border-crimson" />
+                <div className="absolute top-10 right-10 w-5 h-5 border-t-2 border-r-2 border-crimson" />
+                <div className="absolute bottom-20 left-10 w-5 h-5 border-b-2 border-l-2 border-crimson" />
+                <div className="absolute bottom-20 right-10 w-5 h-5 border-b-2 border-r-2 border-crimson" />
+                <div className="absolute inset-x-0 bottom-14 text-center text-crimson/60 text-xs font-space-mono">
                   FRAME THE INSTRUMENT
                 </div>
               </div>
@@ -165,17 +176,17 @@ export function Scanner({ onImageReady }: ScannerProps) {
                 <button
                   id="cancel-camera-btn"
                   onClick={stopCamera}
-                  className="w-10 h-10 rounded-full bg-obsidian/70 border border-silver/30 text-silver text-xs font-space-mono flex items-center justify-center"
+                  className="w-10 h-10 rounded-full bg-obsidian/70 border border-light-gray/30 text-light-gray text-xs font-space-mono flex items-center justify-center"
                 >
                   ✕
                 </button>
                 <button
                   id="capture-btn"
                   onClick={capturePhoto}
-                  className="w-18 h-18 rounded-full bg-cyan/20 border-4 border-cyan shadow-lg shadow-cyan/40 flex items-center justify-center active:scale-90 transition-transform"
+                  className="w-18 h-18 rounded-full bg-crimson/20 border-4 border-crimson shadow-lg shadow-crimson/40 flex items-center justify-center active:scale-90 transition-transform"
                   style={{ width: 72, height: 72 }}
                 >
-                  <div className="w-12 h-12 rounded-full bg-cyan" />
+                  <div className="w-12 h-12 rounded-full bg-crimson" />
                 </button>
                 <div className="w-10 h-10" /> {/* spacer */}
               </div>
@@ -188,17 +199,17 @@ export function Scanner({ onImageReady }: ScannerProps) {
               onDrop={handleDrop}
               onDragOver={e => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
-              className={`p-10 text-center transition-colors ${dragOver ? 'bg-teal/10' : ''}`}
+              className={`p-10 text-center transition-colors ${dragOver ? 'bg-pale-pink/10' : ''}`}
             >
               {/* Animated instrument icon */}
-              <div className="w-24 h-24 mx-auto mb-5 rounded-full bg-gradient-to-br from-teal/20 to-cyan/10 border-2 border-dashed border-teal/40 flex items-center justify-center pulse-glow">
-                <Camera size={36} className="text-teal/70" />
+              <div className="w-24 h-24 mx-auto mb-5 rounded-full bg-gradient-to-br from-pale-pink/20 to-crimson/10 border-2 border-dashed border-pale-pink/40 flex items-center justify-center pulse-glow">
+                <Camera size={36} className="text-pale-pink/70" />
               </div>
 
-              <p className="text-silver/60 text-sm mb-1">
+              <p className="text-light-gray/60 text-sm mb-1">
                 Experience traditional Philippine instruments
               </p>
-              <p className="text-silver/30 text-xs font-space-mono mb-6">
+              <p className="text-light-gray/30 text-xs font-space-mono mb-6">
                 Kulintang · Kudyapi · Gangsa · Agung · Babarak
               </p>
 
@@ -212,20 +223,20 @@ export function Scanner({ onImageReady }: ScannerProps) {
                 <button
                   id="open-camera-btn"
                   onClick={startCamera}
-                  className="flex items-center gap-2 px-5 py-3 bg-teal/20 border border-teal/50 rounded-xl text-teal text-sm font-space-mono hover:bg-teal/30 active:scale-95 transition-all min-h-[44px]"
+                  className="flex items-center gap-2 px-5 py-3 bg-pale-pink/20 border border-pale-pink/50 rounded-xl text-pale-pink text-sm font-space-mono hover:bg-pale-pink/30 active:scale-95 transition-all min-h-[44px]"
                 >
                   <Camera size={18} /> CAMERA
                 </button>
                 <button
                   id="upload-btn"
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-2 px-5 py-3 bg-charcoal/60 border border-silver/20 rounded-xl text-silver text-sm font-space-mono hover:border-silver/40 active:scale-95 transition-all min-h-[44px]"
+                  className="flex items-center gap-2 px-5 py-3 bg-dark-slate/60 border border-light-gray/20 rounded-xl text-light-gray text-sm font-space-mono hover:border-light-gray/40 active:scale-95 transition-all min-h-[44px]"
                 >
                   <Upload size={18} /> UPLOAD
                 </button>
               </div>
 
-              <p className="text-silver/25 text-xs mt-5 font-space-mono">
+              <p className="text-light-gray/25 text-xs mt-5 font-space-mono">
                 or drag & drop an image here
               </p>
             </div>
@@ -250,16 +261,16 @@ export function Scanner({ onImageReady }: ScannerProps) {
           onClick={handleScan}
           disabled={!capturedData}
           className="w-full py-4 rounded-xl font-orbitron text-sm font-bold tracking-widest uppercase
-            bg-gradient-to-r from-teal to-cyan text-obsidian
+            bg-gradient-to-r from-pale-pink to-crimson text-obsidian
             disabled:opacity-25 disabled:cursor-not-allowed
-            enabled:hover:shadow-lg enabled:hover:shadow-cyan/40
+            enabled:hover:shadow-lg enabled:hover:shadow-crimson/40
             enabled:active:scale-[0.98]
             transition-all duration-200 flex items-center justify-center gap-3 min-h-[56px]"
         >
           IDENTIFY &amp; PLAY <ChevronRight size={20} />
         </button>
         {!capturedData && (
-          <p className="text-center text-silver/30 text-xs mt-3 font-space-mono">
+          <p className="text-center text-light-gray/30 text-xs mt-3 font-space-mono">
             Scan or upload an instrument photo first
           </p>
         )}

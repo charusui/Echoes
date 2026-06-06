@@ -121,4 +121,38 @@ export interface PipelineStatus {
 
 // ─── App Views ────────────────────────────────────────────────────────────────
 
-export type AppView = 'setup' | 'pipeline' | 'gameplay' | 'results';
+export type AppView = 'title' | 'onboarding' | 'map' | 'locationServices' | 'setup' | 'pipeline' | 'discoveryCard' | 'gameplay' | 'quiz' | 'story' | 'results' | 'teachMode';
+
+// ─── User Progress & Persistence ──────────────────────────────────────────────
+
+export type ScanMode = 'camera' | 'upload';
+
+export interface UserProgress {
+  xp: number;
+  level: number;
+  currentStreak: number;
+  lastActiveDate: string | null;
+  badges: string[];
+  unlockedInstruments: string[];
+  unlockedRegions: string[];
+  streakShields: number;
+}
+
+// ─── Quizzes & Story ──────────────────────────────────────────────────────────
+
+export interface QuizQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  correctOptionIndex: number;
+  explanation: string;
+}
+
+export interface StoryScenario {
+  id: string;
+  context: string;
+  question: string;
+  options: string[];
+  correctOptionIndex: number;
+  explanation: string;
+}

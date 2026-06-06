@@ -114,10 +114,18 @@ export function WindEngine({ profile }: WindEngineProps) {
         }
         const rms = Math.sqrt(sumSquares / dataArray.length);
         
-        if (rms > 0.05) {
-          setIsBlowing(true);
+        if (rms > 0.05) { // Blowing threshold
+          if (!isBlowingRef.current) {
+            setIsBlowing(true);
+            isBlowingRef.current = true;
+            // Just trigger the visual weave once per blow sequence
+            window.dispatchEvent(new CustomEvent('instrument-strike'));
+          }
+          playCurrentHoles(true);
         } else {
           setIsBlowing(false);
+          isBlowingRef.current = false;
+          playCurrentHoles(false);
         }
 
         animationRef.current = requestAnimationFrame(checkVolume);
@@ -196,9 +204,9 @@ export function WindEngine({ profile }: WindEngineProps) {
 
   return (
     <div className="flex-1 w-full flex flex-col justify-start md:justify-center items-center py-6 px-4 overflow-y-auto select-none touch-none pb-safe pt-safe">
-      <div className="bg-obsidian/60 border border-teal/30 p-6 md:p-8 rounded-3xl backdrop-blur-md w-full max-w-2xl flex flex-col items-center my-auto">
+      <div className="bg-obsidian/60 border border-pale-pink/30 p-6 md:p-8 rounded-3xl backdrop-blur-md w-full max-w-2xl flex flex-col items-center my-auto">
         
-        <h2 className="font-orbitron text-2xl font-black text-cyan glow-cyan mb-8">WIND ENGINE</h2>
+        <h2 className="font-orbitron text-2xl font-black text-crimson glow-crimson mb-8">WIND ENGINE</h2>
         
         {/* Blow Controls */}
         <div className="flex flex-col items-center gap-6 mb-12 w-full">
@@ -222,8 +230,8 @@ export function WindEngine({ profile }: WindEngineProps) {
             disabled={useMic}
             className={`w-full max-w-sm py-6 rounded-2xl font-orbitron font-black text-2xl transition-all duration-100 ${
               isBlowing 
-                ? 'bg-cyan text-obsidian shadow-[0_0_30px_rgba(254,213,107,0.8)] scale-95' 
-                : 'bg-obsidian border-2 border-cyan text-cyan'
+                ? 'bg-crimson text-obsidian shadow-[0_0_30px_rgba(254,213,107,0.8)] scale-95' 
+                : 'bg-obsidian border-2 border-crimson text-crimson'
             } ${useMic ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {isBlowing ? 'BLOWING...' : 'HOLD TO BLOW'}
@@ -234,19 +242,19 @@ export function WindEngine({ profile }: WindEngineProps) {
               type="checkbox" 
               checked={useMic} 
               onChange={handleToggleMic}
-              className="w-5 h-5 accent-cyan"
+              className="w-5 h-5 accent-crimson"
             />
-            <span className="font-space-mono text-silver/80 text-sm flex items-center gap-2">
-              <Mic size={16} className="text-silver/60" /> Use Microphone to Blow (RMS)
+            <span className="font-space-mono text-light-gray/80 text-sm flex items-center gap-2">
+              <Mic size={16} className="text-light-gray/60" /> Use Microphone to Blow (RMS)
             </span>
           </label>
         </div>
 
         {/* Hole Modification Matrix (Vertical Flute Body) */}
-        <div className="flex flex-col items-center bg-charcoal/60 py-10 px-6 rounded-full mb-8 border-4 border-obsidian shadow-2xl gap-6">
+        <div className="flex flex-col items-center bg-dark-slate/60 py-10 px-6 rounded-full mb-8 border-4 border-obsidian shadow-2xl gap-6">
           {holes.map((isCovered, idx) => (
             <div key={idx} className="flex items-center gap-4 w-full justify-center relative">
-              <span className="absolute -left-8 text-silver/40 font-space-mono text-xs">({idx + 1})</span>
+              <span className="absolute -left-8 text-light-gray/40 font-space-mono text-xs">({idx + 1})</span>
               <button
                 onMouseDown={() => openHole(idx)}
                 onMouseUp={() => closeHole(idx)}
@@ -256,11 +264,11 @@ export function WindEngine({ profile }: WindEngineProps) {
                 onTouchCancel={() => closeHole(idx)}
                 className={`w-12 h-12 rounded-full border-4 transition-all duration-75 select-none ${
                   !isCovered
-                    ? 'bg-cyan/80 border-cyan shadow-[0_0_20px_rgba(254,213,107,0.7)] scale-110'
-                    : 'bg-obsidian border-cyan/60 shadow-[inset_0_0_15px_rgba(254,213,107,0.3)]'
+                    ? 'bg-crimson/80 border-crimson shadow-[0_0_20px_rgba(254,213,107,0.7)] scale-110'
+                    : 'bg-obsidian border-crimson/60 shadow-[inset_0_0_15px_rgba(254,213,107,0.3)]'
                 }`}
               />
-              <span className={`absolute -right-12 font-space-mono text-xs font-bold ${!isCovered ? 'text-cyan' : 'text-silver/40'}`}>
+              <span className={`absolute -right-12 font-space-mono text-xs font-bold ${!isCovered ? 'text-crimson' : 'text-light-gray/40'}`}>
                 {!isCovered ? 'OPEN' : 'CLOSED'}
               </span>
             </div>
@@ -269,8 +277,8 @@ export function WindEngine({ profile }: WindEngineProps) {
 
         {/* Status indicator */}
         <div className="flex items-center gap-3">
-          <div className={`w-3 h-3 rounded-full ${isBlowing ? 'bg-cyan glow-cyan' : 'bg-charcoal'}`} />
-          <span className="font-space-mono text-silver/60 text-sm">
+          <div className={`w-3 h-3 rounded-full ${isBlowing ? 'bg-crimson glow-crimson' : 'bg-dark-slate'}`} />
+          <span className="font-space-mono text-light-gray/60 text-sm">
             Status: {isBlowing ? `Playing... (${coveredCount} Holes Covered)` : 'Silent'}
           </span>
         </div>

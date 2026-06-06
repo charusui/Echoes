@@ -48,10 +48,10 @@ export function ResultsScreen({ gameState, profile, onPlayAgain, onNewInstrument
     <div className="min-h-screen bg-obsidian flex flex-col items-center justify-start px-4 pt-8 pb-20 overflow-y-auto">
       {/* Header */}
       <div className="w-full max-w-md text-center mb-6">
-        <h1 className="font-orbitron text-xl font-black text-cyan glow-cyan tracking-wider mb-1">
+        <h1 className="font-orbitron text-xl font-black text-crimson glow-crimson tracking-wider mb-1">
           SESSION COMPLETE
         </h1>
-        <p className="text-teal text-sm font-space-mono">
+        <p className="text-pale-pink text-sm font-space-mono">
           {profile.instrument.name} · {profile.instrument.ethnoLinguisticGroup}
         </p>
       </div>
@@ -85,24 +85,24 @@ export function ResultsScreen({ gameState, profile, onPlayAgain, onNewInstrument
 
       {/* Score Breakdown */}
       <div className="w-full max-w-md mb-5">
-        <div className="glass-card rounded-xl border border-teal/20 p-5 space-y-4">
+        <div className="glass-card rounded-xl border border-pale-pink/20 p-5 space-y-4">
           {/* Final Score */}
-          <div className="text-center border-b border-teal/10 pb-4">
-            <div className="font-orbitron text-3xl font-black text-cyan glow-cyan">
+          <div className="text-center border-b border-pale-pink/10 pb-4">
+            <div className="font-orbitron text-3xl font-black text-crimson glow-crimson">
               {gameState.score.toLocaleString()}
             </div>
-            <div className="text-silver/50 text-xs font-space-mono">FINAL SCORE</div>
+            <div className="text-light-gray/50 text-xs font-space-mono">FINAL SCORE</div>
           </div>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-3 gap-3 text-center">
             <div>
-              <div className="font-orbitron font-bold text-lg text-cyan">{gameState.perfectCount}</div>
-              <div className="text-cyan/60 text-xs font-space-mono">TADHANA</div>
+              <div className="font-orbitron font-bold text-lg text-crimson">{gameState.perfectCount}</div>
+              <div className="text-crimson/60 text-xs font-space-mono">TADHANA</div>
             </div>
             <div>
-              <div className="font-orbitron font-bold text-lg text-teal">{gameState.goodCount}</div>
-              <div className="text-teal/60 text-xs font-space-mono">GANDA</div>
+              <div className="font-orbitron font-bold text-lg text-pale-pink">{gameState.goodCount}</div>
+              <div className="text-pale-pink/60 text-xs font-space-mono">GANDA</div>
             </div>
             <div>
               <div className="font-orbitron font-bold text-lg text-danger">{gameState.missCount}</div>
@@ -111,20 +111,20 @@ export function ResultsScreen({ gameState, profile, onPlayAgain, onNewInstrument
           </div>
 
           {/* Max Combo */}
-          <div className="flex justify-between items-center border-t border-teal/10 pt-3">
-            <span className="text-silver/50 text-xs font-space-mono">MAX COMBO</span>
-            <span className="font-orbitron font-bold text-teal">{gameState.currentStreak}×</span>
+          <div className="flex justify-between items-center border-t border-pale-pink/10 pt-3">
+            <span className="text-light-gray/50 text-xs font-space-mono">MAX COMBO</span>
+            <span className="font-orbitron font-bold text-pale-pink">{gameState.currentStreak}×</span>
           </div>
 
           {/* Weave Progress */}
           <div>
             <div className="flex justify-between mb-1">
-              <span className="text-silver/50 text-xs font-space-mono">WEAVE PROGRESS</span>
-              <span className="text-cyan text-xs font-space-mono">{Math.round(gameState.weaveProgress)}%</span>
+              <span className="text-light-gray/50 text-xs font-space-mono">WEAVE PROGRESS</span>
+              <span className="text-crimson text-xs font-space-mono">{Math.round(gameState.weaveProgress)}%</span>
             </div>
-            <div className="h-2 bg-charcoal rounded-full overflow-hidden">
+            <div className="h-2 bg-dark-slate rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-teal to-cyan rounded-full transition-all duration-1000"
+                className="h-full bg-gradient-to-r from-pale-pink to-crimson rounded-full transition-all duration-1000"
                 style={{ width: `${gameState.weaveProgress}%` }}
               />
             </div>
@@ -134,16 +134,16 @@ export function ResultsScreen({ gameState, profile, onPlayAgain, onNewInstrument
 
       {/* Instrument Info */}
       <div className="w-full max-w-md mb-6">
-        <div className="glass-card rounded-xl border border-teal/10 p-4">
+        <div className="glass-card rounded-xl border border-pale-pink/10 p-4">
           <div className="flex items-start gap-3">
-            <Trophy size={16} className="text-teal mt-0.5 flex-shrink-0" />
+            <Trophy size={16} className="text-pale-pink mt-0.5 flex-shrink-0" />
             <div>
-              <div className="text-teal text-xs font-space-mono mb-1">INSTRUMENT PROFILE</div>
-              <div className="text-silver text-sm font-medium">{profile.instrument.name}</div>
-              <div className="text-silver/50 text-xs mt-1 leading-relaxed">
+              <div className="text-pale-pink text-xs font-space-mono mb-1">INSTRUMENT PROFILE</div>
+              <div className="text-light-gray text-sm font-medium">{profile.instrument.name}</div>
+              <div className="text-light-gray/50 text-xs mt-1 leading-relaxed">
                 {profile.instrument.description}
               </div>
-              <div className="text-silver/40 text-xs mt-2 font-space-mono">
+              <div className="text-light-gray/40 text-xs mt-2 font-space-mono">
                 {profile.instrument.hornbostelSachs}
               </div>
             </div>
@@ -157,8 +157,8 @@ export function ResultsScreen({ gameState, profile, onPlayAgain, onNewInstrument
           id="play-again-btn"
           onClick={onPlayAgain}
           className="w-full py-4 rounded-xl font-orbitron text-sm font-bold tracking-widest uppercase
-            bg-gradient-to-r from-teal to-cyan text-obsidian
-            hover:shadow-lg hover:shadow-cyan/30 active:scale-[0.98] transition-all
+            bg-gradient-to-r from-pale-pink to-crimson text-obsidian
+            hover:shadow-lg hover:shadow-crimson/30 active:scale-[0.98] transition-all
             flex items-center justify-center gap-3"
         >
           <RotateCcw size={16} /> PLAY AGAIN
@@ -167,8 +167,8 @@ export function ResultsScreen({ gameState, profile, onPlayAgain, onNewInstrument
           id="new-instrument-btn"
           onClick={onNewInstrument}
           className="w-full py-4 rounded-xl font-orbitron text-sm font-bold tracking-widest uppercase
-            bg-charcoal/60 border border-teal/30 text-teal
-            hover:border-teal/60 active:scale-[0.98] transition-all
+            bg-dark-slate/60 border border-pale-pink/30 text-pale-pink
+            hover:border-pale-pink/60 active:scale-[0.98] transition-all
             flex items-center justify-center gap-3"
         >
           <Home size={16} /> NEW INSTRUMENT

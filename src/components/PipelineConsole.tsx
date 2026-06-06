@@ -48,27 +48,27 @@ export function PipelineConsole({ status, instrumentName }: PipelineConsoleProps
     <div className="min-h-screen bg-obsidian flex flex-col items-center justify-start px-4 pt-8 pb-12">
       {/* Header */}
       <div className="w-full max-w-md text-center mb-6">
-        <h1 className="font-orbitron text-lg font-black text-cyan mb-1 tracking-wider glow-cyan">
+        <h1 className="font-orbitron text-lg font-black text-crimson mb-1 tracking-wider glow-crimson">
           INITIALIZING INSTRUMENT PROFILE
         </h1>
         {instrumentName && (
-          <p className="text-teal text-sm font-space-mono animate-pulse">
-            Identified: <span className="text-cyan">{instrumentName}</span>
+          <p className="text-pale-pink text-sm font-space-mono animate-pulse">
+            Identified: <span className="text-crimson">{instrumentName}</span>
           </p>
         )}
       </div>
 
       {/* Progress Bar */}
       <div className="w-full max-w-md mb-8">
-        <div className="h-1 bg-charcoal rounded-full overflow-hidden">
+        <div className="h-1 bg-dark-slate rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-teal to-cyan transition-all duration-700 ease-out"
+            className="h-full bg-gradient-to-r from-pale-pink to-crimson transition-all duration-700 ease-out"
             style={{ width: `${status.progress}%` }}
           />
         </div>
         <div className="flex justify-between mt-1">
-          <span className="text-silver/40 text-xs font-space-mono">{Math.round(status.progress)}%</span>
-          <span className="text-silver/40 text-xs font-space-mono">
+          <span className="text-light-gray/40 text-xs font-space-mono">{Math.round(status.progress)}%</span>
+          <span className="text-light-gray/40 text-xs font-space-mono">
             {isComplete ? 'COMPLETE' : isError ? 'ERROR' : 'PROCESSING'}
           </span>
         </div>
@@ -89,31 +89,31 @@ export function PipelineConsole({ status, instrumentName }: PipelineConsoleProps
             <div
               key={phase}
               className={`glass-card rounded-xl p-4 border transition-all duration-500 ${
-                isActive ? 'border-cyan/50 shadow-lg shadow-cyan/10' :
-                isDone   ? 'border-teal/30' :
-                isPending ? 'border-silver/10 opacity-40' : ''
+                isActive ? 'border-crimson/50 shadow-lg shadow-crimson/10' :
+                isDone   ? 'border-pale-pink/30' :
+                isPending ? 'border-light-gray/10 opacity-40' : ''
               }`}
             >
               <div className="flex items-center gap-3">
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                  isDone ? 'bg-teal/20' : isActive ? 'bg-cyan/10' : 'bg-charcoal/50'
+                  isDone ? 'bg-pale-pink/20' : isActive ? 'bg-crimson/10' : 'bg-dark-slate/50'
                 }`}>
                   {isDone
-                    ? <CheckCircle size={16} className="text-teal" />
+                    ? <CheckCircle size={16} className="text-pale-pink" />
                     : isActive
-                      ? <Loader size={16} className="text-cyan animate-spin" />
-                      : <Icon size={16} className="text-silver/30" />
+                      ? <Loader size={16} className="text-crimson animate-spin" />
+                      : <Icon size={16} className="text-light-gray/30" />
                   }
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className={`font-space-mono text-xs font-bold tracking-wider ${
-                    isDone ? 'text-teal' : isActive ? 'text-cyan' : 'text-silver/30'
+                    isDone ? 'text-pale-pink' : isActive ? 'text-crimson' : 'text-light-gray/30'
                   }`}>
                     {PHASE_LABELS[phase]}
                     {isParallel && <span className="ml-2 text-[10px] opacity-60">// PARALLEL</span>}
                   </div>
                   {isActive && status.detail && (
-                    <div className="text-silver/50 text-xs mt-1 truncate">{status.detail}</div>
+                    <div className="text-light-gray/50 text-xs mt-1 truncate">{status.detail}</div>
                   )}
                 </div>
               </div>
@@ -124,8 +124,8 @@ export function PipelineConsole({ status, instrumentName }: PipelineConsoleProps
 
       {/* Terminal Log */}
       <div className="w-full max-w-md">
-        <div className="glass-card rounded-xl border border-teal/10 p-4">
-          <div className="font-space-mono text-xs text-silver/40 mb-2">// CONSOLE OUTPUT</div>
+        <div className="glass-card rounded-xl border border-pale-pink/10 p-4">
+          <div className="font-space-mono text-xs text-light-gray/40 mb-2">// CONSOLE OUTPUT</div>
           <div ref={logRef} className="space-y-1 max-h-32 overflow-y-auto">
             {PIPELINE_PHASES.map(({ phase: p, label }) => {
               const idx = PHASE_ORDER.indexOf(p as typeof PHASE_ORDER[number]);
@@ -133,14 +133,14 @@ export function PipelineConsole({ status, instrumentName }: PipelineConsoleProps
               const active = currentPhaseIndex === idx && !isComplete;
               return (
                 <div key={p} className={`font-space-mono text-xs ${
-                  done ? 'text-teal/70' : active ? 'text-cyan animate-pulse' : 'text-silver/20'
+                  done ? 'text-pale-pink/70' : active ? 'text-crimson animate-pulse' : 'text-light-gray/20'
                 }`}>
                   {done ? '✓' : active ? '›' : '·'} {label}
                 </div>
               );
             })}
             {isComplete && (
-              <div className="font-space-mono text-xs text-cyan mt-2">
+              <div className="font-space-mono text-xs text-crimson mt-2">
                 ✓ Profile synthesis complete. Launching game...
               </div>
             )}
@@ -159,7 +159,7 @@ export function PipelineConsole({ status, instrumentName }: PipelineConsoleProps
           {Array.from({ length: 12 }).map((_, i) => (
             <div
               key={i}
-              className="w-1 bg-teal/40 rounded-full animate-pulse"
+              className="w-1 bg-pale-pink/40 rounded-full animate-pulse"
               style={{
                 height: `${8 + Math.sin(i * 0.8) * 8}px`,
                 animationDelay: `${i * 80}ms`,

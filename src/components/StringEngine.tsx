@@ -39,6 +39,8 @@ export function StringEngine({ profile }: StringEngineProps) {
     // Play the audio
     audioEngine.playNote(profile.acoustic, frequency);
 
+    window.dispatchEvent(new CustomEvent('instrument-strike'));
+
     // Trigger visual animation
     setActiveStrings(prev => {
       const next = new Set(prev);
@@ -111,8 +113,8 @@ export function StringEngine({ profile }: StringEngineProps) {
       onTouchCancel={handleTouchEnd}
     >
       <div className="text-center mb-6 md:mb-12">
-        <h2 className="font-orbitron text-2xl font-black text-cyan glow-cyan mb-2">STRING ENGINE</h2>
-        <p className="text-silver/60 font-space-mono text-sm">Hover, swipe, tap, or press 1-0 to pluck.</p>
+        <h2 className="font-orbitron text-2xl font-black text-crimson glow-crimson mb-2">STRING ENGINE</h2>
+        <p className="text-light-gray/60 font-space-mono text-sm">Hover, swipe, tap, or press 1-0 to pluck.</p>
       </div>
 
       <div className="flex flex-row justify-center gap-1 sm:gap-6 md:gap-12 w-full max-w-5xl mx-auto flex-1 items-stretch py-8 px-1 sm:px-4">
@@ -125,7 +127,7 @@ export function StringEngine({ profile }: StringEngineProps) {
                 className={`h-full border-l-[4px] md:border-l-[6px] transition-all duration-75 rounded-full
                   ${notesOnString.some(n => activeStrings.has(n.originalIdx)) 
                     ? 'animate-vibrate-x border-[#FED56B] shadow-[0_0_15px_#FED56B] opacity-100' 
-                    : 'border-silver/40 opacity-60'}
+                    : 'border-light-gray/40 opacity-60'}
                 `}
                 style={{
                   transitionDuration: notesOnString.some(n => activeStrings.has(n.originalIdx)) 
@@ -158,7 +160,7 @@ export function StringEngine({ profile }: StringEngineProps) {
                     }}
                   >
                     <div className={`font-space-mono text-[10px] md:text-sm font-bold bg-obsidian px-1 sm:px-4 py-1 rounded-full border transition-all ${
-                      isActive ? 'text-[#FED56B] border-[#FED56B] shadow-[0_0_10px_rgba(254,213,107,0.5)] scale-110' : 'text-silver/60 border-silver/20'
+                      isActive ? 'text-[#FED56B] border-[#FED56B] shadow-[0_0_10px_rgba(254,213,107,0.5)] scale-110' : 'text-light-gray/60 border-light-gray/20'
                     }`}>
                       {note.note}
                     </div>

@@ -3,11 +3,12 @@ import type { InstrumentCategory, ActiveInstrumentProfile } from './types';
 // ─── Color Palette ────────────────────────────────────────────────────────────
 
 export const COLORS = {
-  obsidian: '#1E1614',    // Deep espresso/warm black
-  charcoal: '#352520',    // Warm dark brown
-  teal: '#D68910',        // Burnt orange / Amber (Secondary)
-  cyan: '#FED56B',        // Golden yellow (Main Accent)
-  silver: '#FDEBD0',      // Warm parchment/off-white
+  obsidian: '#0f0c0c',    // Near Black
+  'dark-slate': '#2a2d43',    // Dark Slate
+  'pale-pink': '#f0dde0',        // Pale Dusty Pink
+  crimson: '#da2d46',        // Crimson
+  'light-gray': '#e0e5ed',      // Light Cool Gray
+  'slate-gray': '#888ea1',      // Slate Gray
   danger: '#E74C3C',      // Warm red
   success: '#FED56B',     // Golden yellow
   purple: '#A569BD',      // Soft purple
@@ -17,8 +18,8 @@ export const COLORS = {
 // ─── Timing Windows (seconds) ─────────────────────────────────────────────────
 
 export const HIT_WINDOWS = {
-  perfect: 0.045, // ±45ms
-  good: 0.090,    // ±90ms
+  perfect: 0.080, // ±80ms
+  good: 0.200,    // ±200ms
 } as const;
 
 // ─── Scoring ──────────────────────────────────────────────────────────────────

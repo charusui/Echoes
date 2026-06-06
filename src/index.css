@@ -3,11 +3,12 @@
 /* ─── @theme Custom Tokens (Tailwind v4 syntax) ─────────────────────────────── */
 
 @theme {
-  --color-obsidian: #1E1614;
-  --color-charcoal: #352520;
-  --color-teal: #D68910;
-  --color-cyan: #FED56B;
-  --color-silver: #FDEBD0;
+  --color-obsidian: #0f0c0c;
+  --color-dark-slate: #2a2d43;
+  --color-pale-pink: #f0dde0;
+  --color-crimson: #da2d46;
+  --color-light-gray: #e0e5ed;
+  --color-slate-gray: #888ea1;
   --color-danger: #E74C3C;
   --color-purple: #A569BD;
   --color-gold: #FED56B;
@@ -59,12 +60,12 @@ body {
 
 /* ─── Glow Effects ───────────────────────────────────────────────────────────── */
 
-.glow-cyan {
+.glow-crimson {
   text-shadow: 0 0 10px rgba(254, 213, 107, 0.6),
                0 0 30px rgba(254, 213, 107, 0.25);
 }
 
-.glow-teal {
+.glow-pale-pink {
   text-shadow: 0 0 10px rgba(214, 137, 16, 0.6),
                0 0 30px rgba(214, 137, 16, 0.25);
 }
@@ -76,11 +77,11 @@ body {
 
 /* ─── Tailwind color shorthands ──────────────────────────────────────────────── */
 
-.bg-obsidian { background-color: #1E1614; }
-.bg-charcoal { background-color: #352520; }
-.text-silver { color: #FDEBD0; }
-.text-teal   { color: #D68910; }
-.text-cyan   { color: #FED56B; }
+.bg-obsidian { background-color: #0f0c0c; }
+.bg-dark-slate { background-color: #2a2d43; }
+.text-light-gray { color: #e0e5ed; }
+.text-pale-pink   { color: #f0dde0; }
+.text-crimson   { color: #da2d46; }
 .text-danger { color: #E74C3C; }
 
 /* ─── Animations ─────────────────────────────────────────────────────────────── */
