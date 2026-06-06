@@ -73,7 +73,7 @@ export function StringRhythm({ profile, notes, gameState, onLaneHit, activeLanes
     if (mappedLaneId !== undefined) {
        // Check if there's a visual note in the rhythm window for this lane
        // We use a broader window for manual plucks (e.g. 0.2s)
-       const targetNote = notes.find(n => n.lane === (profile.acoustic.scaleNotes[index].lane ?? 0) && !n.hit && !n.missed);
+       const targetNote = notes.find(n => n.lane === mappedLaneId && !n.hit && !n.missed);
        if (targetNote) {
          const delta = Math.abs(gameState.songTimeSeconds - targetNote.time);
          if (delta <= 0.2) {
@@ -158,14 +158,17 @@ export function StringRhythm({ profile, notes, gameState, onLaneHit, activeLanes
       let physicalStringIdx = 0;
       let fretIdx = 0;
       let totalFrets = 1;
-      stringsByLane.forEach((laneNotes, sIdx) => {
-         if (sIdx === note.lane) {
-            physicalStringIdx = sIdx;
-            // Place approach circle on the "middle" fret of this string for visual rhythm
-            fretIdx = Math.floor(laneNotes.length / 2);
-            totalFrets = laneNotes.length;
-         }
-      });
+
+      // Map the note's ID to its visual index (0, 1, 2...)
+      const visualLaneIdx = mapping.lanes.findIndex(l => l.id === note.lane);
+      const safeLaneIdx = visualLaneIdx !== -1 ? visualLaneIdx : Number(note.lane) || 0;
+
+      if (safeLaneIdx < stringsByLane.length) {
+         physicalStringIdx = safeLaneIdx;
+         const laneNotes = stringsByLane[safeLaneIdx];
+         fretIdx = Math.floor(laneNotes.length / 2);
+         totalFrets = laneNotes.length;
+      }
 
       const stringWidth = 100 / stringsByLane.length;
       const leftPos = `${(physicalStringIdx * stringWidth) + (stringWidth / 2)}%`;

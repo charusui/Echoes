@@ -90,12 +90,17 @@ export function PercussionRhythm({ profile, notes, gameState, onLaneHit, activeL
       if (note.missed) noteColor = 'bg-danger shadow-[0_0_10px_rgba(231,76,60,0.5)] opacity-50';
 
       const laneWidth = 100 / mapping.laneCount;
-      const leftPos = `${(note.lane * laneWidth) + (laneWidth / 2)}%`;
+      
+      // Map the note's ID to its visual index (0, 1, 2...)
+      const visualLaneIdx = mapping.lanes.findIndex(l => l.id === note.lane);
+      const safeLaneIdx = visualLaneIdx !== -1 ? visualLaneIdx : Number(note.lane) || 0;
+
+      const leftPos = `${(safeLaneIdx * laneWidth) + (laneWidth / 2)}%`;
 
       return (
         <div
           key={note.id}
-          className={`absolute w-12 h-6 rounded-full -translate-x-1/2 -translate-y-1/2 z-10 ${noteColor}`}
+          className={`absolute w-10 h-10 rounded-full -translate-x-1/2 -translate-y-1/2 z-10 ${noteColor}`}
           style={{
             left: leftPos,
             bottom: `calc(15% + ${distance}px)`,
