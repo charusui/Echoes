@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Camera, Map, Flame, Award, Shield, MapPin, Lock, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState, } from 'react';
+import { Camera, Map, Flame, Award, Shield, Lock, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { useProgress } from '../context/ProgressProvider';
 
 // map
