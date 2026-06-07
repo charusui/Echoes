@@ -10,6 +10,7 @@ interface ProgressContextType {
   awardBadge: (badge: string) => void;
   useStreakShield: () => boolean;
   getClassroomLeaderboard: () => { name: string; xp: number; isPlayer: boolean }[];
+  saveCustomProfile: (profileId: string, profileData: any) => void;
 }
 
 const DEFAULT_PROGRESS: UserProgress = {
@@ -21,6 +22,7 @@ const DEFAULT_PROGRESS: UserProgress = {
   unlockedInstruments: [],
   unlockedRegions: ['Western Visayas'],
   streakShields: 0,
+  customProfiles: {},
 };
 
 const ProgressContext = createContext<ProgressContextType | null>(null);
@@ -58,6 +60,16 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
       return prev;
     });
     return isNew;
+  };
+
+  const saveCustomProfile = (profileId: string, profileData: any) => {
+    setProgress(prev => ({
+      ...prev,
+      customProfiles: {
+        ...prev.customProfiles,
+        [profileId]: profileData
+      }
+    }));
   };
 
   const updateStreak = () => {
@@ -112,7 +124,7 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ProgressContext.Provider value={{
-      progress, addXP, recordScan, updateStreak, unlockRegion, awardBadge, useStreakShield, getClassroomLeaderboard
+      progress, addXP, recordScan, updateStreak, unlockRegion, awardBadge, useStreakShield, getClassroomLeaderboard, saveCustomProfile
     }}>
       {children}
     </ProgressContext.Provider>

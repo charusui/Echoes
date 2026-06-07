@@ -121,7 +121,7 @@ export interface PipelineStatus {
 
 // ─── App Views ────────────────────────────────────────────────────────────────
 
-export type AppView = 'title' | 'onboarding' | 'map' | 'locationServices' | 'setup' | 'pipeline' | 'discoveryCard' | 'gameplay' | 'quiz' | 'story' | 'results' | 'teachMode';
+export type AppView = 'title' | 'onboarding' | 'map' | 'locationServices' | 'setup' | 'pipeline' | 'discoveryCard' | 'gameplay' | 'quiz' | 'story' | 'results' | 'teachMode' | 'collection';
 
 // ─── User Progress & Persistence ──────────────────────────────────────────────
 
@@ -136,6 +136,7 @@ export interface UserProgress {
   unlockedInstruments: string[];
   unlockedRegions: string[];
   streakShields: number;
+  customProfiles: Record<string, any>; // Stores Omit<ActiveInstrumentProfile, 'imageBase64'>
 }
 
 // ─── Quizzes & Story ──────────────────────────────────────────────────────────

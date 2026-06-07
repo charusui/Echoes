@@ -57,6 +57,37 @@ export const KEYBOARD_MAPS: Record<InstrumentCategory, string[]> = {
 
 export const GEMINI_MODEL = 'gemini-3.1-flash-lite-preview';
 
+// ─── Master Instruments Collection ──────────────────────────────────────────────
+
+export interface MasterInstrument {
+  id: string;
+  name: string;
+  region: string;
+  hint: string;
+}
+
+export const MASTER_INSTRUMENTS: MasterInstrument[] = [
+  // Western Visayas (6 Instruments)
+  { id: 'tultugan', name: 'Tultugan', region: 'Western Visayas', hint: 'Massive bamboo drums struck with sticks.' },
+  { id: 'buktot', name: 'Buktot', region: 'Western Visayas', hint: 'A four-stringed native lute crafted from a dried coconut husk.' },
+  { id: 'pasiyak', name: 'Pasiyak', region: 'Western Visayas', hint: 'A unique bamboo whistle that requires water inside to produce a bird-like chirp.' },
+  { id: 'tulali', name: 'Tulali', region: 'Western Visayas', hint: 'A ceremonial bamboo flute with six finger holes.' },
+  { id: 'tugo', name: 'Tugo', region: 'Western Visayas', hint: 'A guitar-shaped wooden drum played by hitting the base with the hands.' },
+  { id: 'litguit', name: 'Litguit', region: 'Western Visayas', hint: 'A wooden percussion instrument scraped with a stick to mimic the sound of maracas.' },
+  
+  // Central Visayas (5 Instruments)
+  { id: 'cebuano_gitara', name: 'Cebuano Gitara', region: 'Central Visayas', hint: 'The iconic, handcrafted 6-string acoustic guitar.' },
+  { id: 'bandurria', name: 'Bandurria', region: 'Central Visayas', hint: 'A 14-string pear-shaped lead melody instrument played with a plectrum.' },
+  { id: 'laud', name: 'Laud', region: 'Central Visayas', hint: 'A teardrop-shaped string instrument tuned lower than the bandurria.' },
+  { id: 'octavina', name: 'Octavina', region: 'Central Visayas', hint: 'A small, guitar-shaped Rondalla string instrument.' },
+  { id: 'bajo_de_unas', name: 'Bajo de Uñas', region: 'Central Visayas', hint: 'The giant acoustic bass that provides the foundational rhythm.' },
+
+  // Eastern Visayas (3 Instruments)
+  { id: 'lantoy', name: 'Lantoy', region: 'Eastern Visayas', hint: 'A slender bamboo flute that can be played using the mouth or the nose.' },
+  { id: 'subing', name: 'Subing', region: 'Eastern Visayas', hint: 'A twangy, vibrating bamboo jaw harp.' },
+  { id: 'korlong', name: 'Korlong', region: 'Eastern Visayas', hint: 'A rare two-stringed fiddle traditionally utilizing abaca or horsehair strings.' },
+];
+
 // ─── Fallback Instrument Profiles ─────────────────────────────────────────────
 // Used when the Gemini pipeline fails or image is unrecognizable
 

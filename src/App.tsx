@@ -16,6 +16,7 @@ import { GameBoard } from './components/GameBoard';
 import { QuizScreen } from './components/QuizScreen';
 import { StoryScreen } from './components/StoryScreen';
 import { ResultsScreen } from './components/ResultsScreen';
+import { CollectionScreen } from './components/CollectionScreen';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { initializeInstrumentPipeline } from './services/geminiPipeline';
 
@@ -61,6 +62,31 @@ function InnerApp() {
     setView('map');
   }, []);
 
+  const handleSelectInstrument = useCallback((selectedInstrumentName: string) => {
+    // Determine which fallback profile template to use
+    let profileTemplate;
+    if (selectedInstrumentName === 'Kudyapi') profileTemplate = FALLBACK_PROFILES.string;
+    else if (selectedInstrumentName === 'Kulintang' || selectedInstrumentName === 'Agung') profileTemplate = FALLBACK_PROFILES.percussion;
+    else profileTemplate = FALLBACK_PROFILES.wind; // Babarak, etc.
+
+    const profile: ActiveInstrumentProfile = {
+       ...profileTemplate,
+       isFallback: true,
+       fallbackReason: 'map-selection',
+       imageBase64: '',
+       imageMimeType: ''
+    };
+    
+    // Override the generic name with the specific regional instrument
+    profile.instrument.name = selectedInstrumentName;
+    
+    setActiveProfile(profile);
+    setInstrumentName(selectedInstrumentName);
+    
+    // Skip scanner pipeline, go straight to gameplay
+    setView('gameplay');
+  }, []);
+
   // 1. Scanner Ready
   const handleImageReady = useCallback(async (base64: string, mimeType: string, mode: ScanMode) => {
     if (!client) return;
@@ -85,17 +111,13 @@ function InnerApp() {
       
       await new Promise(r => setTimeout(r, 1200));
       
-      // Route based on mode
-      if (mode === 'camera') {
-        const isNew = recordScan(profile.instrument.name);
-        if (isNew) {
-          addXP(50, 'discovery');
-          setView('discoveryCard');
-        } else {
-          addXP(10, 'scan');
-          setView('gameplay');
-        }
+      // Route based on mode - both camera and upload modes trigger discoveries and gameplay for testing
+      const isNew = recordScan(profile.instrument.name);
+      if (isNew) {
+        addXP(50, 'discovery');
+        setView('discoveryCard');
       } else {
+        addXP(10, 'scan');
         setView('gameplay');
       }
     } catch (err) {
@@ -154,7 +176,13 @@ function InnerApp() {
         <MapScreen 
           onOpenScanner={() => setView('scanner')}
           onOpenLocationServices={() => setView('locationServices')}
+          onSelectInstrument={handleSelectInstrument}
+          onOpenCollection={() => setView('collection')}
         />
+      )}
+
+      {view === 'collection' && (
+        <CollectionScreen onBack={() => setView('map')} />
       )}
 
       {view === 'locationServices' && (
