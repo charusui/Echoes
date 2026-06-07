@@ -126,27 +126,7 @@ export function GameBoard({ profile, onQuit, onFinish }: GameBoardProps) {
         </div>
       </div>
 
-      {/* Actions */}
-      {gameState.isFinished && (
-        <div className="p-4 bg-obsidian border-t border-light-gray/10 flex flex-col gap-3 z-10 relative">
-          {onRestart && (
-            <button
-              onClick={onRestart}
-              className="w-full py-4 rounded-xl font-space-mono font-bold tracking-widest text-obsidian bg-gradient-to-r from-light-gray to-light-gray/80 hover:scale-[1.02] transition-transform flex items-center justify-center gap-2"
-            >
-              <RotateCcw className="w-5 h-5" />
-              PLAY AGAIN
-            </button>
-          )}
-          <button
-            onClick={onQuit}
-            className="w-full py-4 rounded-xl font-space-mono font-bold tracking-widest text-light-gray bg-obsidian border-2 border-light-gray/20 hover:border-light-gray/50 transition-colors flex items-center justify-center gap-2"
-          >
-            <Home className="w-5 h-5" />
-            RETURN TO MAP
-          </button>
-        </div>
-      )}
+
 
       {/* Disclaimers if any */}
       {profile.isFallback && (

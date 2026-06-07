@@ -1,4 +1,3 @@
-import React from 'react';
 import type { ActiveInstrumentProfile, Note, GameplayState } from '../types';
 import { SCROLL_SPEED } from '../constants';
 
@@ -14,11 +13,8 @@ export function RhythmHighway({ profile, notes, gameState, onLaneHit, activeLane
   const mapping = profile.inputMapping;
   const isVerticalScroll = mapping.orientation === 'horizontal'; // Lanes laid out horizontally, notes fall down
   
-  // Hit line is at 85% of the container (15% from bottom/left)
-  const hitZoneRatio = 0.85;
-
   const renderLanes = () => {
-    return mapping.lanes.map((lane, index) => {
+    return mapping.lanes.map((lane) => {
       const isActive = activeLanes.has(lane.id);
       
       let visualContent = null;

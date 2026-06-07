@@ -37,7 +37,7 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('filinstruments_progress', JSON.stringify(progress));
   }, [progress]);
 
-  const addXP = (amount: number, source: string) => {
+  const addXP = (amount: number, _source: string) => {
     setProgress(prev => {
       const newXp = prev.xp + amount;
       let newLevel = prev.level;

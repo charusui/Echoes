@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { ActiveInstrumentProfile } from '../types';
 import { ChevronRight, ArrowLeft } from 'lucide-react';
 

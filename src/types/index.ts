@@ -57,7 +57,7 @@ export interface ActiveInstrumentProfile {
   imageBase64: string;
   imageMimeType: string;
   isFallback?: boolean;
-  fallbackReason?: 'not-instrument' | 'error';
+  fallbackReason?: 'not-instrument' | 'error' | 'map-selection';
 }
 
 // ─── Gameplay ─────────────────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ export interface PipelineStatus {
 
 // ─── App Views ────────────────────────────────────────────────────────────────
 
-export type AppView = 'title' | 'onboarding' | 'map' | 'locationServices' | 'setup' | 'pipeline' | 'discoveryCard' | 'gameplay' | 'quiz' | 'story' | 'results' | 'teachMode' | 'collection';
+export type AppView = 'title' | 'onboarding' | 'map' | 'locationServices' | 'setup' | 'pipeline' | 'discoveryCard' | 'gameplay' | 'quiz' | 'story' | 'results' | 'teachMode' | 'collection' | 'scanner';
 
 // ─── User Progress & Persistence ──────────────────────────────────────────────
 

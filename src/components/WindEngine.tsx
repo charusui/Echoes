@@ -35,6 +35,7 @@ export function WindEngine({ profile }: WindEngineProps) {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
   const animationRef = useRef<number | undefined>(undefined);
+  const isBlowingRef = useRef(false);
 
   // Calculate current frequency based on holes covered
   const getFrequency = useCallback(() => {
@@ -121,11 +122,11 @@ export function WindEngine({ profile }: WindEngineProps) {
             // Just trigger the visual weave once per blow sequence
             window.dispatchEvent(new CustomEvent('instrument-strike'));
           }
-          playCurrentHoles(true);
         } else {
-          setIsBlowing(false);
-          isBlowingRef.current = false;
-          playCurrentHoles(false);
+          if (isBlowingRef.current) {
+            setIsBlowing(false);
+            isBlowingRef.current = false;
+          }
         }
 
         animationRef.current = requestAnimationFrame(checkVolume);

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 // T'nalak colors
 const COLORS = ['#0f0c0c', '#da2d46', '#f0dde0'];

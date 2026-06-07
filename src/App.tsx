@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { AppView, ActiveInstrumentProfile, ScanMode, PipelineStatus, GameplayState } from './types';
 import { GeminiProvider } from './context/GeminiProvider';
 import { audioEngine } from './services/audioSynth';
@@ -31,7 +31,6 @@ function InnerApp() {
   });
   const [activeProfile, setActiveProfile] = useState<ActiveInstrumentProfile | null>(null);
   const [instrumentName, setInstrumentName] = useState<string | undefined>();
-  const [scanMode, setScanMode] = useState<ScanMode>('camera');
   const [pipelineImage, setPipelineImage] = useState<{base64: string, mimeType: string} | null>(null);
   const [finalGameState, setFinalGameState] = useState<GameplayState | null>(null);
 
@@ -119,9 +118,8 @@ function InnerApp() {
   }, []);
 
   // 1. Scanner Ready
-  const handleImageReady = useCallback(async (base64: string, mimeType: string, mode: ScanMode) => {
+  const handleImageReady = useCallback(async (base64: string, mimeType: string, _mode: ScanMode) => {
     if (!client) return;
-    setScanMode(mode);
     setPipelineImage({ base64, mimeType });
     setActiveProfile(null);
     setView('pipeline');

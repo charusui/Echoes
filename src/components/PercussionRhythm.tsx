@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { audioEngine } from '../services/audioSynth';
 import type { ActiveInstrumentProfile, Note, GameplayState } from '../types';
 import { SCROLL_SPEED } from '../constants';

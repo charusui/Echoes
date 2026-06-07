@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import type { ActiveInstrumentProfile } from '../types';
 import { useProgress } from '../context/ProgressProvider';
 import { useGemini } from '../context/GeminiProvider';
@@ -61,6 +61,9 @@ Return strictly in this JSON format:
 
         if (!mounted) return;
         const text = response.text;
+        if (!text) {
+          throw new Error("Empty response from story generator");
+        }
         const data = JSON.parse(text) as StoryData;
         // Shuffle choices so 15XP isn't always first
         data.choices = data.choices.sort(() => Math.random() - 0.5);

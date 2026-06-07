@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ChevronLeft, BookOpen, Music, Tag, FileText, CheckCircle, HelpCircle } from 'lucide-react';
 import { useProgress } from '../context/ProgressProvider';
 import { MASTER_INSTRUMENTS } from '../constants';

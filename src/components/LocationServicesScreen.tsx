@@ -198,7 +198,7 @@ export function LocationServicesScreen({ onBack }: { onBack: () => void }) {
   const [isSearchingAI, setIsSearchingAI] = useState(false);
 
   // Helper to query Gemini for museums
-  const searchMuseumsWithAI = async (promptText: string, fallbackCenter: [number, number]) => {
+  const searchMuseumsWithAI = async (promptText: string, _fallbackCenter: [number, number]) => {
     setIsSearchingAI(true);
     try {
       const responseSchema = {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import type { ActiveInstrumentProfile } from '../types';
 import { useProgress } from '../context/ProgressProvider';
 import { Check, X, ChevronRight, Sparkles, ArrowLeft } from 'lucide-react';
@@ -28,6 +28,7 @@ export function QuizScreen({ profile, onComplete, onBack }: QuizScreenProps) {
           '321.32 - Chordophone / Lute',
           '411 - Aerophone / Lip-vibrated'
         ].sort(() => Math.random() - 0.5),
+        correctIdx: -1,
       });
     } else if (rand < 0.66) {
       setQuestionData({
@@ -38,6 +39,7 @@ export function QuizScreen({ profile, onComplete, onBack }: QuizScreenProps) {
           'Tagalog',
           'Tausug'
         ].sort(() => Math.random() - 0.5),
+        correctIdx: -1,
       });
     } else {
       setQuestionData({
@@ -48,6 +50,7 @@ export function QuizScreen({ profile, onComplete, onBack }: QuizScreenProps) {
           'Accompanying modern pop music',
           'Strictly for children\'s play'
         ].sort(() => Math.random() - 0.5),
+        correctIdx: -1,
       });
     }
   }, [profile]);
@@ -130,7 +133,6 @@ export function QuizScreen({ profile, onComplete, onBack }: QuizScreenProps) {
           <div className="space-y-3">
             {questionData.opts.map((opt, idx) => {
               const letters = ['A', 'B', 'C', 'D'];
-              const isSelected = selectedIdx === idx;
               
               let btnClass = "w-full text-left p-4 rounded-xl border transition-all duration-300 relative overflow-hidden flex items-center gap-4 ";
               let icon = null;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { Mic } from 'lucide-react';
 import { audioEngine } from '../services/audioSynth';
 import type { ActiveInstrumentProfile, Note, GameplayState } from '../types';
@@ -201,7 +201,6 @@ export function WindRhythm({ profile, notes, gameState, onLaneHit, activeLanes }
   }, [mapping.lanes, openHole, closeHole]);
 
   const { laneIndices: currentActiveLaneIndices } = getFrequencyAndLane();
-  const coveredCount = holes.filter(h => h).length;
 
   const renderFluteBody = () => {
     return (

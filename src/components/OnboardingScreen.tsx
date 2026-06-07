@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Map, Camera, Music, ChevronRight, ChevronLeft } from 'lucide-react';
 
 interface OnboardingScreenProps {

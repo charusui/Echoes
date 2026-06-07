@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { audioEngine } from '../services/audioSynth';
 import type { ActiveInstrumentProfile, Note, GameplayState } from '../types';
 
@@ -10,12 +10,13 @@ interface StringRhythmProps {
   activeLanes: Set<number>;
 }
 
-export function StringRhythm({ profile, notes, gameState, onLaneHit, activeLanes }: StringRhythmProps) {
+export function StringRhythm({ profile, notes, gameState, onLaneHit, activeLanes: _activeLanes }: StringRhythmProps) {
   const [activeStrings, setActiveStrings] = useState<Set<number>>(new Set());
+  const lastNoteIdxRef = useRef<number | null>(null);
   const mapping = profile.inputMapping;
 
   // Determine expected physical string count
-  const expectedStrings = React.useMemo(() => {
+  const expectedStrings = useMemo(() => {
     const name = profile.instrument.name.toLowerCase();
     if (name.includes('kudyapi') || name.includes('kudlong')) return 2;
     if (name.includes('bandurria') || name.includes('octavina') || name.includes('laud')) return 14;
@@ -24,7 +25,7 @@ export function StringRhythm({ profile, notes, gameState, onLaneHit, activeLanes
   }, [profile.instrument.name]);
 
   // Group notes by physical string (lane)
-  const stringsByLane = React.useMemo(() => {
+  const stringsByLane = useMemo(() => {
     const lanes: Record<number, (typeof profile.acoustic.scaleNotes[0] & { originalIdx: number })[]> = {};
     profile.acoustic.scaleNotes.forEach((note, idx) => {
       let finalLane = note.lane ?? idx;
@@ -64,7 +65,7 @@ export function StringRhythm({ profile, notes, gameState, onLaneHit, activeLanes
     // Does this index belong to a mapped lane?
     // Let's find which lane this index belongs to.
     let mappedLaneId: number | undefined;
-    profile.acoustic.scaleNotes.forEach((n, idx) => {
+    profile.acoustic.scaleNotes.forEach((_, idx) => {
        if (idx === index) {
           mappedLaneId = mapping.lanes[idx]?.id ?? idx;
        }
