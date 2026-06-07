@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { Camera, Map, Flame, Award, Shield, MapPin, Lock } from 'lucide-react';
 import { useProgress } from '../context/ProgressProvider';
 
+//map
+import map from '../assets/png/visayas_map.png'
+
 interface MapScreenProps {
   onOpenScanner: () => void;
   onOpenLocationServices: () => void;
@@ -177,8 +180,9 @@ export function MapScreen({ onOpenScanner, onOpenLocationServices, onSelectInstr
       >
         <div 
           className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-screen pointer-events-none"
-          style={{ backgroundImage: 'url(/visayas_map.png)' }}
-        />
+        >
+          <img src = {map}/>
+        </div>
         <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-obsidian/40 to-obsidian/80 pointer-events-none" />
         
         {/* Render Map Pins */}
