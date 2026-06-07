@@ -129,17 +129,21 @@ async function runPhase1(
           text: `You are an expert ethnomusicologist.
 Analyze this image. Identify the exact musical instrument name. 
 
-CRITICAL CONTEXT: This application specializes in traditional Philippine instruments. Look closely for visual cues that match:
-- Agong / Agung (large bronze gongs with a prominent boss, often hung)
-- Kulintang (row of small horizontal gongs on a rack)
-- Kudyapi / Kudlong (long, two-stringed wooden boat lute)
-- Gangsa (flat bronze gongs, often played with hands or sticks)
-- Babandil (small narrow-rimmed gong)
-- Dabakan (tall goblet drum with animal skin)
-- Tongali / Kaleleng (bamboo nose flute)
-- Kubing (bamboo jaw harp)
-- Suling / Palendag (bamboo ring flutes)
-- Bandurria / Octavina (14-stringed plucked chordophones)
+CRITICAL CONTEXT: This application specializes in traditional Philippine Visayan instruments. Look closely for visual cues that match:
+- Tultugan (massive bamboo drums struck with sticks)
+- Buktot (four-stringed native lute crafted from a dried coconut husk)
+- Pasiyak (unique bamboo whistle requiring water inside to produce a bird-like chirp)
+- Tulali (ceremonial bamboo flute with six finger holes)
+- Tugo (guitar-shaped wooden drum played by hitting the base with the hands)
+- Litguit (wooden percussion instrument scraped with a stick mimicking maracas)
+- Cebuano Gitara (handcrafted 6-string acoustic guitar)
+- Bandurria (14-string pear-shaped lead melody instrument played with a plectrum)
+- Laud (teardrop-shaped string instrument tuned lower than the bandurria)
+- Octavina (small, guitar-shaped Rondalla string instrument)
+- Bajo de Uñas (giant acoustic bass providing foundational rhythm)
+- Lantoy (slender bamboo mouth or nose flute)
+- Subing (twangy, vibrating bamboo jaw harp)
+- Korlong (rare two-stringed fiddle with abaca or horsehair strings)
 
 If the image matches or closely resembles one of these, identify it accurately as the Philippine instrument. Provide its ethno-linguistic group (e.g., Maguindanao, Kalinga, Maranao), cultural purpose, and Hornbostel-Sachs classification.
 If it is ANY other instrument from around the world (e.g. American drum kit, modern electric guitar, piano), identify it accurately and provide its general origin instead. 

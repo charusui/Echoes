@@ -19,6 +19,7 @@ import { ResultsScreen } from './components/ResultsScreen';
 import { CollectionScreen } from './components/CollectionScreen';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { initializeInstrumentPipeline } from './services/geminiPipeline';
+import { MASTER_INSTRUMENTS, FALLBACK_PROFILES } from './constants';
 
 function InnerApp() {
   const { client } = useGemini();
@@ -34,7 +35,7 @@ function InnerApp() {
   const [pipelineImage, setPipelineImage] = useState<{base64: string, mimeType: string} | null>(null);
   const [finalGameState, setFinalGameState] = useState<GameplayState | null>(null);
 
-  const { recordScan, updateStreak, addXP } = useProgress();
+  const { recordScan, updateStreak, addXP, progress, saveCustomProfile } = useProgress();
 
   useEffect(() => {
     updateStreak();
@@ -63,11 +64,30 @@ function InnerApp() {
   }, []);
 
   const handleSelectInstrument = useCallback((selectedInstrumentName: string) => {
-    // Determine which fallback profile template to use
-    let profileTemplate;
-    if (selectedInstrumentName === 'Kudyapi') profileTemplate = FALLBACK_PROFILES.string;
-    else if (selectedInstrumentName === 'Kulintang' || selectedInstrumentName === 'Agung') profileTemplate = FALLBACK_PROFILES.percussion;
-    else profileTemplate = FALLBACK_PROFILES.wind; // Babarak, etc.
+    // Determine which fallback profile template to use based on categories of the 14 instruments
+    const INSTRUMENT_CATEGORIES: Record<string, 'string' | 'wind' | 'percussion'> = {
+      // Western
+      'tultugan': 'percussion',
+      'buktot': 'string',
+      'pasiyak': 'wind',
+      'tulali': 'wind',
+      'tugo': 'percussion',
+      'litguit': 'percussion',
+      // Central
+      'cebuano gitara': 'string',
+      'bandurria': 'string',
+      'laud': 'string',
+      'octavina': 'string',
+      'bajo de uñas': 'string',
+      // Eastern
+      'lantoy': 'wind',
+      'subing': 'percussion',
+      'korlong': 'string',
+    };
+
+    const nameLower = selectedInstrumentName.toLowerCase();
+    const category = INSTRUMENT_CATEGORIES[nameLower] || 'percussion';
+    const profileTemplate = FALLBACK_PROFILES[category];
 
     const profile: ActiveInstrumentProfile = {
        ...profileTemplate,
@@ -78,12 +98,23 @@ function InnerApp() {
     };
     
     // Override the generic name with the specific regional instrument
-    profile.instrument.name = selectedInstrumentName;
+    profile.instrument = {
+      ...profileTemplate.instrument,
+      name: selectedInstrumentName,
+      localName: selectedInstrumentName,
+      region: MASTER_INSTRUMENTS.find(i => i.name.toLowerCase() === nameLower)?.region || 'Visayas',
+    };
     
     setActiveProfile(profile);
     setInstrumentName(selectedInstrumentName);
     
     // Skip scanner pipeline, go straight to gameplay
+    setView('gameplay');
+  }, []);
+
+  const handleSelectCustomProfile = useCallback((profile: any) => {
+    setActiveProfile(profile);
+    setInstrumentName(profile.instrument.name);
     setView('gameplay');
   }, []);
 
@@ -111,14 +142,37 @@ function InnerApp() {
       
       await new Promise(r => setTimeout(r, 1200));
       
-      // Route based on mode - both camera and upload modes trigger discoveries and gameplay for testing
-      const isNew = recordScan(profile.instrument.name);
-      if (isNew) {
-        addXP(50, 'discovery');
-        setView('discoveryCard');
+      // Route based on master vs custom instrument
+      const parsedName = profile.instrument.name;
+      const matchedMaster = MASTER_INSTRUMENTS.find(
+        inst => inst.name.toLowerCase() === parsedName.toLowerCase()
+      );
+
+      if (matchedMaster) {
+        // Master Visayan instrument
+        profile.instrument.name = matchedMaster.name;
+        const isNew = recordScan(matchedMaster.name);
+        if (isNew) {
+          addXP(50, 'discovery');
+          setView('discoveryCard');
+        } else {
+          addXP(10, 'scan');
+          setView('gameplay');
+        }
       } else {
-        addXP(10, 'scan');
-        setView('gameplay');
+        // Custom instrument scanned
+        const profileId = parsedName || `Custom Instrument ${Date.now()}`;
+        const isNewCustom = !progress.customProfiles || !progress.customProfiles[profileId];
+        
+        saveCustomProfile(profileId, profile);
+        
+        if (isNewCustom) {
+          addXP(20, 'custom_discovery');
+          setView('discoveryCard');
+        } else {
+          addXP(5, 'custom_scan');
+          setView('gameplay');
+        }
       }
     } catch (err) {
       console.error('[App] Pipeline error:', err);
@@ -127,24 +181,20 @@ function InnerApp() {
       
       // Fallback
       if (!activeProfile) {
-        const { FALLBACK_PROFILES } = await import('./constants');
         const fallback = { ...FALLBACK_PROFILES.percussion, imageBase64: base64, imageMimeType: mimeType, isFallback: true };
         setActiveProfile(fallback);
         setInstrumentName(fallback.instrument.name);
       }
       setView('gameplay');
     }
-  }, [client, activeProfile, recordScan, addXP]);
+  }, [client, activeProfile, recordScan, addXP, saveCustomProfile, progress.customProfiles]);
 
   // 3. Gameplay finishes
   const handleGameFinish = useCallback((gameState?: GameplayState) => {
     if (gameState) setFinalGameState(gameState);
-    if (scanMode === 'camera') {
-      setView('quiz');
-    } else {
-      setView('results');
-    }
-  }, [scanMode]);
+    // Always guide the player through the Quiz and Story screens to explore the full game content
+    setView('quiz');
+  }, []);
 
   // 4. Quiz finishes
   const handleQuizComplete = useCallback(() => {
@@ -182,7 +232,11 @@ function InnerApp() {
       )}
 
       {view === 'collection' && (
-        <CollectionScreen onBack={() => setView('map')} />
+        <CollectionScreen 
+          onBack={() => setView('map')} 
+          onSelectInstrument={handleSelectInstrument}
+          onSelectCustomProfile={handleSelectCustomProfile}
+        />
       )}
 
       {view === 'locationServices' && (
@@ -207,13 +261,14 @@ function InnerApp() {
         <DiscoveryCard 
           profile={activeProfile}
           onContinue={() => setView('gameplay')}
+          onBack={handleQuit}
         />
       )}
 
       {view === 'gameplay' && activeProfile && (
         <GameBoard
           profile={activeProfile}
-          onFinish={() => handleGameFinish()}
+          onFinish={handleGameFinish}
           onQuit={handleQuit}
         />
       )}
@@ -222,6 +277,7 @@ function InnerApp() {
         <QuizScreen 
           profile={activeProfile}
           onComplete={handleQuizComplete}
+          onBack={handleQuit}
         />
       )}
 
@@ -229,6 +285,7 @@ function InnerApp() {
         <StoryScreen 
           profile={activeProfile}
           onComplete={handleStoryComplete}
+          onBack={handleQuit}
         />
       )}
 

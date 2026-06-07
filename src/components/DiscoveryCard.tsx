@@ -1,13 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { ActiveInstrumentProfile } from '../types';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, ArrowLeft } from 'lucide-react';
 
 interface DiscoveryCardProps {
   profile: ActiveInstrumentProfile;
   onContinue: () => void;
+  onBack: () => void;
 }
 
-export function DiscoveryCard({ profile, onContinue }: DiscoveryCardProps) {
+export function DiscoveryCard({ profile, onContinue, onBack }: DiscoveryCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [rotation, setRotation] = useState({ x: 0, y: 0 });
   const [isFlipped, setIsFlipped] = useState(false);
@@ -57,16 +58,36 @@ export function DiscoveryCard({ profile, onContinue }: DiscoveryCardProps) {
   }, [isFlipped]);
 
   return (
-    <div className="min-h-screen bg-obsidian/90 flex flex-col items-center justify-center p-6 relative overflow-hidden backdrop-blur-md">
-      
-      <div className="text-center mb-10 mt-10">
-        <h2 className="font-orbitron font-black text-light-gray text-xl tracking-widest uppercase mb-2">
-          NEW DISCOVERY
-        </h2>
-        <p className="font-space-mono text-crimson text-sm glow-crimson">
-          Drag to inspect
-        </p>
-      </div>
+    <div className="min-h-screen bg-obsidian/95 flex flex-col items-center justify-center p-6 relative overflow-hidden backdrop-blur-md pb-12 md:pb-16 pb-safe">
+      {/* Background ambient light */}
+      <div className="absolute top-[-10%] left-[-25%] w-[90%] h-[60%] bg-crimson/15 rounded-full blur-[130px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-25%] w-[90%] h-[60%] bg-gold/10 rounded-full blur-[130px] pointer-events-none" />
+
+      <div className="w-full max-w-sm relative z-10 pb-12 flex flex-col items-center">
+        {/* Header Bar with Back Button */}
+        <div className="flex items-center justify-between mb-6 w-full">
+          <button 
+            onClick={onBack}
+            className="px-3 py-1.5 rounded-lg bg-dark-slate/30 border border-pale-pink/10 hover:border-crimson/50 hover:bg-dark-slate/50 text-pale-pink hover:text-crimson transition-all duration-200 flex items-center justify-center gap-1.5 font-orbitron text-[10px] font-bold tracking-widest uppercase"
+          >
+            <ArrowLeft size={14} /> BACK
+          </button>
+          
+          <div className="text-right">
+            <span className="font-space-mono text-[9px] text-crimson font-black tracking-[0.2em] uppercase block">
+              DISCOVERY
+            </span>
+          </div>
+        </div>
+
+        <div className="text-center mb-6">
+          <h2 className="font-orbitron font-black text-light-gray text-xl tracking-widest uppercase mb-1 glow-crimson">
+            NEW DISCOVERY
+          </h2>
+          <p className="font-space-mono text-slate-gray text-[10px] tracking-widest uppercase">
+            Drag to inspect
+          </p>
+        </div>
 
       {/* 3D Scene Container */}
       <div 
@@ -146,6 +167,8 @@ export function DiscoveryCard({ profile, onContinue }: DiscoveryCardProps) {
         >
           PLAY INSTRUMENT <ChevronRight size={20} />
         </button>
+      </div>
+
       </div>
 
       {/* Required CSS for 3D */}

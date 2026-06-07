@@ -1,16 +1,92 @@
 import React, { useState } from 'react';
-import { ChevronLeft, Compass, Flame, Shield, BookOpen, Music, Tag, FileText, CheckCircle, HelpCircle } from 'lucide-react';
+import { ChevronLeft, BookOpen, Music, Tag, FileText, CheckCircle, HelpCircle } from 'lucide-react';
 import { useProgress } from '../context/ProgressProvider';
 import { MASTER_INSTRUMENTS } from '../constants';
 
+const SCANNING_LOCATIONS: Record<string, string[]> = {
+  'tultugan': [
+    'National Museum of Western Visayas (Iloilo City)',
+    'Museo Iloilo (Iloilo City)',
+    'Maasin Municipal Hall Heritage Display (Maasin, Iloilo)'
+  ],
+  'buktot': [
+    'Jose R. Gullas Halad Museum (Cebu City)',
+    'National Museum of Western Visayas (Iloilo City)',
+    'University of San Carlos (USC) Museum Ethnographic Gallery (Cebu City)'
+  ],
+  'pasiyak': [
+    'Jose R. Gullas Halad Museum (Cebu City)',
+    'Museo Sugbo / Cebu Provincial Museum (Cebu City)',
+    'UP Visayas Museum of Art and Cultural Heritage (UPV MACH, Iloilo City)'
+  ],
+  'tulali': [
+    'National Museum of Western Visayas (Iloilo City)',
+    'UP Visayas Museum of Art and Cultural Heritage (UPV MACH, Iloilo City)',
+    'School of Living Traditions (SLT) Cultural Gallery (Calinog, Iloilo)'
+  ],
+  'tugo': [
+    'Museo Iloilo (Iloilo City)',
+    'National Museum of Western Visayas (Iloilo City)',
+    'UP Visayas Museum of Art and Cultural Heritage (UPV MACH, Iloilo City)'
+  ],
+  'litguit': [
+    'National Museum of Western Visayas (Iloilo City)',
+    'UP Visayas Museum of Art and Cultural Heritage (UPV MACH, Iloilo City)',
+    'Jose R. Gullas Halad Museum (Cebu City)'
+  ],
+  'cebuano gitara': [
+    'Alegre Guitar Factory Showroom (Lapu-Lapu City, Cebu)',
+    'Jose R. Gullas Halad Museum (Cebu City)',
+    'University of San Carlos (USC) Museum (Cebu City)'
+  ],
+  'bandurria': [
+    'Alegre Guitar Factory Showroom (Lapu-Lapu City, Cebu)',
+    'Jose R. Gullas Halad Museum (Cebu City)',
+    'University of San Carlos (USC) Museum (Cebu City)'
+  ],
+  'laud': [
+    'Jose R. Gullas Halad Museum (Cebu City)',
+    'University of San Carlos (USC) Museum (Cebu City)',
+    'Alegre Guitar Factory Showroom (Lapu-Lapu City, Cebu)'
+  ],
+  'octavina': [
+    'Jose R. Gullas Halad Museum (Cebu City)',
+    'University of San Carlos (USC) Museum (Cebu City)',
+    'Alegre Guitar Factory Showroom (Lapu-Lapu City, Cebu)'
+  ],
+  'bajo de uñas': [
+    'Jose R. Gullas Halad Museum (Cebu City)',
+    'University of San Carlos (USC) Museum (Cebu City)',
+    'Alegre Guitar Factory Showroom (Lapu-Lapu City, Cebu)'
+  ],
+  'lantoy': [
+    'Samar Archaeological Museum and Research Center (Calbayog City, Samar)',
+    'People\'s Center and Library Heritage Displays (Tacloban City, Leyte)',
+    'University of San Carlos (USC) Museum Ethnographic Gallery (Cebu City)'
+  ],
+  'subing': [
+    'Samar Archaeological Museum and Research Center (Calbayog City, Samar)',
+    'National Museum of Western Visayas (Iloilo City)',
+    'Leyte Provincial Capitol Museum Displays (Tacloban City, Leyte)'
+  ],
+  'korlong': [
+    'Samar Archaeological Museum and Research Center (Calbayog City, Samar)',
+    'University of San Carlos (USC) Museum Ethnographic Gallery (Cebu City)',
+    'National Museum of the Philippines Regional Exhibitions (when on rotation)'
+  ]
+};
+
 interface CollectionScreenProps {
   onBack: () => void;
+  onSelectInstrument: (name: string) => void;
+  onSelectCustomProfile: (profile: any) => void;
 }
 
-export function CollectionScreen({ onBack }: CollectionScreenProps) {
+export function CollectionScreen({ onBack, onSelectInstrument, onSelectCustomProfile }: CollectionScreenProps) {
   const { progress } = useProgress();
   const [activeTab, setActiveTab] = useState<'Western Visayas' | 'Central Visayas' | 'Eastern Visayas'>('Western Visayas');
   const [selectedCustomProfile, setSelectedCustomProfile] = useState<any | null>(null);
+  const [selectedHintInstrument, setSelectedHintInstrument] = useState<any | null>(null);
 
   // Filter instruments for the active region
   const regionInstruments = MASTER_INSTRUMENTS.filter(inst => inst.region === activeTab);
@@ -136,13 +212,27 @@ export function CollectionScreen({ onBack }: CollectionScreenProps) {
                     {/* Status Badge */}
                     <div className="absolute top-2 right-2 z-20">
                       {isUnlocked ? (
-                        <span className="w-5 h-5 rounded-full bg-crimson border border-obsidian flex items-center justify-center text-obsidian shadow-md">
-                          <CheckCircle size={12} className="text-obsidian fill-current" />
-                        </span>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedHintInstrument(inst);
+                          }}
+                          className="w-6 h-6 rounded-full bg-crimson border border-obsidian flex items-center justify-center text-obsidian shadow-md hover:scale-110 active:scale-95 transition-all"
+                          title="Show location hints"
+                        >
+                          <CheckCircle size={13} className="text-obsidian" />
+                        </button>
                       ) : (
-                        <span className="w-5 h-5 rounded-full bg-dark-slate border border-light-gray/10 flex items-center justify-center text-slate-gray shadow-md">
-                          <HelpCircle size={12} />
-                        </span>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedHintInstrument(inst);
+                          }}
+                          className="w-6 h-6 rounded-full bg-dark-slate border border-light-gray/10 flex items-center justify-center text-slate-gray shadow-md hover:bg-dark-slate/80 hover:scale-110 active:scale-95 transition-all"
+                          title="Show location hints"
+                        >
+                          <HelpCircle size={13} />
+                        </button>
                       )}
                     </div>
                   </div>
@@ -169,7 +259,7 @@ export function CollectionScreen({ onBack }: CollectionScreenProps) {
 
                     <div className="mt-2.5 pt-2 border-t border-light-gray/5">
                       {isUnlocked ? (
-                        <p className="font-space-mono text-[9px] text-light-gray/80 line-clamp-3 leading-relaxed">
+                        <p className="font-space-mono text-[9px] text-light-gray/80 line-clamp-3 leading-relaxed mb-3">
                           {inst.hint}
                         </p>
                       ) : (
@@ -181,6 +271,15 @@ export function CollectionScreen({ onBack }: CollectionScreenProps) {
                         </div>
                       )}
                     </div>
+
+                    {isUnlocked && (
+                      <button 
+                        onClick={() => onSelectInstrument(inst.name)}
+                        className="w-full py-2 bg-crimson text-obsidian text-xs font-black font-orbitron rounded-xl hover:shadow-lg hover:shadow-crimson/20 transition-all active:scale-95 mt-auto"
+                      >
+                        PLAY NOW
+                      </button>
+                    )}
                   </div>
                 </div>
               );
@@ -353,6 +452,55 @@ export function CollectionScreen({ onBack }: CollectionScreenProps) {
               )}
 
             </div>
+
+            {/* Modal Footer / Play Button */}
+            <div className="px-6 py-4 border-t border-light-gray/10 bg-obsidian/20 flex gap-2">
+              <button
+                onClick={() => {
+                  onSelectCustomProfile(selectedCustomProfile);
+                  setSelectedCustomProfile(null);
+                }}
+                className="flex-1 py-3 bg-crimson text-obsidian text-xs font-black font-orbitron rounded-xl hover:shadow-lg hover:shadow-crimson/20 transition-all active:scale-[0.98] text-center uppercase tracking-widest"
+              >
+                PLAY THIS SOUNDPRINT
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Location Hint Modal */}
+      {selectedHintInstrument && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-obsidian/90 backdrop-blur-md">
+          <div className="w-full max-w-sm bg-dark-slate border-2 border-crimson/50 rounded-3xl overflow-hidden flex flex-col shadow-2xl relative p-6 space-y-4">
+            <div>
+              <h3 className="font-orbitron font-black text-lg text-light-gray uppercase tracking-wider">
+                {selectedHintInstrument.name} Hints
+              </h3>
+              <span className="font-space-mono text-[10px] text-pale-pink uppercase tracking-widest">
+                Location Guide
+              </span>
+            </div>
+            
+            <p className="font-space-mono text-xs text-pale-pink font-bold">
+              this instrument may be found in these locations:
+            </p>
+            
+            <ul className="space-y-2.5 font-space-mono text-xs text-light-gray/90 bg-obsidian/40 p-4 rounded-2xl border border-light-gray/5 max-h-[40vh] overflow-y-auto custom-scrollbar">
+              {(SCANNING_LOCATIONS[selectedHintInstrument.name.toLowerCase()] || []).map((loc, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-crimson font-bold flex-shrink-0">•</span>
+                  <span>{loc}</span>
+                </li>
+              ))}
+            </ul>
+            
+            <button
+              onClick={() => setSelectedHintInstrument(null)}
+              className="w-full py-3 bg-crimson text-obsidian text-xs font-black font-orbitron rounded-xl hover:shadow-lg hover:shadow-crimson/20 transition-all active:scale-[0.98] text-center uppercase tracking-widest"
+            >
+              CLOSE
+            </button>
           </div>
         </div>
       )}

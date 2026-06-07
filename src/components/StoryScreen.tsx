@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import type { ActiveInstrumentProfile } from '../types';
 import { useProgress } from '../context/ProgressProvider';
 import { useGemini } from '../context/GeminiProvider';
-import { ChevronRight, Sparkles } from 'lucide-react';
+import { ChevronRight, Sparkles, ArrowLeft } from 'lucide-react';
 import { GEMINI_MODEL } from '../constants';
 
 interface StoryScreenProps {
   profile: ActiveInstrumentProfile;
   onComplete: () => void;
+  onBack: () => void;
 }
 
 interface StoryData {
@@ -19,7 +20,7 @@ interface StoryData {
   }[];
 }
 
-export function StoryScreen({ profile, onComplete }: StoryScreenProps) {
+export function StoryScreen({ profile, onComplete, onBack }: StoryScreenProps) {
   const { addXP } = useProgress();
   const { client } = useGemini();
   
@@ -59,7 +60,7 @@ Return strictly in this JSON format:
         });
 
         if (!mounted) return;
-        const text = response.text();
+        const text = response.text;
         const data = JSON.parse(text) as StoryData;
         // Shuffle choices so 15XP isn't always first
         data.choices = data.choices.sort(() => Math.random() - 0.5);
@@ -108,43 +109,80 @@ Return strictly in this JSON format:
   }
 
   return (
-    <div className="min-h-screen bg-obsidian flex flex-col p-6 relative pb-safe">
-      <div className="flex-1 flex flex-col max-w-md mx-auto w-full pt-12">
+    <div className="min-h-screen bg-obsidian flex flex-col p-6 relative overflow-hidden pb-12 md:pb-16 pb-safe">
+      {/* Background ambient light */}
+      <div className="absolute top-[-10%] left-[-25%] w-[90%] h-[60%] bg-crimson/15 rounded-full blur-[130px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-25%] w-[90%] h-[60%] bg-gold/10 rounded-full blur-[130px] pointer-events-none" />
+      <div className="absolute top-[35%] right-[-20%] w-[60%] h-[40%] bg-purple/10 rounded-full blur-[110px] pointer-events-none" />
+
+      <div className="flex-1 flex flex-col max-w-md mx-auto w-full pt-6 pb-12 relative z-10">
         
-        <div className="text-center mb-10">
-          <h2 className="font-orbitron font-black text-pale-pink text-xl tracking-widest uppercase mb-2 glow-pale-pink">
+        {/* Header Bar with Back Button */}
+        <div className="flex items-center justify-between mb-6 w-full">
+          <button 
+            onClick={onBack}
+            className="px-3 py-1.5 rounded-lg bg-dark-slate/30 border border-pale-pink/10 hover:border-crimson/50 hover:bg-dark-slate/50 text-pale-pink hover:text-crimson transition-all duration-200 flex items-center justify-center gap-1.5 font-orbitron text-[10px] font-bold tracking-widest uppercase"
+          >
+            <ArrowLeft size={14} /> BACK
+          </button>
+          
+          <div className="text-right">
+            <span className="font-space-mono text-[9px] text-crimson font-black tracking-[0.2em] uppercase block">
+              CULTURAL NARRATIVE
+            </span>
+          </div>
+        </div>
+
+        {/* Title */}
+        <div className="text-center mb-8">
+          <h2 className="font-orbitron font-black text-light-gray text-xl tracking-widest uppercase glow-crimson">
             ECHOES OF THE PAST
           </h2>
         </div>
 
-        {/* Story Text */}
-        <div className="glass-card p-6 rounded-3xl border border-pale-pink/20 mb-8 shadow-2xl relative">
-          <div className="absolute -top-4 -left-4 w-8 h-8 bg-dark-slate rounded-full border border-pale-pink/30 flex items-center justify-center">
-            <Sparkles size={14} className="text-pale-pink" />
+        {/* Story Text Box */}
+        <div className="relative p-6 rounded-2xl border border-pale-pink/10 bg-gradient-to-b from-dark-slate/50 to-obsidian/70 backdrop-blur-md mb-8 shadow-[0_12px_40px_rgba(0,0,0,0.6)] overflow-hidden">
+          {/* Corner decorative accents */}
+          <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-crimson/60" />
+          <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-crimson/60" />
+          <div className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 border-crimson/60" />
+          <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-crimson/60" />
+
+          <div className="flex items-center gap-2 mb-4 border-b border-light-gray/10 pb-3">
+            <Sparkles size={16} className="text-crimson animate-pulse" />
+            <span className="font-orbitron text-[10px] text-pale-pink/80 font-black tracking-widest uppercase">
+              SCENARIO LOG
+            </span>
           </div>
-          <p className="font-space-mono text-light-gray leading-relaxed text-sm">
+
+          <p className="font-sans text-light-gray/90 leading-relaxed text-sm md:text-base">
             {story.scenario}
           </p>
         </div>
 
-        {/* Choices */}
-        <div className="space-y-3 mt-auto">
+        {/* Choices Container */}
+        <div className="space-y-4 mt-auto">
+          <span className="block font-orbitron text-[9px] text-slate-gray font-black tracking-widest uppercase mb-1">
+            CHOOSE YOUR REACTION:
+          </span>
+          
           {story.choices.map((choice, idx) => {
             const isSelected = selectedIdx === idx;
             const hasSelection = selectedIdx !== null;
+            const letters = ['A', 'B', 'C'];
             
-            let btnClass = "w-full text-left p-4 rounded-xl border font-space-mono text-sm transition-all duration-300 ";
+            let btnClass = "w-full text-left p-4 rounded-xl border transition-all duration-300 relative overflow-hidden flex items-start gap-4 ";
             
             if (!hasSelection) {
-              btnClass += "bg-dark-slate border-light-gray/10 text-light-gray/80 hover:border-pale-pink/50 hover:bg-dark-slate/80 active:scale-[0.98]";
+              btnClass += "bg-gradient-to-br from-dark-slate/40 to-obsidian/30 border-pale-pink/10 text-light-gray/80 hover:border-crimson/50 hover:from-dark-slate/60 hover:to-obsidian/40 hover:-translate-y-0.5 active:translate-y-0 hover:shadow-[0_4px_20px_rgba(218,45,70,0.15)]";
             } else if (isSelected) {
               btnClass += choice.xp === 15 
-                ? "bg-green-900/40 border-green-500/50 text-green-100 shadow-[0_0_15px_rgba(34,197,94,0.2)]" 
+                ? "bg-gradient-to-br from-green-950/40 to-green-900/20 border-green-500/40 text-green-100 shadow-[0_0_25px_rgba(34,197,94,0.2)]" 
                 : choice.xp > 0 
-                  ? "bg-pale-pink/20 border-pale-pink/50 text-pale-pink"
-                  : "bg-danger/20 border-danger/50 text-danger-100";
+                  ? "bg-gradient-to-br from-amber-950/40 to-amber-900/20 border-amber-500/40 text-amber-100 shadow-[0_0_25px_rgba(245,158,11,0.2)]"
+                  : "bg-gradient-to-br from-red-950/40 to-red-900/20 border-red-500/40 text-red-100 shadow-[0_0_25px_rgba(239,68,68,0.25)]";
             } else {
-              btnClass += "bg-obsidian border-light-gray/5 text-light-gray/30 opacity-50";
+              btnClass += "bg-obsidian/20 border-light-gray/5 text-light-gray/30 opacity-40";
             }
 
             return (
@@ -154,15 +192,39 @@ Return strictly in this JSON format:
                 className={btnClass}
                 disabled={hasSelection}
               >
-                {choice.text}
-                
-                {/* Feedback Dropdown */}
-                {isSelected && (
-                  <div className={`mt-3 pt-3 border-t text-xs leading-relaxed ${choice.xp === 15 ? 'border-green-500/30' : choice.xp > 0 ? 'border-pale-pink/30' : 'border-danger/30'}`}>
-                    <span className="font-bold mb-1 block">+{choice.xp} XP</span>
-                    {choice.feedback}
-                  </div>
-                )}
+                <span className={`font-space-mono text-xs px-2 py-0.5 rounded border transition-colors shrink-0 ${
+                  !hasSelection 
+                    ? 'border-pale-pink/20 bg-obsidian/50 text-pale-pink/60' 
+                    : isSelected 
+                      ? choice.xp === 15
+                        ? 'border-green-500/30 bg-green-950/50 text-green-400'
+                        : choice.xp > 0
+                          ? 'border-amber-500/30 bg-amber-950/50 text-amber-400'
+                          : 'border-red-500/30 bg-red-950/50 text-red-400'
+                      : 'border-light-gray/5 bg-obsidian/20 text-light-gray/20'
+                }`}>
+                  {letters[idx]}
+                </span>
+
+                <div className="flex-1">
+                  <span className="block font-sans text-sm leading-relaxed">{choice.text}</span>
+                  
+                  {/* Feedback Panel */}
+                  {isSelected && (
+                    <div className={`mt-3 pt-3 border-t text-xs leading-relaxed transition-all duration-500 ${
+                      choice.xp === 15 
+                        ? 'border-green-500/20 text-green-200/90' 
+                        : choice.xp > 0 
+                          ? 'border-amber-500/20 text-amber-200/90' 
+                          : 'border-red-500/20 text-red-200/90'
+                    }`}>
+                      <span className="font-bold font-orbitron block text-[10px] tracking-wider uppercase mb-1">
+                        {choice.xp === 15 ? 'Optimal Reaction' : choice.xp > 0 ? 'Acceptable Reaction' : 'Cultural Faux Pas'} (+{choice.xp} XP)
+                      </span>
+                      {choice.feedback}
+                    </div>
+                  )}
+                </div>
               </button>
             );
           })}
@@ -171,12 +233,12 @@ Return strictly in this JSON format:
         {selectedIdx !== null && (
           <button 
             onClick={onComplete}
-            className="w-full mt-6 py-5 rounded-2xl font-orbitron text-sm font-bold tracking-widest uppercase
-              bg-gradient-to-r from-pale-pink to-light-gray text-obsidian
-              hover:shadow-lg hover:shadow-pale-pink/40 active:scale-[0.98]
+            className="w-full mt-6 py-4 rounded-xl font-orbitron text-xs font-black tracking-widest uppercase
+              bg-gradient-to-r from-crimson to-pale-pink text-obsidian
+              hover:shadow-lg hover:shadow-crimson/30 hover:-translate-y-0.5 active:translate-y-0
               transition-all duration-200 flex items-center justify-center gap-3 animate-judgement-pop"
           >
-            CONTINUE JOURNEY <ChevronRight size={20} />
+            CONTINUE JOURNEY <ChevronRight size={18} />
           </button>
         )}
       </div>

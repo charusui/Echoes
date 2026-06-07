@@ -1,4 +1,4 @@
-import { Trophy, RotateCcw, Home } from 'lucide-react';
+import { Trophy, RotateCcw, Home, ArrowLeft } from 'lucide-react';
 import type { GameplayState, ActiveInstrumentProfile } from '../types';
 
 interface ResultsScreenProps {
@@ -40,17 +40,38 @@ function getRank(accuracy: number): { rank: string; color: string; label: string
 }
 
 export function ResultsScreen({ gameState, profile, onPlayAgain, onNewInstrument }: ResultsScreenProps) {
-  const total = gameState.totalNotes || 1;
+  // If the user skipped early, only evaluate notes that were actually processed (hit or miss)
+  const isSkipped = gameState.isFinished && gameState.songTimeSeconds < 59;
+  const total = isSkipped
+    ? (gameState.perfectCount + gameState.goodCount + gameState.missCount || 1)
+    : (gameState.totalNotes || 1);
+
   const accuracy = Math.round(((gameState.perfectCount + gameState.goodCount * 0.5) / total) * 100);
   const { rank, color, label } = getRank(accuracy);
+  const displayMissCount = isSkipped
+    ? gameState.missCount
+    : Math.max(0, total - (gameState.perfectCount + gameState.goodCount));
 
   return (
-    <div className="min-h-screen bg-obsidian flex flex-col items-center justify-start px-4 pt-8 pb-20 overflow-y-auto">
-      {/* Header */}
+    <div className="min-h-screen bg-obsidian flex flex-col items-center justify-start px-4 pt-6 pb-20 overflow-y-auto pb-12 md:pb-16 pb-safe">
+      
+      {/* Header Bar with Back Button */}
+      <div className="w-full max-w-md flex items-center justify-between mb-6">
+        <button 
+          onClick={onNewInstrument}
+          className="px-3 py-1.5 rounded-lg bg-dark-slate/30 border border-pale-pink/10 hover:border-crimson/50 hover:bg-dark-slate/50 text-pale-pink hover:text-crimson transition-all duration-200 flex items-center justify-center gap-1.5 font-orbitron text-[10px] font-bold tracking-widest uppercase"
+        >
+          <ArrowLeft size={14} /> BACK
+        </button>
+        
+        <div className="text-right">
+          <span className="font-space-mono text-[9px] text-crimson font-black tracking-[0.2em] uppercase block">
+            SESSION COMPLETE
+          </span>
+        </div>
+      </div>
+
       <div className="w-full max-w-md text-center mb-6">
-        <h1 className="font-orbitron text-xl font-black text-crimson glow-crimson tracking-wider mb-1">
-          SESSION COMPLETE
-        </h1>
         <p className="text-pale-pink text-sm font-space-mono">
           {profile.instrument.name} · {profile.instrument.ethnoLinguisticGroup}
         </p>
@@ -105,7 +126,7 @@ export function ResultsScreen({ gameState, profile, onPlayAgain, onNewInstrument
               <div className="text-pale-pink/60 text-xs font-space-mono">GANDA</div>
             </div>
             <div>
-              <div className="font-orbitron font-bold text-lg text-danger">{gameState.missCount}</div>
+              <div className="font-orbitron font-bold text-lg text-danger">{displayMissCount}</div>
               <div className="text-danger/60 text-xs font-space-mono">SABLAY</div>
             </div>
           </div>
@@ -171,7 +192,7 @@ export function ResultsScreen({ gameState, profile, onPlayAgain, onNewInstrument
             hover:border-pale-pink/60 active:scale-[0.98] transition-all
             flex items-center justify-center gap-3"
         >
-          <Home size={16} /> NEW INSTRUMENT
+          <Home size={16} /> RETURN TO MAP
         </button>
       </div>
     </div>

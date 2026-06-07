@@ -77,9 +77,16 @@ export function GameBoard({ profile, onQuit, onFinish }: GameBoardProps) {
   // so they can freely play audio in sandbox mode.
 
   return (
-    <div className="fixed inset-0 bg-obsidian flex flex-col select-none overflow-hidden">
+    <div className="fixed inset-0 bg-obsidian flex flex-col select-none overflow-hidden pb-12 md:pb-16 pb-safe">
       {/* HUD — Top Navigation */}
       <div className="flex items-center justify-between px-6 pt-safe pt-6 pb-4 bg-obsidian/90 backdrop-blur-sm z-10 border-b border-dark-slate">
+        <button 
+          onClick={onQuit}
+          className="mr-4 px-3 py-1.5 rounded-lg bg-dark-slate/30 border border-pale-pink/10 hover:border-crimson/50 hover:bg-dark-slate/50 text-pale-pink hover:text-crimson transition-all duration-200 flex items-center justify-center gap-1.5 font-orbitron text-[10px] font-bold tracking-widest uppercase shrink-0"
+        >
+          <X size={14} /> BACK
+        </button>
+
         <div className="text-left flex flex-col justify-center flex-1 min-w-0 mr-4">
           <div className="text-light-gray/90 text-sm md:text-base font-space-mono font-bold uppercase tracking-[0.2em] glow-light-gray truncate">
             {profile.instrument.name}

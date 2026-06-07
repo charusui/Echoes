@@ -116,7 +116,7 @@ export function PercussionRhythm({ profile, notes, gameState, onLaneHit, activeL
         {renderLanes()}
       </div>
 
-      <div className="absolute left-0 right-0 h-1 bg-crimson shadow-[0_0_20px_rgba(218,45,70,0.5)] z-0" style={{ bottom: '15%' }} />
+      <div className="absolute left-0 right-0 h-1 bg-crimson shadow-[0_0_20px_rgba(218,45,70,0.5)] z-0 pointer-events-none" style={{ bottom: '15%' }} />
 
       <div className="absolute inset-0 pointer-events-none">
         {renderNotes()}
