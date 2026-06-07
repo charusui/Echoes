@@ -19,9 +19,12 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
     // Responsive Wrapper: Padding top on mobile to push text up, centered vertically on desktop
     <div className="relative min-h-screen bg-[#2a2d43] flex flex-col pt-24 md:pt-0 md:justify-center overflow-hidden pb-safe px-6 md:px-12">
 
-      {/* Background Image / Character */}
       {/* Fixed mobile height to 65vh so it actually fits on the screen */}
       <div className={`absolute -bottom-15 right-0 md:right-10 z-0 h-[65vh] md:h-[105vh] transition-opacity duration-[2000ms] ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+        
+        {/* Subtle Radial Glow behind image - Now with custom subtle pulse */}
+        <div className="absolute inset-0 z-[-1] rounded-full blur-[90px] bg-[#da2d46] scale-125 md:scale-115 transition-all duration-300 animate-subtle-pulse" />
+        
         <img 
           src={person} 
           alt="person posing" 
@@ -29,7 +32,7 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
         />
       </div>
       
-      {/* Vignette & Gradients */}
+      {/* Vignette & Gradients - z-0 to sit behind z-20 text but above the glow/image z-[-1]/z-0 container */}
       <div className="absolute bottom-0 left-0 right-0 h-[80vh] z-0 bg-gradient-to-t from-[#0f0c0c] via-[#2a2d43]/40 to-transparent pointer-events-none" />
       <div className="absolute top-0 left-0 right-0 h-[70vh] md:h-[30vh] z-0 bg-gradient-to-b from-[#0f0c0c] via-transparent to-transparent pointer-events-none" />
 
@@ -77,6 +80,17 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
           </div>
         </button>
       </div>
+
+      {/* Custom Keyframes for the Subtle Pulse */}
+      <style>{`
+        @keyframes subtle-pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
+        }
+        .animate-subtle-pulse { 
+          animation: subtle-pulse 4s ease-in-out infinite; 
+        }
+      `}</style>
     </div>
   );
 }
