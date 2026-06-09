@@ -124,51 +124,52 @@ async function runPhase1(
 
   const result = await callGeminiWithRetry(client, {
     contents: {
-      parts: [
-        {
-          text: `You are an expert ethnomusicologist.
-Analyze this image. Identify the exact musical instrument name. 
+  parts: [
+    {
+      text: `You are an expert ethnomusicologist.
+Analyze this image. Identify the exact musical instrument name.
+
+CRITICAL INSTRUCTION: Completely IGNORE the color of the instrument. In real life, these instruments come in various stains, paints, and natural material shades. You must base your classification SOLELY on structural geometry, shape, number of strings, presence of bows/sticks, and physical proportions.
 
 CRITICAL CONTEXT: This application specializes in traditional Philippine Visayan instruments. Look closely for visual cues that match:
 
 **Western Visayas:**
-- Tultugan: Massive bamboo drums struck with sticks. Look for large bamboo nodes/tubes.
-- Buktot: A four-stringed native lute. CRITICAL VISUAL CUE: The body is crafted from a distinct, round dried coconut husk. The neck is a simple wooden stick attached to the husk. Has exactly 4 strings.
-- Pasiyak: A unique bamboo whistle requiring water inside to produce a bird-like chirp. Small, tubular bamboo shape with a mouthpiece.
-- Tulali: A ceremonial bamboo flute with exactly six finger holes. Long, slender bamboo tube.
-- Tugo: A wooden drum played by hitting the base with the hands. Distinctive guitar-shaped body, but it is a drum (no strings, solid wooden top).
-- Litguit: A wooden percussion instrument scraped with a stick. Often looks like a carved piece of wood with serrations or ridges for scraping.
+- Tultugan: A bamboo percussion instrument. Look for suspended or mounted bamboo nodes/tubes that are struck with bamboo sticks.
+- Buktot: A Visayan lute. CRITICAL VISUAL CUE: The body features a distinct, deep, rounded, bowl-like back (traditionally a coconut shell) with a flat soundboard. It has a neck with tuning pegs and typically exactly 4 strings.
+- Pasiyak: A water whistle. CRITICAL VISUAL CUE: Shaped like a bird, featuring a mouthpiece at the tail section. 
+- Tulali: A slender bamboo transverse or vertical flute with a blowing hole and finger holes along a single long tube.
+- Tugo: A cylindrical or barrel-shaped drum. CRITICAL VISUAL CUE: It has a membrane/skin head on top, tensioned by distinct laced cords running down the sides of the wooden body.
+- Litgit: A traditional bowed string instrument. Look for a slender main body (often bamboo or wood) with a small soundbox, strings, and it is played with a curved stringed bow.
 
 **Central Visayas:**
-- Cebuano Gitara: Handcrafted acoustic guitar. Look for the classic figure-eight guitar shape, round soundhole, and exactly 6 strings. Often has decorative inlays.
-- Bandurria: A lead melody instrument. CRITICAL VISUAL CUE: Pear-shaped body with a flat back. It has exactly 14 strings, usually arranged in courses, and a short, wide neck.
-- Laud: A string instrument tuned lower than the bandurria. CRITICAL VISUAL CUE: Teardrop-shaped body (often with f-holes instead of a round soundhole). Longer neck than the bandurria, usually 14 strings like the bandurria but visually distinct shape.
-- Octavina: A Rondalla string instrument. CRITICAL VISUAL CUE: Shaped exactly like a small guitar (figure-eight body), but has 14 strings like a bandurria/laud.
-- Bajo de Uñas: The giant acoustic bass. Very large, typical stand-up bass/contrabass shape (violin family shape, not guitar shape). Usually has 4 thick strings.
+- Cebuano Gitara: Handcrafted acoustic guitar. Look for the classic figure-eight guitar shape, a flat top and flat back, a central circular soundhole, and exactly 6 strings.
+- Bandurria: A plucked melody instrument. CRITICAL VISUAL CUE: A teardrop or pear-shaped body with a FLAT back. It has a short, wide neck, a central soundhole, and exactly 14 strings arranged in courses. (Do not confuse with the bowl-backed Buktot).
+- Laud: A string instrument similar to the bandurria. CRITICAL VISUAL CUE: Teardrop-shaped body with a flat back, but features a visibly longer neck than the bandurria. Often features f-holes instead of a central round soundhole. Has 14 strings.
+- Octavina: A Rondalla string instrument. CRITICAL VISUAL CUE: Shaped exactly like a miniature acoustic guitar (figure-eight body) with a flat back, but has a shorter neck and 14 strings like a bandurria.
+- Bajo de Uñas: A massive acoustic bass. Very large, upright stringed bass instrument (resembling a large cello or double bass), featuring a carved body, f-holes, a long neck, and typically 4 thick strings.
 
 **Eastern Visayas:**
-- Lantoy: A slender bamboo mouth or nose flute. Very thin bamboo tube, sometimes with subtle decorative carvings.
-- Subing: A twangy, vibrating bamboo jaw harp. Small, slender, flat piece of bamboo with a carved vibrating tongue in the center. Look for the pointed/tapered end.
-- Korlong: A rare two-stringed fiddle. Look for a small body, often made from bamboo or coconut, and exactly two strings, played with a distinct bow (often horsehair or abaca).
+- Lantoy: A small, simple, slender bamboo mouth or nose flute with small finger holes. 
+- Subing: A bamboo jaw harp. CRITICAL VISUAL CUE: A small, slender, flat piece of carved bamboo with a highly flexible, distinct vibrating tongue in the center and a pointed/tapered end.
+- Korlong: A rare two-stringed fiddle. Look for a small body, often made from bamboo or coconut, and exactly two strings, played with a distinct bow.
 
-If the image matches or closely resembles one of these, identify it accurately as the Philippine instrument. Provide its ethno-linguistic group (e.g., Maguindanao, Kalinga, Maranao, Visayan), cultural purpose, and Hornbostel-Sachs classification.
+If the image matches or closely resembles one of these, identify it accurately as the Philippine instrument. Provide its ethno-linguistic group (e.g., Visayan), cultural purpose, and Hornbostel-Sachs classification.
 If it is ANY other instrument from around the world (e.g. American drum kit, modern electric guitar, piano), identify it accurately and provide its general origin instead. 
 Classify it strictly as one of: string, percussion, or wind.
 If the image is NOT a musical instrument at all, you MUST set the name exactly to "NOT_AN_INSTRUMENT".
 Return a clean JSON response.`,
-        },
-        {
-          inlineData: { data: imageBase64, mimeType: imageMimeType },
-        },
-      ],
     },
-    config: {
-      responseMimeType: 'application/json',
-      responseSchema: schema,
+    {
+      inlineData: { data: imageBase64, mimeType: imageMimeType },
     },
-  });
+  ],
+  config: {
+    responseMimeType: 'application/json',
+    responseSchema: schema,
+  },
+};
 
-  return JSON.parse(result) as InstrumentProfile;
+return JSON.parse(result) as InstrumentProfile;
 }
 
 // ─── Phase 2: Acoustic Profile ────────────────────────────────────────────────
