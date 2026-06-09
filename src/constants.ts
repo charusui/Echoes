@@ -66,6 +66,8 @@ export interface MasterInstrument {
   hint: string;
 }
 
+export const IMAGE_BASE = 'src/assets/instruments/';
+
 export const MASTER_INSTRUMENTS: MasterInstrument[] = [
   // Western Visayas (6 Instruments)
   { id: 'tultugan', name: 'Tultugan', region: 'Western Visayas', hint: 'Massive bamboo drums struck with sticks.' },
@@ -73,7 +75,7 @@ export const MASTER_INSTRUMENTS: MasterInstrument[] = [
   { id: 'pasiyak', name: 'Pasiyak', region: 'Western Visayas', hint: 'A unique bamboo whistle that requires water inside to produce a bird-like chirp.' },
   { id: 'tulali', name: 'Tulali', region: 'Western Visayas', hint: 'A ceremonial bamboo flute with six finger holes.' },
   { id: 'tugo', name: 'Tugo', region: 'Western Visayas', hint: 'A guitar-shaped wooden drum played by hitting the base with the hands.' },
-  { id: 'litguit', name: 'Litguit', region: 'Western Visayas', hint: 'A wooden percussion instrument scraped with a stick to mimic the sound of maracas.' },
+  { id: 'litgit', name: 'Litgit', region: 'Western Visayas', hint: 'A wooden percussion instrument scraped with a stick to mimic the sound of maracas.' },
   
   // Central Visayas (5 Instruments)
   { id: 'cebuano_gitara', name: 'Cebuano Gitara', region: 'Central Visayas', hint: 'The iconic, handcrafted 6-string acoustic guitar.' },

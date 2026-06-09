@@ -1,4 +1,4 @@
-import React, { useState, } from 'react';
+import React, { useState } from 'react';
 import { Camera, Map, Flame, Award, Shield, Lock, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { useProgress } from '../context/ProgressProvider';
 
@@ -95,11 +95,12 @@ interface MapScreenProps {
   onOpenCollection: () => void;
 }
 
+// Added totalInstruments to track how many instruments belong to each region
 const REGION_PINS = [
-  { id: 'western', name: 'Western Visayas', instrument: 'Tultugan', levelRequired: 1, top: '45%', left: '25%', emoji: '🪘' },
-  { id: 'central', name: 'Central Visayas', instrument: 'Cebuano Gitara', levelRequired: 2, top: '65%', left: '55%', emoji: '🎸' },
-  { id: 'eastern', name: 'Eastern Visayas', instrument: 'Lantoy', levelRequired: 3, top: '40%', left: '80%', emoji: '🎶' },
-  { id: 'negros', name: 'Negros Region', instrument: 'Subing', levelRequired: 4, top: '60%', left: '42%', emoji: '🎵' },
+  { id: 'western', name: 'Western Visayas', instrument: 'Tultugan', levelRequired: 1, top: '45%', left: '25%', emoji: '🪘', totalInstruments: 6 },
+  { id: 'central', name: 'Central Visayas', instrument: 'Cebuano Gitara', levelRequired: 2, top: '65%', left: '55%', emoji: '🎸', totalInstruments: 5 },
+  { id: 'eastern', name: 'Eastern Visayas', instrument: 'Lantoy', levelRequired: 3, top: '40%', left: '80%', emoji: '🎶', totalInstruments: 3 },
+  { id: 'negros', name: 'Negros Region', instrument: 'Subing', levelRequired: 4, top: '60%', left: '42%', emoji: '🎵'}, 
 ];
 
 /* ─── Floating Particle Component ─── */
@@ -337,6 +338,10 @@ export function MapScreen({ onOpenScanner, onOpenLocationServices, onSelectInstr
             else if (pin.name === 'Eastern Visayas') isUnlocked = progress.level >= 3;
             else if (pin.name === 'Negros Region') isUnlocked = progress.level >= 4;
 
+            // Simple logic to check if they've acquired an instrument in this region. 
+            // NOTE: If you add more instruments per region, you'd filter the full array instead of just includes()
+            const acquiredCount = progress.unlockedInstruments.includes(pin.instrument) ? 1 : 0;
+
             return (
               <button
                 key={pin.id}
@@ -425,12 +430,24 @@ export function MapScreen({ onOpenScanner, onOpenLocationServices, onSelectInstr
                     {pin.name.toUpperCase()}
                   </p>
                   {isUnlocked ? (
-                    <p className="font-space-mono" style={{ fontSize: 9, color: '#da2d46', fontWeight: 600 }}>
-                      ♪ {pin.instrument}
+                    <p className="font-space-mono flex items-center justify-center gap-1" style={{ fontSize: 9, color: '#da2d46', fontWeight: 600 }}>
+                      <span>♪ {pin.instrument}</span>
+                      {/* Only render the fraction if totalInstruments is defined */}
+                      {pin.totalInstruments && (
+                        <span style={{ color: 'rgba(240, 221, 224, 0.7)', marginLeft: 2 }}>
+                          {acquiredCount}/{pin.totalInstruments}
+                        </span>
+                      )}
                     </p>
                   ) : (
-                    <p className="font-space-mono" style={{ fontSize: 9, color: '#888ea1' }}>
-                      🔒 Reach Lvl {pin.levelRequired}
+                    <p className="font-space-mono flex items-center justify-center gap-1" style={{ fontSize: 9, color: '#888ea1' }}>
+                      <span>🔒 Lvl {pin.levelRequired}</span>
+                      {/* Only render the fraction if totalInstruments is defined */}
+                      {pin.totalInstruments && (
+                        <span style={{ color: 'rgba(136, 142, 161, 0.6)', marginLeft: 2 }}>
+                          0/{pin.totalInstruments}
+                        </span>
+                      )}
                     </p>
                   )}
                 </div>
@@ -841,7 +858,7 @@ export function MapScreen({ onOpenScanner, onOpenLocationServices, onSelectInstr
               }}
             >
               <div
-                className="font-space-mono font-bold"
+                className="font-bold"
                 style={{
                   background: 'linear-gradient(135deg, #f0dde0, #da2d46)',
                   color: '#0f0c0c', fontSize: 11,
@@ -864,7 +881,7 @@ export function MapScreen({ onOpenScanner, onOpenLocationServices, onSelectInstr
 
           <button
             onClick={onOpenScanner}
-            className="w-full font-orbitron text-xs sm:text-sm font-bold tracking-widest uppercase flex items-center justify-center gap-2 sm:gap-3 relative overflow-hidden group py-[14px] sm:py-[18px] px-4 sm:px-6 rounded-[14px] sm:rounded-2xl"
+            className="w-full text-xs sm:text-sm font-bold tracking-widest uppercase flex items-center justify-center gap-2 sm:gap-3 relative overflow-hidden group py-[14px] sm:py-[18px] px-4 sm:px-6 rounded-[14px] sm:rounded-2xl"
             style={{
               background: 'linear-gradient(135deg, #da2d46, #e8556a, #f0dde0)',
               backgroundSize: '200% 200%',
