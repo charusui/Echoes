@@ -124,9 +124,9 @@ async function runPhase1(
 
   const result = await callGeminiWithRetry(client, {
     contents: {
-  parts: [
-    {
-      text: `You are an expert ethnomusicologist.
+      parts: [
+        {
+          text: `You are an expert ethnomusicologist.
 Analyze this image. Identify the exact musical instrument name.
 
 CRITICAL INSTRUCTION: Completely IGNORE the color of the instrument. In real life, these instruments come in various stains, paints, and natural material shades. You must base your classification SOLELY on structural geometry, shape, number of strings, presence of bows/sticks, and physical proportions.
@@ -158,19 +158,20 @@ If it is ANY other instrument from around the world (e.g. American drum kit, mod
 Classify it strictly as one of: string, percussion, or wind.
 If the image is NOT a musical instrument at all, you MUST set the name exactly to "NOT_AN_INSTRUMENT".
 Return a clean JSON response.`,
+        },
+        {
+          inlineData: { data: imageBase64, mimeType: imageMimeType },
+        },
+      ],
+    }, 
+    config: {
+      responseMimeType: 'application/json',
+      responseSchema: schema,
     },
-    {
-      inlineData: { data: imageBase64, mimeType: imageMimeType },
-    },
-  ],
-  config: {
-    responseMimeType: 'application/json',
-    responseSchema: schema,
-  },
-};
+  }); 
 
-return JSON.parse(result) as InstrumentProfile;
-}
+  return JSON.parse(result) as InstrumentProfile;
+} 
 
 // ─── Phase 2: Acoustic Profile ────────────────────────────────────────────────
 
@@ -311,7 +312,8 @@ async function runPhase4(
       decayTime:           { type: 'number' },
       attackTime:          { type: 'number' },
       tuningSystem:        { type: 'string' },
-      synthesisType:       { type: 'string', enum: ['string', 'fm-gong', 'flute'] },
+      synthesisType: { 
+        type: 'string', enum: ['string', 'fm-gong', 'flute', 'membrane-drum', 'brass', 'synth-lead'] },
       scaleNotes: {
         type: 'array',
         items: {
