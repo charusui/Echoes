@@ -46,33 +46,47 @@ export function PercussionRhythm({ profile, notes, gameState, onLaneHit, activeL
     return mapping.lanes.map((lane) => {
       const isActive = activeLanes.has(lane.id);
       
-      // Render a top-down view of a drum/gong
+      // Render a heavy comic-style drum hit zone
       const visualContent = (
-        <div className={`w-16 h-16 md:w-24 md:h-24 rounded-full border-2 transition-all flex items-center justify-center shadow-xl z-20
-            ${isActive ? 'bg-pale-pink/40 border-[#66FCF1] scale-95 shadow-[0_0_30px_rgba(254,213,107,0.6)]' : 'bg-dark-slate/80 border-pale-pink/40'}
+        <div className={`w-16 h-16 md:w-24 md:h-24 border-[4px] md:border-[6px] border-[#0f0c0c] transition-all duration-75 flex items-center justify-center z-20 rounded-full
+            ${isActive 
+              ? 'bg-[#da2d46] scale-95 shadow-[0px_0px_0px_0px_#0f0c0c] translate-y-1.5 translate-x-1.5' 
+              : 'bg-[#e0e5ed] shadow-[6px_6px_0px_0px_#0f0c0c]'
+            }
         `}>
-            <div className="w-4 h-4 rounded-full bg-obsidian/50" />
+          {/* Inner ring to make it look like a drum head or target */}
+          <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full border-[3px] border-[#0f0c0c] transition-colors ${isActive ? 'bg-[#f0dde0]' : 'bg-[#888ea1]'}`} />
+          
+          {/* Comic impact speedlines inside the drum */}
+          {isActive && (
+            <div 
+              className="absolute inset-0 rounded-full opacity-30 pointer-events-none"
+              style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, #0f0c0c 10px, #0f0c0c 12px)' }}
+            />
+          )}
         </div>
       );
 
       return (
         <div 
           key={lane.id}
-          onPointerDown={() => handleHit(lane.id)}
+          onPointerDown={(e) => { e.preventDefault(); handleHit(lane.id); }}
           className={`
-            relative h-full border-r border-slate-gray/30 last:border-r-0 flex-1 flex flex-col items-center justify-center
-            ${isActive ? 'bg-pale-pink/5' : 'bg-transparent'}
-            transition-colors duration-75 cursor-pointer
+            relative h-full border-r-[3px] border-[#0f0c0c]/40 last:border-r-0 flex-1 flex flex-col items-center justify-center
+            ${isActive ? 'bg-[#da2d46]/10' : 'bg-transparent'}
+            transition-colors duration-75 cursor-pointer touch-none
           `}
         >
-          {/* Hit Line Placement */}
+          {/* Hit Zone Placement */}
           <div className="absolute bottom-[15%] translate-y-1/2 w-full flex items-center justify-center pointer-events-none">
              {visualContent}
           </div>
 
-          {/* Key Binding Hint */}
-          <div className="absolute bottom-[5%] font-orbitron font-bold text-pale-pink/50 text-xl pointer-events-none">
-            {lane.keyBinding}
+          {/* Key Binding Hint - Styled as a skewed comic tag */}
+          <div className="absolute bottom-[5%] pointer-events-none bg-[#0f0c0c] border-[3px] border-[#da2d46] px-3 py-1 -skew-x-6 shadow-[3px_3px_0px_0px_#da2d46]">
+            <span className="font-orbitron font-black text-[#e0e5ed] text-sm md:text-lg skew-x-6 block">
+              {lane.keyBinding}
+            </span>
           </div>
         </div>
       );
@@ -86,9 +100,8 @@ export function PercussionRhythm({ profile, notes, gameState, onLaneHit, activeL
       const timeDiff = note.time - gameState.songTimeSeconds;
       const distance = timeDiff * SCROLL_SPEED;
 
-      let noteColor = 'bg-light-gray shadow-[0_0_15px_rgba(224,229,237,0.8)]';
-      if (note.missed) noteColor = 'bg-danger shadow-[0_0_10px_rgba(231,76,60,0.5)] opacity-50';
-
+      const isMissed = note.missed;
+      
       const laneWidth = 100 / mapping.laneCount;
       
       // Map the note's ID to its visual index (0, 1, 2...)
@@ -100,36 +113,51 @@ export function PercussionRhythm({ profile, notes, gameState, onLaneHit, activeL
       return (
         <div
           key={note.id}
-          className={`absolute w-10 h-10 rounded-full -translate-x-1/2 -translate-y-1/2 z-10 ${noteColor}`}
+          className={`absolute w-12 h-12 md:w-16 md:h-16 rounded-full border-[4px] border-[#0f0c0c] -translate-x-1/2 -translate-y-1/2 z-10 flex items-center justify-center ${
+            isMissed 
+              ? 'bg-[#888ea1] opacity-50 grayscale' 
+              : 'bg-[#da2d46] shadow-[4px_4px_0px_0px_#0f0c0c]'
+          }`}
           style={{
             left: leftPos,
             bottom: `calc(15% + ${distance}px)`,
           }}
-        />
+        >
+          {/* Inner marking for the note to make it look like a physical puck */}
+          <div className={`w-4 h-4 md:w-6 md:h-6 rounded-full border-[3px] border-[#0f0c0c] ${isMissed ? 'bg-[#2a2d43]' : 'bg-[#f0dde0]'}`} />
+        </div>
       );
     });
   };
 
   return (
-    <div className="w-full h-full relative overflow-hidden bg-obsidian/60 backdrop-blur-sm rounded-xl border-2 border-pale-pink/20">
+    // Replaced transparent blur with solid Dark Slate and heavy border
+    <div className="w-full h-full relative overflow-hidden bg-[#2a2d43] border-[6px] border-[#0f0c0c]">
+      
       <div className="absolute inset-0 flex flex-row">
         {renderLanes()}
       </div>
 
-      <div className="absolute left-0 right-0 h-1 bg-crimson shadow-[0_0_20px_rgba(218,45,70,0.5)] z-0 pointer-events-none" style={{ bottom: '15%' }} />
+      {/* Heavy Graphic Novel Hit Line */}
+      <div 
+        className="absolute left-0 right-0 h-2 bg-[#0f0c0c] border-t-4 border-[#da2d46] z-0 pointer-events-none -skew-x-12" 
+        style={{ bottom: '15%' }} 
+      />
 
       <div className="absolute inset-0 pointer-events-none">
         {renderNotes()}
       </div>
 
       {!gameState.isPlaying && !gameState.isFinished && (
-        <div className="absolute inset-0 flex items-center justify-center bg-obsidian/80 z-50">
-          <div className="text-center">
-            <h2 className="font-orbitron font-black text-3xl text-pale-pink glow-pale-pink mb-4 uppercase">
-              Ready
-            </h2>
-            <p className="font-space-mono text-light-gray text-sm">
-              Press any mapped key or tap a drum to start
+        <div className="absolute inset-0 flex items-center justify-center bg-[#0f0c0c]/80 z-50 backdrop-blur-sm">
+          <div className="text-center flex flex-col items-center">
+            <div className="bg-[#da2d46] border-[6px] border-[#0f0c0c] px-8 py-3 -skew-x-6 shadow-[8px_8px_0px_0px_#0f0c0c] mb-6">
+              <h2 className="font-orbitron font-black text-4xl md:text-5xl text-[#0f0c0c] skew-x-6 uppercase tracking-widest">
+                Ready
+              </h2>
+            </div>
+            <p className="font-space-mono font-bold text-[#e0e5ed] text-sm md:text-base bg-[#2a2d43] border-[3px] border-[#0f0c0c] px-4 py-2 -skew-x-2 shadow-[4px_4px_0px_0px_#0f0c0c]">
+              <span className="skew-x-2 block">Press any mapped key or tap a drum to start</span>
             </p>
           </div>
         </div>

@@ -3,7 +3,12 @@ import type { Note, GameplayState, InputMapping, HitJudgement, HitResult } from 
 import { HIT_WINDOWS, SCORE_VALUES, MULTIPLIER_THRESHOLDS, SONG_DURATION } from '../constants';
 import { generateProceduralChart } from '../services/chartGenerator';
 
-export function useRhythmGame(mapping: InputMapping, onFinish: (state: GameplayState) => void, totalLanesOverride?: number) {
+export function useRhythmGame(
+  mapping: InputMapping, 
+  onFinish: (state: GameplayState) => void, 
+  totalLanesOverride?: number,
+  onPassiveMiss?: () => void // <-- NEW PARAMETER: Hook calls this when a note drops
+) {
   const [notes, setNotes] = useState<Note[]>([]);
   const [gameState, setGameState] = useState<GameplayState>({
     score: 0,
@@ -77,13 +82,18 @@ export function useRhythmGame(mapping: InputMapping, onFinish: (state: GameplayS
         setGameState(prev => {
           const newState = {
             ...prev,
-            combo: 0,
-            multiplier: 1,
+            combo: 0, // Reset combo on passive miss
+            multiplier: 1, // Reset multiplier
             missCount: prev.missCount + missedCount,
           };
           stateRef.current = newState;
           return newState;
         });
+
+        // Trigger the visual glitch in GameBoard!
+        if (onPassiveMiss) {
+          onPassiveMiss();
+        }
       }
 
       setGameState(prev => {
@@ -107,7 +117,7 @@ export function useRhythmGame(mapping: InputMapping, onFinish: (state: GameplayS
 
     reqId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(reqId);
-  }, [gameState.isPlaying, gameState.isFinished, onFinish]);
+  }, [gameState.isPlaying, gameState.isFinished, onFinish, onPassiveMiss]);
 
   const hitLane = useCallback((laneIndex: number): HitResult | null => {
     if (!stateRef.current.isPlaying || stateRef.current.isFinished) return null;
@@ -117,13 +127,30 @@ export function useRhythmGame(mapping: InputMapping, onFinish: (state: GameplayS
     // Find the earliest unhit/unmissed note in this lane
     const targetNote = notesRef.current.find(n => n.lane === laneIndex && !n.hit && !n.missed);
     
-    if (!targetNote) return null; // free tap
+    if (!targetNote) {
+      // PENALTY FIX: They tapped an empty lane! Reset their combo.
+      setGameState(prev => {
+        const newState = { ...prev, combo: 0, multiplier: 1 };
+        stateRef.current = newState;
+        return newState;
+      });
+      return null; // Triggers "MISS" indicator in GameBoard
+    }
     
     const delta = Math.abs(currentTime - targetNote.time);
     
     let judgement: HitJudgement | null = null;
     if (delta <= HIT_WINDOWS.perfect) judgement = 'perfect';
     else if (delta <= HIT_WINDOWS.good) judgement = 'good';
+    else {
+      // Early tap penalty
+      setGameState(prev => {
+        const newState = { ...prev, combo: 0, multiplier: 1 };
+        stateRef.current = newState;
+        return newState;
+      });
+      return null;
+    }
     
     if (judgement) {
       // Mark as hit
@@ -149,7 +176,6 @@ export function useRhythmGame(mapping: InputMapping, onFinish: (state: GameplayS
         const scoreAdd = SCORE_VALUES[judgement as HitJudgement] * prev.multiplier;
         const newScore = prev.score + scoreAdd;
         
-        // 100% weave progress if you got perfect on everything
         const weaveProgress = Math.min(100, (newScore / (prev.totalNotes * SCORE_VALUES.perfect)) * 100);
 
         const newState = {
