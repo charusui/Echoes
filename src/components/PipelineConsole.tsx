@@ -47,13 +47,11 @@ export function PipelineConsole({ status, instrumentName }: PipelineConsoleProps
   return (
     <div className="min-h-screen bg-[#2a2d43] flex flex-col items-center justify-start px-4 pt-12 pb-12 relative z-0 overflow-hidden">
       
-      {/* Halftone Dot Pattern Background */}
       <div 
         className="absolute inset-0 z-[-3] opacity-30 pointer-events-none" 
         style={{ backgroundImage: 'radial-gradient(#da2d46 2px, transparent 2px)', backgroundSize: '20px 20px' }}
       />
 
-      {/* Header */}
       <div className="w-full max-w-md text-center mb-6 relative z-10 flex flex-col items-center">
         <h1 
           className="font-orbitron text-2xl md:text-3xl font-black text-[#e0e5ed] mb-4 tracking-widest uppercase leading-tight"
@@ -70,7 +68,6 @@ export function PipelineConsole({ status, instrumentName }: PipelineConsoleProps
         )}
       </div>
 
-      {/* Heavy Mechanical Progress Bar */}
       <div className="w-full max-w-md mb-8 relative z-10">
         <div className="h-4 border-[4px] border-[#0f0c0c] bg-[#2a2d43] -skew-x-6 relative shadow-[4px_4px_0px_0px_#0f0c0c]">
           <div
@@ -86,27 +83,20 @@ export function PipelineConsole({ status, instrumentName }: PipelineConsoleProps
         </div>
       </div>
 
-      {/* Phase Steps - Comic Panels */}
       <div className="w-full max-w-md space-y-3 mb-8 relative z-10">
         {PHASE_ORDER.map((phase, idx) => {
           const Icon = PHASE_ICONS[phase] ?? Zap;
           const isDone = isComplete || currentPhaseIndex > idx;
           const isActive = currentPhaseIndex === idx && !isComplete && !isError;
           const isPending = currentPhaseIndex < idx && !isComplete;
-
-          // Phases 2+3 run in parallel
           const isParallel = phase === 'phase2-acoustic' || phase === 'phase3-mapping';
 
-          // Determine styling based on state
           let panelStyles = 'bg-[#2a2d43] text-[#888ea1] border-[#0f0c0c] opacity-60';
           if (isActive) panelStyles = 'bg-[#da2d46] text-[#0f0c0c] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] translate-x-1 scale-[1.02]';
           else if (isDone) panelStyles = 'bg-[#e0e5ed] text-[#0f0c0c] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c]';
 
           return (
-            <div
-              key={phase}
-              className={`border-[4px] p-3 transition-all duration-300 -skew-x-2 ${panelStyles}`}
-            >
+            <div key={phase} className={`border-[4px] p-3 transition-all duration-300 -skew-x-2 ${panelStyles}`}>
               <div className="flex items-center gap-3 skew-x-2">
                 <div className={`w-8 h-8 flex items-center justify-center flex-shrink-0 border-[3px] border-[#0f0c0c] ${
                   isActive ? 'bg-[#f0dde0]' : isDone ? 'bg-[#f0dde0]' : 'bg-[#2a2d43]'
@@ -136,7 +126,6 @@ export function PipelineConsole({ status, instrumentName }: PipelineConsoleProps
         })}
       </div>
 
-      {/* Terminal Log - Graphic Data Box */}
       <div className="w-full max-w-md relative z-10">
         <div className="border-[4px] border-[#0f0c0c] bg-[#0f0c0c] p-4 -skew-x-2 shadow-[6px_6px_0px_0px_#da2d46]">
           <div className="font-space-mono text-[10px] font-bold text-[#da2d46] mb-2 skew-x-2 tracking-widest uppercase">
@@ -171,7 +160,6 @@ export function PipelineConsole({ status, instrumentName }: PipelineConsoleProps
         </div>
       </div>
 
-      {/* Heavy Sharp Decorative Loading Animation */}
       <div className="w-full max-w-md mt-8 flex justify-center gap-1.5 relative z-10">
         {Array.from({ length: 6 }).map((_, i) => (
           <div
@@ -182,7 +170,6 @@ export function PipelineConsole({ status, instrumentName }: PipelineConsoleProps
         ))}
       </div>
 
-      {/* Animation & Scrollbar Styles */}
       <style>{`
         @keyframes comic-pulse {
           0%, 100% { opacity: 1; transform: scale(1); }
