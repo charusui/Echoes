@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Play } from 'lucide-react';
 
 // imported picture
-import person from '../assets/images/pose_one_colored_removebg.png';
+import person from '../assets/images/pose_three.png';
 
 interface TitleScreenProps {
   onStart: () => void;
@@ -16,81 +16,114 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
   }, []);
 
   return (
-    // Responsive Wrapper: Padding top on mobile to push text up, centered vertically on desktop
-    <div className="relative min-h-screen bg-[#2a2d43] flex flex-col pt-24 md:pt-0 md:justify-center overflow-hidden pb-safe px-6 md:px-12">
+    // Base container uses Dark Slate (#2a2d43)
+    <div className="relative min-h-screen bg-[#2a2d43] flex flex-col pt-24 md:pt-0 md:justify-center overflow-hidden pb-safe px-6 md:px-12 z-0">
+      
+      {/* 1. Halftone Dot Pattern Background */}
+      {/* Uses radial-gradient to generate comic dots purely with CSS */}
+      <div 
+        className="absolute inset-0 z-[-3] opacity-30 pointer-events-none" 
+        style={{
+          backgroundImage: 'radial-gradient(#da2d46 2px, transparent 2px)',
+          backgroundSize: '20px 20px'
+        }}
+      />
 
-      {/* Fixed mobile height to 65vh so it actually fits on the screen */}
-      <div className={`absolute -bottom-15 right-0 md:right-10 z-0 h-[65vh] md:h-[105vh] transition-opacity duration-[2000ms] ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+      {/* 2. Dynamic Speed Slashes */}
+      {/* A massive, skewed Crimson shape breaking the background */}
+      <div className="absolute top-0 right-0 w-[120%] md:w-[65%] h-[120%] bg-[#da2d46] -skew-x-12 translate-x-20 md:translate-x-32 z-[-2] border-l-[12px] border-[#0f0c0c]" />
+
+      {/* Abstract comic panel framing the characters */}
+      <div className="absolute bottom-20 right-35 w-[50%] h-[60%] bg-[#f0dde0] border-[8px] border-[#0f0c0c] shadow-[16px_16px_0px_0px_#0f0c0c] -skew-x-6 z-[-1] hidden md:block" />
+
+      {/* 3. Characters */}
+      <div className={`absolute bottom-0 md:-bottom-10 left-[-1rem] md:left-auto md:right-0 z-10 h-[55vh] md:h-[105vh] w-[85%] md:w-auto transition-transform duration-[1200ms] ease-out ${mounted ? 'translate-x-0' : 'translate-x-32'}`}>
         
-        {/* Subtle Radial Glow behind image - Now with custom subtle pulse */}
-        <div className="absolute inset-0 z-[-1] rounded-full blur-[90px] bg-[#da2d46] scale-125 md:scale-115 transition-all duration-300 animate-subtle-pulse" />
-        
+        {/* Applying a hard drop shadow to the PNG itself instead of a soft glow */}
         <img 
           src={person} 
           alt="person posing" 
-          className="h-full w-auto object-contain object-right-bottom md:object-right" 
+          className="h-full w-full md:w-auto object-cover md:object-contain object-bottom md:object-right drop-shadow-[8px_8px_0px_rgba(15,12,12,1)]" 
         />
       </div>
+
+      <div className="absolute bottom-0 left-0 right-0 h-[80vh] z-10 bg-gradient-to-t from-[#0f0c0c] via-[#2a2d43]/40 to-transparent pointer-events-none" />
       
-      {/* Vignette & Gradients - z-0 to sit behind z-20 text but above the glow/image z-[-1]/z-0 container */}
-      <div className="absolute bottom-0 left-0 right-0 h-[80vh] z-0 bg-gradient-to-t from-[#0f0c0c] via-[#2a2d43]/40 to-transparent pointer-events-none" />
-      <div className="absolute top-0 left-0 right-0 h-[70vh] md:h-[30vh] z-0 bg-gradient-to-b from-[#0f0c0c] via-transparent to-transparent pointer-events-none" />
-
       {/* Main Content - Text Container */}
-      {/* Responsive: items-end (right side) on mobile, items-start (left side) on desktop */}
-      <div className={`relative z-20 flex flex-col items-end md:items-start w-full transition-all duration-[2000ms] delay-500 ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+      <div className={`relative z-20 flex flex-col items-end md:items-start w-full transition-transform duration-[800ms] ease-out ${mounted ? 'translate-x-0' : '-translate-x-16'}`}>
         
-        {/* Responsive text alignment */}
-        <h2 className="font-space-mono text-pale-pink tracking-[0.4em] text-xs md:text-sm uppercase mb-4 glow-pale-pink text-right md:text-left">
-          The Cultural Resonance Project
-        </h2>
+        {/* Project Label - Framed in a skewed container */}
+        <div className="bg-[#0f0c0c] px-4 py-2 mb-6 border-4 border-[#da2d46] -skew-x-6 shadow-[6px_6px_0px_0px_#da2d46]">
+          <h2 className="font-space-mono text-[#f0dde0] font-bold tracking-[0.2em] text-xs md:text-sm uppercase skew-x-6">
+            The Cultural Resonance Project
+          </h2>
+        </div>
         
-        <h1 className="font-orbitron font-black text-4xl md:text-5xl lg:text-[6rem] text-right md:text-left text-light-gray leading-none mb-2 drop-shadow-2xl">
-          ECHOES<br/>
-          OF THE<br/>
-          ANCESTORS
-        </h1>
+        {/* 4. Chromatic Aberration Typography */}
+        <div className="relative">
+          <h1 
+            className="font-orbitron font-black text-5xl md:text-[7rem] text-right md:text-left leading-none mb-2 relative text-[#e0e5ed] uppercase tracking-tighter"
+            style={{
+              // Text shadow handles the heavy black outline and the Crimson/Pink glitch offsets
+              textShadow: '6px 6px 0px #0f0c0c, -5px 0px 0px #da2d46, 5px 0px 0px #f0dde0'
+            }}
+          >
+            ECHOES<br/>
+            OF THE<br/>
+            ANCESTORS
+          </h1>
+        </div>
 
-        {/* Responsive Divider: Align right on mobile, left on desktop */}
-        <div className="w-[80%] max-w-[250px] md:max-w-md h-px bg-gradient-to-l md:bg-gradient-to-r from-pale-pink/50 to-transparent my-6 md:my-8 opacity-50 ml-auto md:ml-0" />
+        {/* Heavy comic divider replacing the soft gradient line */}
+        <div className="w-[80%] max-w-[250px] md:max-w-md h-3 bg-[#0f0c0c] my-6 md:my-8 border-b-4 border-[#da2d46] ml-auto md:ml-0 -skew-x-12" />
       </div>
 
-      {/* Play button & Minor Text - Anchored to Bottom Left */}
-      <div className={`absolute bottom-8 left-6 md:bottom-12 md:left-12 z-20 transition-all duration-1000 delay-1000 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+      {/* 5. The "Action" Button */}
+      {/* Removes opacity transitions for hard translations. Active state presses the button into its shadow. */}
+      <div className={`absolute bottom-8 left-6 md:bottom-12 md:left-12 z-20 transition-transform duration-[800ms] delay-300 ease-out ${mounted ? 'translate-y-0' : 'translate-y-24'}`}>
         <button 
           onClick={onStart}
-          className="group relative flex items-center gap-4 active:scale-95 transition-all duration-300"
+          className="group relative flex items-center gap-4 transition-transform active:translate-y-2 active:translate-x-2"
         >
-          {/* Button Glow/Pulse */}
-          <div className="absolute left-0 w-16 h-16 bg-crimson/20 rounded-full blur-xl group-hover:bg-crimson/40 transition-all animate-pulse" />
           
-          {/* Button Icon - Fixed invalid w-30 to standard w-32 */}
-          <div className="relative w-32 h-14 shrink-0 rounded-xl bg-crimson/10 border border-crimson/40 flex items-center justify-center text-crimson shadow-[0_0_30px_rgba(218,45,70,0.3)] backdrop-blur-sm">
-            <Play size={24} className="ml-1 fill-current" />
+          {/* Main Button Block */}
+          {/* Added hover translations and expanded hover shadow for the "lift" effect */}
+          <div className="relative h-16 shrink-0 bg-[#da2d46] border-[4px] border-[#0f0c0c] shadow-[8px_8px_0px_0px_#0f0c0c] transition-all duration-200 ease-out -skew-x-6 overflow-hidden group-hover:-translate-y-1 group-hover:-translate-x-1 group-hover:shadow-[12px_12px_0px_0px_#0f0c0c] group-active:translate-y-2 group-active:translate-x-2 group-active:shadow-[0px_0px_0px_0px_#0f0c0c]">
+            
+            {/* 1. The Circling LED Effect (Spinning Gradient) */}
+            {/* Sits completely in the background, scaled up to ensure it covers the corners while spinning */}
+            <div 
+              className="absolute inset-[-150%] animate-[spin_2s_linear_infinite] z-0"
+              style={{
+                background: 'conic-gradient(from 0deg, transparent 75%, #f0dde0 90%, #ffffff 100%)'
+              }}
+            />
+
+            {/* 2. Inner Mask */}
+            {/* This blocks out the center of the spinning gradient, leaving only a 3px glowing LED border */}
+            <div className="absolute inset-[3px] bg-[#da2d46] z-0" />
+
+            {/* 3. Button Content */}
+            {/* Needs relative and z-10 to sit above the background layers */}
+            <div className="relative z-10 flex items-center justify-center w-full h-full px-8 text-[#0f0c0c]">
+              <Play size={28} className="fill-current skew-x-6 font-black" />
+              <span className="font-space-mono font-black tracking-widest uppercase text-lg skew-x-6 ml-3">
+                START 
+              </span>
+            </div>
           </div>
 
-          {/* Button Text & Subtext */}
-          <div className="flex flex-col items-start text-left">
-            <span className="font-space-mono font-bold text-light-gray tracking-widest uppercase text-sm md:text-base animate-pulse">
-              Tap to Begin
+          {/* Supplemental Info Tag - Formatted as an attached comic caption box */}
+          <div className="flex flex-col items-start text-left bg-[#2a2d43] border-4 border-[#0f0c0c] px-4 py-2 -skew-x-6 shadow-[6px_6px_0px_0px_#0f0c0c] hidden md:flex">
+            <span className="font-space-mono text-sm text-[#e0e5ed] font-bold uppercase tracking-widest skew-x-6">
+              System Ready
             </span>
-            <span className="font-space-mono text-[10px] text-light-gray/40 uppercase tracking-widest mt-1">
-              Headphones Recommended
+            <span className="font-space-mono text-xs text-[#888ea1] uppercase tracking-widest mt-1 skew-x-6 font-bold">
+              Headphones Rec.
             </span>
           </div>
         </button>
       </div>
-
-      {/* Custom Keyframes for the Subtle Pulse */}
-      <style>{`
-        @keyframes subtle-pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.7; }
-        }
-        .animate-subtle-pulse { 
-          animation: subtle-pulse 4s ease-in-out infinite; 
-        }
-      `}</style>
     </div>
   );
 }
