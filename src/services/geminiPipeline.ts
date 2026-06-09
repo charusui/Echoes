@@ -130,22 +130,28 @@ async function runPhase1(
 Analyze this image. Identify the exact musical instrument name. 
 
 CRITICAL CONTEXT: This application specializes in traditional Philippine Visayan instruments. Look closely for visual cues that match:
-- Tultugan (massive bamboo drums struck with sticks)
-- Buktot (four-stringed native lute crafted from a dried coconut husk)
-- Pasiyak (unique bamboo whistle requiring water inside to produce a bird-like chirp)
-- Tulali (ceremonial bamboo flute with six finger holes)
-- Tugo (guitar-shaped wooden drum played by hitting the base with the hands)
-- Litguit (wooden percussion instrument scraped with a stick mimicking maracas)
-- Cebuano Gitara (handcrafted 6-string acoustic guitar)
-- Bandurria (14-string pear-shaped lead melody instrument played with a plectrum)
-- Laud (teardrop-shaped string instrument tuned lower than the bandurria)
-- Octavina (small, guitar-shaped Rondalla string instrument)
-- Bajo de Uñas (giant acoustic bass providing foundational rhythm)
-- Lantoy (slender bamboo mouth or nose flute)
-- Subing (twangy, vibrating bamboo jaw harp)
-- Korlong (rare two-stringed fiddle with abaca or horsehair strings)
 
-If the image matches or closely resembles one of these, identify it accurately as the Philippine instrument. Provide its ethno-linguistic group (e.g., Maguindanao, Kalinga, Maranao), cultural purpose, and Hornbostel-Sachs classification.
+**Western Visayas:**
+- Tultugan: Massive bamboo drums struck with sticks. Look for large bamboo nodes/tubes.
+- Buktot: A four-stringed native lute. CRITICAL VISUAL CUE: The body is crafted from a distinct, round dried coconut husk. The neck is a simple wooden stick attached to the husk. Has exactly 4 strings.
+- Pasiyak: A unique bamboo whistle requiring water inside to produce a bird-like chirp. Small, tubular bamboo shape with a mouthpiece.
+- Tulali: A ceremonial bamboo flute with exactly six finger holes. Long, slender bamboo tube.
+- Tugo: A wooden drum played by hitting the base with the hands. Distinctive guitar-shaped body, but it is a drum (no strings, solid wooden top).
+- Litguit: A wooden percussion instrument scraped with a stick. Often looks like a carved piece of wood with serrations or ridges for scraping.
+
+**Central Visayas:**
+- Cebuano Gitara: Handcrafted acoustic guitar. Look for the classic figure-eight guitar shape, round soundhole, and exactly 6 strings. Often has decorative inlays.
+- Bandurria: A lead melody instrument. CRITICAL VISUAL CUE: Pear-shaped body with a flat back. It has exactly 14 strings, usually arranged in courses, and a short, wide neck.
+- Laud: A string instrument tuned lower than the bandurria. CRITICAL VISUAL CUE: Teardrop-shaped body (often with f-holes instead of a round soundhole). Longer neck than the bandurria, usually 14 strings like the bandurria but visually distinct shape.
+- Octavina: A Rondalla string instrument. CRITICAL VISUAL CUE: Shaped exactly like a small guitar (figure-eight body), but has 14 strings like a bandurria/laud.
+- Bajo de Uñas: The giant acoustic bass. Very large, typical stand-up bass/contrabass shape (violin family shape, not guitar shape). Usually has 4 thick strings.
+
+**Eastern Visayas:**
+- Lantoy: A slender bamboo mouth or nose flute. Very thin bamboo tube, sometimes with subtle decorative carvings.
+- Subing: A twangy, vibrating bamboo jaw harp. Small, slender, flat piece of bamboo with a carved vibrating tongue in the center. Look for the pointed/tapered end.
+- Korlong: A rare two-stringed fiddle. Look for a small body, often made from bamboo or coconut, and exactly two strings, played with a distinct bow (often horsehair or abaca).
+
+If the image matches or closely resembles one of these, identify it accurately as the Philippine instrument. Provide its ethno-linguistic group (e.g., Maguindanao, Kalinga, Maranao, Visayan), cultural purpose, and Hornbostel-Sachs classification.
 If it is ANY other instrument from around the world (e.g. American drum kit, modern electric guitar, piano), identify it accurately and provide its general origin instead. 
 Classify it strictly as one of: string, percussion, or wind.
 If the image is NOT a musical instrument at all, you MUST set the name exactly to "NOT_AN_INSTRUMENT".

@@ -102,41 +102,6 @@ export function MapScreen({ onOpenScanner, onOpenLocationServices, onSelectInstr
     setPanOffset(prev => getBoundedPan(prev.x, prev.y, newScale));
   };
 
-  const centerOnPin = (leftStr: string, topStr: string) => {
-    const leftRatio = parseFloat(leftStr) / 100;
-    const topRatio = parseFloat(topStr) / 100;
-    const relativeX = dimensions.width * leftRatio - dimensions.width / 2;
-    const relativeY = dimensions.height * topRatio - dimensions.height / 2;
-    setPanOffset(getBoundedPan(-relativeX, -relativeY, mapScale));
-  };
-
-  const indicators = REGION_PINS.map(pin => {
-    let isUnlocked = progress.unlockedRegions.includes(pin.name);
-    if (pin.name === 'Western Visayas') isUnlocked = progress.level >= 1;
-    else if (pin.name === 'Central Visayas') isUnlocked = progress.level >= 2;
-    else if (pin.name === 'Eastern Visayas') isUnlocked = progress.level >= 3;
-    else if (pin.name === 'Negros Region') isUnlocked = progress.level >= 4;
-
-    const pinLeftRatio = parseFloat(pin.left) / 100;
-    const pinTopRatio = parseFloat(pin.top) / 100;
-    const relativeX = dimensions.width * pinLeftRatio - dimensions.width / 2;
-    const relativeY = dimensions.height * pinTopRatio - dimensions.height / 2;
-    
-    const x = dimensions.width / 2 + (relativeX + panOffset.x) * mapScale;
-    const y = dimensions.height / 2 + (relativeY + panOffset.y) * mapScale;
-    
-    const isOffLeft = x < 65;
-    const isOffRight = x > dimensions.width - 65;
-    const isOffTop = y < 110;
-    const isOffBottom = y > dimensions.height - 180;
-
-    return {
-      id: pin.id, name: pin.name, left: pin.left, top: pin.top,
-      isUnlocked, x, y, isOffLeft, isOffRight, isOffTop, isOffBottom,
-      isOffScreen: isOffLeft || isOffRight || isOffTop || isOffBottom,
-    };
-  });
-
   const xpForNextLevel = progress.level === 1 ? 100 : progress.level === 2 ? 250 : progress.level === 3 ? 500 : progress.level === 4 ? 900 : 900;
   const xpProgress = Math.min((progress.xp / xpForNextLevel) * 100, 100);
 

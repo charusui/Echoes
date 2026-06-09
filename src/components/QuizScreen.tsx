@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { ActiveInstrumentProfile } from '../types';
 import { useProgress } from '../context/ProgressProvider';
 import { Check, X, ChevronRight, Sparkles, ArrowLeft } from 'lucide-react';
@@ -13,74 +13,107 @@ export function QuizScreen({ profile, onComplete, onBack }: QuizScreenProps) {
   const { addXP } = useProgress();
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [isRevealed, setIsRevealed] = useState(false);
-  const [questionData, setQuestionData] = useState<{ q: string; opts: string[]; correctIdx: number } | null>(null);
+  const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
 
-  // Generate a dynamic question based on the instrument
-  useEffect(() => {
-    // A simple mock for question generation based on the instrument
-    const rand = Math.random();
-    if (rand < 0.33) {
-      setQuestionData({
-        q: `What is the Hornbostel-Sachs classification of the ${profile.instrument.name}?`,
-        opts: [
-          profile.instrument.hornbostelSachs,
-          '111.2 - Idiophone / Bamboo Tubes',
-          '321.32 - Chordophone / Lute',
-          '411 - Aerophone / Lip-vibrated'
-        ].sort(() => Math.random() - 0.5),
-        correctIdx: -1,
-      });
-    } else if (rand < 0.66) {
-      setQuestionData({
-        q: `Which ethno-linguistic group is primarily known for playing the ${profile.instrument.name}?`,
-        opts: [
-          profile.instrument.ethnoLinguisticGroup,
-          'Ifugao',
-          'Tagalog',
-          'Tausug'
-        ].sort(() => Math.random() - 0.5),
-        correctIdx: -1,
-      });
-    } else {
-      setQuestionData({
-        q: `What is the primary cultural purpose of the ${profile.instrument.name}?`,
-        opts: [
-          profile.instrument.culturalPurpose,
-          'Military signals during battles',
-          'Accompanying modern pop music',
-          'Strictly for children\'s play'
-        ].sort(() => Math.random() - 0.5),
-        correctIdx: -1,
-      });
-    }
-  }, [profile]);
+  // Generate 5 dynamic questions based on the instrument
+  const [questions] = useState(() => {
+    const q1 = {
+      q: `What is the Hornbostel-Sachs classification of the ${profile.instrument.name}?`,
+      opts: [
+        profile.instrument.hornbostelSachs,
+        '111.2 - Idiophone / Bamboo Tubes',
+        '321.32 - Chordophone / Lute',
+        '411 - Aerophone / Lip-vibrated'
+      ]
+    };
+    
+    const q2 = {
+      q: `Which ethno-linguistic group is primarily known for playing the ${profile.instrument.name}?`,
+      opts: [
+        profile.instrument.ethnoLinguisticGroup,
+        'Ifugao',
+        'Tagalog',
+        'Tausug'
+      ]
+    };
+    
+    const q3 = {
+      q: `What is the primary cultural purpose of the ${profile.instrument.name}?`,
+      opts: [
+        profile.instrument.culturalPurpose,
+        'Military signals during battles',
+        'Accompanying modern pop music',
+        "Strictly for children's play"
+      ]
+    };
 
-  useEffect(() => {
-    if (questionData) {
-      // Re-find the correct index after sorting
-      let correct = 0;
-      if (questionData.q.includes('classification')) {
-        correct = questionData.opts.indexOf(profile.instrument.hornbostelSachs);
-      } else if (questionData.q.includes('group')) {
-        correct = questionData.opts.indexOf(profile.instrument.ethnoLinguisticGroup);
-      } else {
-        correct = questionData.opts.indexOf(profile.instrument.culturalPurpose);
+    const q4 = {
+      q: `From which region does the ${profile.instrument.name} originate?`,
+      opts: [
+        profile.instrument.region,
+        'Metro Manila',
+        'Batanes',
+        'Central Visayas'
+      ]
+    };
+
+    const q5 = {
+      q: `Which category does the ${profile.instrument.name} belong to?`,
+      opts: [
+        profile.instrument.category,
+        profile.instrument.category === 'string' ? 'percussion' : 'string',
+        profile.instrument.category === 'wind' ? 'percussion' : 'wind',
+        'brass'
+      ]
+    };
+
+    return [q1, q2, q3, q4, q5].map(q => {
+      // Deduplicate options (in case the correct answer equals a fallback)
+      const uniqueOpts = Array.from(new Set(q.opts));
+      let idx = 0;
+      while (uniqueOpts.length < 4) {
+          idx++;
+          uniqueOpts.push('Unknown Option ' + idx);
       }
-      setQuestionData(prev => prev ? { ...prev, correctIdx: correct } : null);
-    }
-  }, [questionData?.q]);
+      
+      // A simple deterministic pseudo-shuffle based on string length to avoid Math.random() in render/initializer if strict mode double-invokes it
+      // Actually, useState initializer is allowed to be slightly impure if it only affects local initial state, 
+      // but to be perfectly safe, let's use a simple deterministic sort based on string length and character codes
+      const shuffledOpts = uniqueOpts.slice(0, 4).sort((a, b) => {
+        // pseudo-random sorting based on length and first character
+        const valA = a.length + a.charCodeAt(0);
+        const valB = b.length + b.charCodeAt(0);
+        return valA - valB;
+      });
+      
+      const correctIdx = shuffledOpts.indexOf(q.opts[0]);
+      return { ...q, opts: shuffledOpts, correctIdx };
+    });
+  });
+
+  const currentQuestionData = questions[currentQuestionIdx];
 
   const handleSelect = (idx: number) => {
     if (isRevealed) return;
     setSelectedIdx(idx);
     setIsRevealed(true);
     
-    if (idx === questionData?.correctIdx) {
+    if (idx === currentQuestionData?.correctIdx) {
       addXP(10, 'quiz');
     }
   };
 
-  if (!questionData) return null;
+  const handleNext = () => {
+    if (currentQuestionIdx < questions.length - 1) {
+      setCurrentQuestionIdx(prev => prev + 1);
+      setIsRevealed(false);
+      setSelectedIdx(null);
+    } else {
+      onComplete();
+    }
+  };
+
+  if (questions.length === 0 || !currentQuestionData) return null;
 
   return (
     <div className="min-h-screen bg-obsidian flex flex-col items-center justify-center p-6 relative overflow-hidden pb-12 md:pb-16 pb-safe">
@@ -122,16 +155,16 @@ export function QuizScreen({ profile, onComplete, onBack }: QuizScreenProps) {
           <div className="flex items-center gap-2 mb-4 border-b border-light-gray/10 pb-3">
             <Sparkles size={16} className="text-crimson animate-pulse" />
             <span className="font-orbitron text-[10px] text-pale-pink/80 font-black tracking-widest uppercase">
-              COMPREHENSION CHECK
+              COMPREHENSION CHECK ({currentQuestionIdx + 1}/5)
             </span>
           </div>
 
           <h3 className="font-sans font-semibold text-light-gray text-base md:text-lg mb-6 leading-relaxed">
-            {questionData.q}
+            {currentQuestionData.q}
           </h3>
 
           <div className="space-y-3">
-            {questionData.opts.map((opt, idx) => {
+            {currentQuestionData.opts.map((opt, idx) => {
               const letters = ['A', 'B', 'C', 'D'];
               
               let btnClass = "w-full text-left p-4 rounded-xl border transition-all duration-300 relative overflow-hidden flex items-center gap-4 ";
@@ -140,7 +173,7 @@ export function QuizScreen({ profile, onComplete, onBack }: QuizScreenProps) {
               if (!isRevealed) {
                 btnClass += "bg-gradient-to-br from-dark-slate/40 to-obsidian/30 border-pale-pink/10 text-light-gray/80 hover:border-crimson/50 hover:from-dark-slate/60 hover:to-obsidian/40 hover:-translate-y-0.5 active:translate-y-0 hover:shadow-[0_4px_20px_rgba(218,45,70,0.15)]";
               } else {
-                if (idx === questionData.correctIdx) {
+                if (idx === currentQuestionData.correctIdx) {
                   btnClass += "bg-gradient-to-br from-green-950/40 to-green-900/20 border-green-500/40 text-green-100 shadow-[0_0_25px_rgba(34,197,94,0.2)]";
                   icon = <Check size={18} className="text-green-400 shrink-0 ml-auto" />;
                 } else if (idx === selectedIdx) {
@@ -161,7 +194,7 @@ export function QuizScreen({ profile, onComplete, onBack }: QuizScreenProps) {
                   <span className={`font-space-mono text-xs px-2 py-0.5 rounded border transition-colors shrink-0 ${
                     !isRevealed 
                       ? 'border-pale-pink/20 bg-obsidian/50 text-pale-pink/60' 
-                      : idx === questionData.correctIdx
+                      : idx === currentQuestionData.correctIdx
                         ? 'border-green-500/30 bg-green-950/50 text-green-400'
                         : idx === selectedIdx
                           ? 'border-red-500/30 bg-red-950/50 text-red-400'
@@ -180,7 +213,7 @@ export function QuizScreen({ profile, onComplete, onBack }: QuizScreenProps) {
 
         {isRevealed && (
           <button 
-            onClick={onComplete}
+            onClick={handleNext}
             className="w-full py-4 rounded-xl font-orbitron text-xs font-black tracking-widest uppercase
               bg-gradient-to-r from-crimson to-pale-pink text-obsidian
               hover:shadow-lg hover:shadow-crimson/30 hover:-translate-y-0.5 active:translate-y-0
