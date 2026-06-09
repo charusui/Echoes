@@ -1,3 +1,4 @@
+//UI Update
 import { useEffect, useState, useCallback } from 'react';
 import { X, Play, FastForward } from 'lucide-react';
 import type { ActiveInstrumentProfile, GameplayState } from '../types';
