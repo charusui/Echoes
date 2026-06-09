@@ -61,9 +61,6 @@ export function StringRhythm({ profile, notes, gameState, onLaneHit, activeLanes
     }, decayMs);
 
     // --- Invisible Rhythm Bridge ---
-    // We just plucked `index` (which corresponds to an original note index).
-    // Does this index belong to a mapped lane?
-    // Let's find which lane this index belongs to.
     let mappedLaneId: number | undefined;
     profile.acoustic.scaleNotes.forEach((_, idx) => {
        if (idx === index) {
@@ -72,8 +69,6 @@ export function StringRhythm({ profile, notes, gameState, onLaneHit, activeLanes
     });
 
     if (mappedLaneId !== undefined) {
-       // Check if there's a visual note in the rhythm window for this lane
-       // We use a broader window for manual plucks (e.g. 0.2s)
        const targetNote = notes.find(n => n.lane === mappedLaneId && !n.hit && !n.missed);
        if (targetNote) {
          const delta = Math.abs(gameState.songTimeSeconds - targetNote.time);
@@ -90,7 +85,6 @@ export function StringRhythm({ profile, notes, gameState, onLaneHit, activeLanes
     if ('touches' in e) {
       const currentTouches = new Set<number>();
       
-      // Iterate over ALL active fingers for true multi-touch swiping!
       for (let i = 0; i < e.touches.length; i++) {
         const touch = e.touches[i];
         const el = document.elementFromPoint(touch.clientX, touch.clientY);
@@ -105,18 +99,14 @@ export function StringRhythm({ profile, notes, gameState, onLaneHit, activeLanes
             
             currentTouches.add(idx);
             
-            // If this specific finger wasn't touching this string in the last frame, pluck it!
             if (!lastTouchedIndicesRef.current.has(idx)) {
               pluckString(idx, freq);
             }
           }
         }
       }
-      
-      // Update the active touches for the next frame
       lastTouchedIndicesRef.current = currentTouches;
     } else {
-      // Mouse drag support
       if (e.buttons !== 1) { 
         lastTouchedIndicesRef.current.clear(); 
         return; 
@@ -161,11 +151,10 @@ export function StringRhythm({ profile, notes, gameState, onLaneHit, activeLanes
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [profile.acoustic.scaleNotes, pluckString]);
 
-  // Note: renderRhythmNotes is removed because we now render the approach circles directly inside the fret bubbles!
-
   return (
+    // Base container replaced with heavy border and solid background
     <div 
-      className="w-full h-full relative overflow-hidden bg-obsidian/60 backdrop-blur-sm rounded-xl border-2 border-pale-pink/20 touch-none select-none"
+      className="w-full h-full relative overflow-hidden bg-[#2a2d43] border-[6px] border-[#0f0c0c] touch-none select-none"
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchEnd}
@@ -177,13 +166,13 @@ export function StringRhythm({ profile, notes, gameState, onLaneHit, activeLanes
         {stringsByLane.map((notesOnString, stringIdx) => (
           <div key={stringIdx} className="relative h-full flex-1 min-w-[28px] max-w-[64px] sm:max-w-[80px] md:max-w-[96px] flex flex-col group justify-center shrink">
             
-            {/* The Physical String Line */}
+            {/* The Physical String Line - Restyled as a thick ink stroke */}
             <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 pointer-events-none">
               <div 
-                className={`h-full border-l-[4px] md:border-l-[6px] transition-all duration-75 rounded-full
+                className={`h-full border-l-[6px] md:border-l-[8px] transition-all duration-75
                   ${notesOnString.some(n => activeStrings.has(n.originalIdx)) 
-                    ? 'animate-vibrate-x border-[#FED56B] shadow-[0_0_15px_#FED56B] opacity-100' 
-                    : 'border-light-gray/40 opacity-60'}
+                    ? 'animate-vibrate-x border-[#f0dde0] opacity-100' 
+                    : 'border-[#0f0c0c] opacity-80'}
                 `}
               />
             </div>
@@ -217,13 +206,16 @@ export function StringRhythm({ profile, notes, gameState, onLaneHit, activeLanes
                       lastNoteIdxRef.current = note.originalIdx;
                     }}
                   >
-                    {/* Text Bubble - acting as the absolute positioning anchor */}
-                    <div className={`shrink-0 relative z-10 font-space-mono text-[10px] md:text-xs font-bold leading-none bg-obsidian p-1 w-14 h-14 md:w-16 md:h-16 aspect-square flex flex-col items-center justify-center text-center rounded-full border transition-all ${
-                      isActive ? 'text-[#FED56B] border-[#FED56B] shadow-[inset_0_0_10px_rgba(254,213,107,0.5)] scale-110' : 'text-light-gray/60 border-light-gray/20'
+                    {/* Fret Marker - Replaced circle with a heavy skewed tag */}
+                    <div className={`shrink-0 relative z-10 font-space-mono text-[10px] md:text-xs font-black leading-none p-1 w-12 h-12 md:w-16 md:h-16 flex flex-col items-center justify-center text-center -skew-x-6 border-[3px] md:border-[4px] border-[#0f0c0c] transition-all duration-75 ${
+                      isActive 
+                        ? 'bg-[#da2d46] text-[#0f0c0c] scale-110 shadow-none translate-y-1 translate-x-1' 
+                        : 'bg-[#2a2d43] text-[#e0e5ed] shadow-[4px_4px_0px_0px_#0f0c0c]'
                     }`}>
-                      <span className="pointer-events-none relative z-20">{note.note}</span>
+                      
+                      <span className="pointer-events-none relative z-20 skew-x-6">{note.note}</span>
 
-                      {/* OSU Approach Circles glued directly inside the text bubble! */}
+                      {/* Approach "Circles" - Restyled as heavy square borders snapping inward */}
                       {fallingNotes.map(n => {
                         if (n.hit || (n.missed && gameState.songTimeSeconds - n.time > 1)) return null;
 
@@ -237,8 +229,8 @@ export function StringRhythm({ profile, notes, gameState, onLaneHit, activeLanes
                         return (
                           <div 
                             key={n.id}
-                            className={`absolute -inset-[1px] rounded-full border-[3px] md:border-[4px] transition-colors pointer-events-none z-0 ${
-                              n.missed ? 'border-danger/80' : isPerfectWindow ? 'border-[#66FCF1] shadow-[0_0_15px_#66FCF1]' : 'border-crimson shadow-[0_0_10px_rgba(218,45,70,0.5)]'
+                            className={`absolute -inset-[2px] md:-inset-[4px] border-[4px] md:border-[6px] transition-colors pointer-events-none z-0 ${
+                              n.missed ? 'border-[#888ea1]' : isPerfectWindow ? 'border-[#f0dde0]' : 'border-[#da2d46]'
                             }`}
                             style={{ opacity, transform: `scale(${approachScale})` }}
                           />
@@ -253,20 +245,32 @@ export function StringRhythm({ profile, notes, gameState, onLaneHit, activeLanes
         ))}
       </div>
 
-      {/* Rhythm Notes are now rendered directly inside the clickable fret segments! */}
-
       {!gameState.isPlaying && !gameState.isFinished && (
-        <div className="absolute inset-0 flex items-center justify-center bg-obsidian/80 z-50 pointer-events-none">
-          <div className="text-center">
-            <h2 className="font-orbitron font-black text-3xl text-pale-pink glow-pale-pink mb-4 uppercase">
-              Free Play Sandbox
-            </h2>
-            <p className="font-space-mono text-light-gray text-sm max-w-sm mx-auto">
-              Swipe across the strings to play naturally. If you strum a string when a rhythm circle aligns, you score!
+        <div className="absolute inset-0 flex items-center justify-center bg-[#0f0c0c]/80 z-50 pointer-events-none backdrop-blur-sm">
+          <div className="text-center flex flex-col items-center p-6">
+            <div className="bg-[#da2d46] border-[6px] border-[#0f0c0c] px-8 py-3 -skew-x-6 shadow-[8px_8px_0px_0px_#0f0c0c] mb-6">
+              <h2 className="font-orbitron font-black text-3xl md:text-4xl text-[#0f0c0c] skew-x-6 uppercase tracking-widest">
+                Sandbox Mode
+              </h2>
+            </div>
+            <p className="font-space-mono font-bold text-[#e0e5ed] text-sm md:text-base bg-[#2a2d43] border-[3px] border-[#0f0c0c] px-6 py-4 -skew-x-2 shadow-[4px_4px_0px_0px_#0f0c0c] max-w-sm">
+              <span className="skew-x-2 block">Swipe across the strings to play naturally. If you strum a string when a rhythm target aligns, you score!</span>
             </p>
           </div>
         </div>
       )}
+
+      {/* Vibration keyframe for the physical string pluck */}
+      <style>{`
+        @keyframes vibrate-x {
+          0%, 100% { transform: translateX(-50%); }
+          25% { transform: translateX(calc(-50% - 2px)); }
+          75% { transform: translateX(calc(-50% + 2px)); }
+        }
+        .animate-vibrate-x {
+          animation: vibrate-x 0.05s linear infinite;
+        }
+      `}</style>
     </div>
   );
 }
