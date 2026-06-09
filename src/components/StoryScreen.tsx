@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import type { ActiveInstrumentProfile } from '../types';
 import { useProgress } from '../context/ProgressProvider';
 import { useGemini } from '../context/GeminiProvider';
-import { ChevronRight, Sparkles, ArrowLeft } from 'lucide-react';
+import { ChevronRight, ArrowLeft } from 'lucide-react';
 import { GEMINI_MODEL } from '../constants';
 
 interface StoryScreenProps {
@@ -91,46 +91,90 @@ Return strictly in this JSON format:
     }
   };
 
+  // ─── ERROR STATE ──────────────────────────────────────────────────────────
   if (error) {
     return (
-      <div className="min-h-screen bg-obsidian flex flex-col items-center justify-center p-6 text-center">
-        <p className="text-light-gray mb-4">The ancestors are quiet right now...</p>
-        <button onClick={onComplete} className="px-6 py-3 bg-dark-slate rounded-xl text-light-gray">Continue</button>
+      <div className="min-h-screen bg-[#2a2d43] flex flex-col items-center justify-center p-6 relative z-0">
+        <div className="absolute inset-0 z-[-1] opacity-30 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#da2d46 2px, transparent 2px)', backgroundSize: '20px 20px' }} />
+        
+        <div className="bg-[#f0dde0] border-[6px] border-[#0f0c0c] p-6 -skew-x-2 shadow-[8px_8px_0px_0px_#da2d46] text-center max-w-sm">
+          <div className="inline-block bg-[#0f0c0c] text-[#da2d46] px-3 py-1 mb-4 font-orbitron font-black uppercase tracking-widest -skew-x-6">
+            SYSTEM FAILURE
+          </div>
+          <p className="font-space-mono font-bold text-[#0f0c0c] mb-6 skew-x-2">
+            The ancestors are quiet right now. Transmission lost.
+          </p>
+          <button 
+            onClick={onComplete} 
+            className="w-full px-6 py-3 bg-[#da2d46] border-[4px] border-[#0f0c0c] text-[#0f0c0c] font-orbitron font-black tracking-widest uppercase shadow-[4px_4px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all skew-x-2"
+          >
+            CONTINUE
+          </button>
+        </div>
       </div>
     );
   }
 
+  // ─── LOADING STATE ────────────────────────────────────────────────────────
   if (isLoading || !story) {
     return (
-      <div className="min-h-screen bg-obsidian flex flex-col items-center justify-center p-6 text-center pb-safe">
-        <Sparkles size={48} className="text-pale-pink animate-pulse mb-6" />
-        <h2 className="font-orbitron font-bold text-light-gray tracking-widest uppercase animate-pulse">
-          Consulting the Ancestors...
-        </h2>
+      <div className="min-h-screen bg-[#2a2d43] flex flex-col items-center justify-center p-6 relative z-0">
+        <div className="absolute inset-0 z-[-1] opacity-30 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#da2d46 2px, transparent 2px)', backgroundSize: '20px 20px' }} />
+        
+        <div className="bg-[#0f0c0c] border-[4px] border-[#da2d46] p-8 -skew-x-2 shadow-[8px_8px_0px_0px_#da2d46] text-center animate-comic-pulse">
+          <h2 className="font-orbitron font-black text-[#e0e5ed] text-xl md:text-2xl tracking-widest uppercase skew-x-2">
+            Consulting<br/>Ancestors...
+          </h2>
+          <div className="mt-4 flex justify-center gap-2 skew-x-2">
+            <div className="w-4 h-4 bg-[#da2d46] border-[2px] border-[#e0e5ed] animate-block-bounce" style={{ animationDelay: '0ms' }} />
+            <div className="w-4 h-4 bg-[#da2d46] border-[2px] border-[#e0e5ed] animate-block-bounce" style={{ animationDelay: '150ms' }} />
+            <div className="w-4 h-4 bg-[#da2d46] border-[2px] border-[#e0e5ed] animate-block-bounce" style={{ animationDelay: '300ms' }} />
+          </div>
+        </div>
+
+        <style>{`
+          @keyframes comic-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(0.98); opacity: 0.9; }
+          }
+          @keyframes block-bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+          }
+          .animate-comic-pulse { animation: comic-pulse 2s ease-in-out infinite; }
+          .animate-block-bounce { animation: block-bounce 0.6s infinite ease-in-out; }
+        `}</style>
       </div>
     );
   }
 
+  // ─── MAIN STORY CONTENT ───────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-obsidian flex flex-col p-6 relative overflow-hidden pb-12 md:pb-16 pb-safe">
-      {/* Background ambient light */}
-      <div className="absolute top-[-10%] left-[-25%] w-[90%] h-[60%] bg-crimson/15 rounded-full blur-[130px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-25%] w-[90%] h-[60%] bg-gold/10 rounded-full blur-[130px] pointer-events-none" />
-      <div className="absolute top-[35%] right-[-20%] w-[60%] h-[40%] bg-purple/10 rounded-full blur-[110px] pointer-events-none" />
+    <div className="min-h-screen bg-[#2a2d43] flex flex-col p-4 pt-10 md:pt-12 relative overflow-hidden pb-12 md:pb-16 pb-safe z-0">
+      
+      {/* Halftone Pattern Background */}
+      <div 
+        className="absolute inset-0 z-[-3] opacity-30 pointer-events-none" 
+        style={{ backgroundImage: 'radial-gradient(#da2d46 2px, transparent 2px)', backgroundSize: '20px 20px' }}
+      />
+      
+      {/* Heavy Diagonal Background Block */}
+      <div className="absolute top-0 right-0 w-[120%] h-[35%] bg-[#0f0c0c] -skew-y-3 -translate-y-10 z-[-2] border-b-[8px] border-[#da2d46]" />
 
-      <div className="flex-1 flex flex-col max-w-md mx-auto w-full pt-6 pb-12 relative z-10">
+      <div className="flex-1 flex flex-col max-w-lg mx-auto w-full pt-4 pb-12 relative z-10">
         
-        {/* Header Bar with Back Button */}
-        <div className="flex items-center justify-between mb-6 w-full">
+        {/* Header Bar */}
+        <div className="flex items-center justify-between w-full mb-8">
           <button 
             onClick={onBack}
-            className="px-3 py-1.5 rounded-lg bg-dark-slate/30 border border-pale-pink/10 hover:border-crimson/50 hover:bg-dark-slate/50 text-pale-pink hover:text-crimson transition-all duration-200 flex items-center justify-center gap-1.5 font-orbitron text-[10px] font-bold tracking-widest uppercase"
+            className="px-4 py-2 bg-[#f0dde0] border-[3px] border-[#0f0c0c] hover:bg-[#da2d46] text-[#0f0c0c] transition-all flex items-center gap-1.5 font-orbitron text-[10px] md:text-xs font-black tracking-widest uppercase -skew-x-6 shadow-[3px_3px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none"
           >
-            <ArrowLeft size={14} /> BACK
+            <ArrowLeft size={16} className="skew-x-6 stroke-[3px]" /> 
+            <span className="skew-x-6 hidden sm:block">ABORT</span>
           </button>
           
-          <div className="text-right">
-            <span className="font-space-mono text-[9px] text-crimson font-black tracking-[0.2em] uppercase block">
+          <div className="bg-[#0f0c0c] border-[3px] border-[#da2d46] px-3 py-1 -skew-x-6 shadow-[4px_4px_0px_0px_#da2d46]">
+            <span className="font-space-mono text-[9px] md:text-xs text-[#f0dde0] font-black tracking-widest uppercase skew-x-6 block">
               CULTURAL NARRATIVE
             </span>
           </div>
@@ -138,54 +182,67 @@ Return strictly in this JSON format:
 
         {/* Title */}
         <div className="text-center mb-8">
-          <h2 className="font-orbitron font-black text-light-gray text-xl tracking-widest uppercase glow-crimson">
-            ECHOES OF THE PAST
+          <h2 
+            className="font-orbitron font-black text-[#e0e5ed] text-3xl md:text-4xl tracking-widest uppercase leading-none"
+            style={{ textShadow: '4px 4px 0px #0f0c0c, -2px -2px 0px #da2d46' }}
+          >
+            ECHOES<br/>OF THE PAST
           </h2>
         </div>
 
-        {/* Story Text Box */}
-        <div className="relative p-6 rounded-2xl border border-pale-pink/10 bg-gradient-to-b from-dark-slate/50 to-obsidian/70 backdrop-blur-md mb-8 shadow-[0_12px_40px_rgba(0,0,0,0.6)] overflow-hidden">
-          {/* Corner decorative accents */}
-          <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-crimson/60" />
-          <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-crimson/60" />
-          <div className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 border-crimson/60" />
-          <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-crimson/60" />
-
-          <div className="flex items-center gap-2 mb-4 border-b border-light-gray/10 pb-3">
-            <Sparkles size={16} className="text-crimson animate-pulse" />
-            <span className="font-orbitron text-[10px] text-pale-pink/80 font-black tracking-widest uppercase">
+        {/* Story Text Box (Narrator Panel) */}
+        <div className="w-full bg-[#e0e5ed] border-[6px] border-[#0f0c0c] p-5 md:p-8 shadow-[12px_12px_0px_0px_#0f0c0c] relative mb-10 -skew-x-1">
+          {/* Top-Left Tag */}
+          <div className="absolute -top-4 -left-2 bg-[#da2d46] border-[3px] border-[#0f0c0c] px-3 py-1 shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6">
+            <span className="font-orbitron text-[10px] md:text-xs text-[#0f0c0c] font-black tracking-widest uppercase skew-x-6 block">
               SCENARIO LOG
             </span>
           </div>
 
-          <p className="font-sans text-light-gray/90 leading-relaxed text-sm md:text-base">
+          <p className="font-space-mono font-bold text-[#0f0c0c] text-sm md:text-base mt-2 leading-relaxed skew-x-1">
             {story.scenario}
           </p>
         </div>
 
         {/* Choices Container */}
         <div className="space-y-4 mt-auto">
-          <span className="block font-orbitron text-[9px] text-slate-gray font-black tracking-widest uppercase mb-1">
-            CHOOSE YOUR REACTION:
-          </span>
+          <div className="inline-block bg-[#0f0c0c] border-[2px] border-[#e0e5ed] px-2 py-0.5 mb-2 -skew-x-6">
+            <span className="block font-space-mono text-[10px] text-[#e0e5ed] font-black tracking-widest uppercase skew-x-6">
+              CHOOSE YOUR REACTION:
+            </span>
+          </div>
           
           {story.choices.map((choice, idx) => {
             const isSelected = selectedIdx === idx;
             const hasSelection = selectedIdx !== null;
             const letters = ['A', 'B', 'C'];
             
-            let btnClass = "w-full text-left p-4 rounded-xl border transition-all duration-300 relative overflow-hidden flex items-start gap-4 ";
-            
+            let btnClass = "w-full text-left p-4 md:p-5 border-[4px] transition-all duration-300 relative flex flex-col items-start gap-2 -skew-x-2 outline-none ";
+            let letterClass = "font-orbitron font-black w-6 h-6 md:w-8 md:h-8 border-[2px] flex items-center justify-center shrink-0 skew-x-2 ";
+
             if (!hasSelection) {
-              btnClass += "bg-gradient-to-br from-dark-slate/40 to-obsidian/30 border-pale-pink/10 text-light-gray/80 hover:border-crimson/50 hover:from-dark-slate/60 hover:to-obsidian/40 hover:-translate-y-0.5 active:translate-y-0 hover:shadow-[0_4px_20px_rgba(218,45,70,0.15)]";
+              // Unselected idle state
+              btnClass += "bg-[#2a2d43] border-[#0f0c0c] text-[#e0e5ed] shadow-[4px_4px_0px_0px_#0f0c0c] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none cursor-pointer";
+              letterClass += "bg-[#0f0c0c] border-[#0f0c0c] text-[#e0e5ed]";
             } else if (isSelected) {
-              btnClass += choice.xp === 15 
-                ? "bg-gradient-to-br from-green-950/40 to-green-900/20 border-green-500/40 text-green-100 shadow-[0_0_25px_rgba(34,197,94,0.2)]" 
-                : choice.xp > 0 
-                  ? "bg-gradient-to-br from-amber-950/40 to-amber-900/20 border-amber-500/40 text-amber-100 shadow-[0_0_25px_rgba(245,158,11,0.2)]"
-                  : "bg-gradient-to-br from-red-950/40 to-red-900/20 border-red-500/40 text-red-100 shadow-[0_0_25px_rgba(239,68,68,0.25)]";
+              // Selected state (Locking down the clicked option)
+              btnClass += "shadow-none translate-y-1 translate-x-1 cursor-default ";
+              letterClass += "bg-[#0f0c0c] border-[#0f0c0c] ";
+              
+              if (choice.xp === 15) {
+                btnClass += "bg-[#4ade80] border-[#0f0c0c] text-[#0f0c0c]"; // Green (Optimal)
+                letterClass += "text-[#4ade80]";
+              } else if (choice.xp > 0) {
+                btnClass += "bg-[#fbbf24] border-[#0f0c0c] text-[#0f0c0c]"; // Yellow (Neutral)
+                letterClass += "text-[#fbbf24]";
+              } else {
+                btnClass += "bg-[#da2d46] border-[#0f0c0c] text-[#0f0c0c]"; // Red (Poor)
+                letterClass += "text-[#da2d46]";
+              }
             } else {
-              btnClass += "bg-obsidian/20 border-light-gray/5 text-light-gray/30 opacity-40";
+              // Unselected disabled state
+              btnClass += "bg-[#e0e5ed] border-[#888ea1] border-dashed text-[#888ea1] shadow-none opacity-60 pointer-events-none";
+              letterClass += "bg-transparent border-[#888ea1] text-[#888ea1]";
             }
 
             return (
@@ -195,56 +252,53 @@ Return strictly in this JSON format:
                 className={btnClass}
                 disabled={hasSelection}
               >
-                <span className={`font-space-mono text-xs px-2 py-0.5 rounded border transition-colors shrink-0 ${
-                  !hasSelection 
-                    ? 'border-pale-pink/20 bg-obsidian/50 text-pale-pink/60' 
-                    : isSelected 
-                      ? choice.xp === 15
-                        ? 'border-green-500/30 bg-green-950/50 text-green-400'
-                        : choice.xp > 0
-                          ? 'border-amber-500/30 bg-amber-950/50 text-amber-400'
-                          : 'border-red-500/30 bg-red-950/50 text-red-400'
-                      : 'border-light-gray/5 bg-obsidian/20 text-light-gray/20'
-                }`}>
-                  {letters[idx]}
-                </span>
-
-                <div className="flex-1">
-                  <span className="block font-sans text-sm leading-relaxed">{choice.text}</span>
-                  
-                  {/* Feedback Panel */}
-                  {isSelected && (
-                    <div className={`mt-3 pt-3 border-t text-xs leading-relaxed transition-all duration-500 ${
-                      choice.xp === 15 
-                        ? 'border-green-500/20 text-green-200/90' 
-                        : choice.xp > 0 
-                          ? 'border-amber-500/20 text-amber-200/90' 
-                          : 'border-red-500/20 text-red-200/90'
-                    }`}>
-                      <span className="font-bold font-orbitron block text-[10px] tracking-wider uppercase mb-1">
-                        {choice.xp === 15 ? 'Optimal Reaction' : choice.xp > 0 ? 'Acceptable Reaction' : 'Cultural Faux Pas'} (+{choice.xp} XP)
-                      </span>
-                      {choice.feedback}
-                    </div>
-                  )}
+                <div className="flex items-center gap-3 w-full">
+                  <div className={letterClass}>
+                    <span>{letters[idx]}</span>
+                  </div>
+                  <span className="flex-1 font-space-mono font-bold text-sm leading-snug skew-x-2">
+                    {choice.text}
+                  </span>
                 </div>
+                
+                {/* Feedback Panel (Appears inside the selected choice) */}
+                {isSelected && (
+                  <div className={`mt-3 w-full pt-3 border-t-[3px] border-[#0f0c0c]/20 skew-x-2 animate-comic-pop`}>
+                    <div className="font-orbitron font-black text-[10px] md:text-xs tracking-widest uppercase mb-2 bg-[#0f0c0c] text-[#e0e5ed] inline-block px-2 py-0.5">
+                      {choice.xp === 15 ? 'OPTIMAL' : choice.xp > 0 ? 'ACCEPTABLE' : 'FAUX PAS'} [+{(choice.xp).toString()} XP]
+                    </div>
+                    <p className="font-space-mono text-xs md:text-sm font-bold leading-relaxed">
+                      {choice.feedback}
+                    </p>
+                  </div>
+                )}
               </button>
             );
           })}
         </div>
 
         {selectedIdx !== null && (
-          <button 
-            onClick={onComplete}
-            className="w-full mt-6 py-4 rounded-xl font-orbitron text-xs font-black tracking-widest uppercase
-              bg-gradient-to-r from-crimson to-pale-pink text-obsidian
-              hover:shadow-lg hover:shadow-crimson/30 hover:-translate-y-0.5 active:translate-y-0
-              transition-all duration-200 flex items-center justify-center gap-3 animate-judgement-pop"
-          >
-            CONTINUE JOURNEY <ChevronRight size={18} />
-          </button>
+          <div className="w-full flex justify-end mt-8 animate-comic-pop">
+            <button 
+              onClick={onComplete}
+              className="px-8 py-4 bg-[#da2d46] border-[4px] border-[#0f0c0c] font-orbitron text-sm md:text-base font-black tracking-widest uppercase text-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[8px_8px_0px_0px_#0f0c0c] active:translate-y-2 active:translate-x-2 active:shadow-none transition-all flex items-center gap-2 -skew-x-6"
+            >
+              <span className="skew-x-6">CONTINUE</span> <ChevronRight size={20} className="skew-x-6 stroke-[3px]" />
+            </button>
+          </div>
         )}
       </div>
+
+      <style>{`
+        @keyframes comic-pop {
+          0% { transform: scale(0.9) translateY(10px); opacity: 0; }
+          60% { transform: scale(1.02) translateY(-2px); opacity: 1; }
+          100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .animate-comic-pop {
+          animation: comic-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+      `}</style>
     </div>
   );
 }

@@ -68,7 +68,7 @@ export function QuizScreen({ profile, onComplete, onBack }: QuizScreenProps) {
     };
 
     return [q1, q2, q3, q4, q5].map(q => {
-      // Deduplicate options (in case the correct answer equals a fallback)
+      // Deduplicate options
       const uniqueOpts = Array.from(new Set(q.opts));
       let idx = 0;
       while (uniqueOpts.length < 4) {
@@ -76,11 +76,8 @@ export function QuizScreen({ profile, onComplete, onBack }: QuizScreenProps) {
           uniqueOpts.push('Unknown Option ' + idx);
       }
       
-      // A simple deterministic pseudo-shuffle based on string length to avoid Math.random() in render/initializer if strict mode double-invokes it
-      // Actually, useState initializer is allowed to be slightly impure if it only affects local initial state, 
-      // but to be perfectly safe, let's use a simple deterministic sort based on string length and character codes
+      // Deterministic pseudo-shuffle
       const shuffledOpts = uniqueOpts.slice(0, 4).sort((a, b) => {
-        // pseudo-random sorting based on length and first character
         const valA = a.length + a.charCodeAt(0);
         const valB = b.length + b.charCodeAt(0);
         return valA - valB;
@@ -116,71 +113,87 @@ export function QuizScreen({ profile, onComplete, onBack }: QuizScreenProps) {
   if (questions.length === 0 || !currentQuestionData) return null;
 
   return (
-    <div className="min-h-screen bg-obsidian flex flex-col items-center justify-center p-6 relative overflow-hidden pb-12 md:pb-16 pb-safe">
-      {/* Background ambient light */}
-      <div className="absolute top-[-10%] left-[-25%] w-[90%] h-[60%] bg-crimson/15 rounded-full blur-[130px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-25%] w-[90%] h-[60%] bg-gold/10 rounded-full blur-[130px] pointer-events-none" />
-      <div className="absolute top-[35%] right-[-20%] w-[60%] h-[40%] bg-purple/10 rounded-full blur-[110px] pointer-events-none" />
+    <div className="min-h-screen bg-[#2a2d43] flex flex-col items-center justify-start p-4 pt-10 md:pt-12 relative overflow-hidden pb-12 md:pb-16 pb-safe z-0">
+      
+      {/* Halftone Background Pattern */}
+      <div 
+        className="absolute inset-0 z-[-3] opacity-30 pointer-events-none" 
+        style={{ backgroundImage: 'radial-gradient(#da2d46 2px, transparent 2px)', backgroundSize: '20px 20px' }}
+      />
+      
+      {/* Slanted Background Block for dynamic layout */}
+      <div className="absolute top-0 right-0 w-[120%] h-[40%] bg-[#0f0c0c] -skew-y-6 -translate-y-10 z-[-2] border-b-[8px] border-[#da2d46]" />
 
-      <div className="w-full max-w-md relative z-10 pb-12">
-        {/* Header Bar with Back Button */}
-        <div className="flex items-center justify-between mb-6 w-full">
+      <div className="w-full max-w-lg relative z-10 flex flex-col items-center">
+        
+        {/* Header Bar */}
+        <div className="flex items-center justify-between w-full mb-8">
           <button 
             onClick={onBack}
-            className="px-3 py-1.5 rounded-lg bg-dark-slate/30 border border-pale-pink/10 hover:border-crimson/50 hover:bg-dark-slate/50 text-pale-pink hover:text-crimson transition-all duration-200 flex items-center justify-center gap-1.5 font-orbitron text-[10px] font-bold tracking-widest uppercase"
+            className="px-4 py-2 bg-[#f0dde0] border-[3px] border-[#0f0c0c] hover:bg-[#da2d46] text-[#0f0c0c] transition-all flex items-center gap-1.5 font-orbitron text-[10px] md:text-xs font-black tracking-widest uppercase -skew-x-6 shadow-[3px_3px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none"
           >
-            <ArrowLeft size={14} /> BACK
+            <ArrowLeft size={16} className="skew-x-6 stroke-[3px]" /> 
+            <span className="skew-x-6 hidden sm:block">ABORT</span>
           </button>
           
-          <div className="text-right">
-            <span className="font-space-mono text-[9px] text-crimson font-black tracking-[0.2em] uppercase block">
+          <div className="bg-[#0f0c0c] border-[3px] border-[#da2d46] px-3 py-1 -skew-x-6 shadow-[4px_4px_0px_0px_#da2d46]">
+            <span className="font-space-mono text-[9px] md:text-xs text-[#f0dde0] font-black tracking-widest uppercase skew-x-6 block">
               RETENTION QUIZ
             </span>
           </div>
         </div>
 
+        {/* Title Area */}
         <div className="text-center mb-8">
-          <h2 className="font-orbitron font-black text-light-gray text-xl tracking-widest uppercase glow-crimson">
-            KNOWLEDGE CHECK
+          <h2 
+            className="font-orbitron font-black text-[#e0e5ed] text-3xl md:text-4xl tracking-widest uppercase leading-none"
+            style={{ textShadow: '4px 4px 0px #0f0c0c, -2px -2px 0px #da2d46' }}
+          >
+            KNOWLEDGE<br/>CHECK
           </h2>
         </div>
 
-        <div className="relative p-6 rounded-2xl border border-pale-pink/10 bg-gradient-to-b from-dark-slate/50 to-obsidian/70 backdrop-blur-md mb-8 shadow-[0_12px_40px_rgba(0,0,0,0.6)] overflow-hidden">
-          {/* Corner decorative accents */}
-          <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-crimson/60" />
-          <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-crimson/60" />
-          <div className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 border-crimson/60" />
-          <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-crimson/60" />
-
-          <div className="flex items-center gap-2 mb-4 border-b border-light-gray/10 pb-3">
-            <Sparkles size={16} className="text-crimson animate-pulse" />
-            <span className="font-orbitron text-[10px] text-pale-pink/80 font-black tracking-widest uppercase">
-              COMPREHENSION CHECK ({currentQuestionIdx + 1}/5)
+        {/* Main Comic Panel (The Question) */}
+        <div className="w-full bg-[#e0e5ed] border-[6px] border-[#0f0c0c] p-5 md:p-8 shadow-[12px_12px_0px_0px_#0f0c0c] relative mb-8 -skew-x-1">
+          
+          {/* Top-Left Tag / Progress */}
+          <div className="absolute -top-4 -left-2 bg-[#da2d46] border-[3px] border-[#0f0c0c] px-3 py-1 flex items-center gap-1.5 shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6">
+            <Sparkles size={14} className="text-[#0f0c0c] skew-x-6" />
+            <span className="font-orbitron text-[10px] md:text-xs text-[#0f0c0c] font-black tracking-widest uppercase skew-x-6">
+              PAGE {currentQuestionIdx + 1}/5
             </span>
           </div>
 
-          <h3 className="font-sans font-semibold text-light-gray text-base md:text-lg mb-6 leading-relaxed">
+          <h3 className="font-space-mono font-bold text-[#0f0c0c] text-sm md:text-base mt-4 mb-6 leading-relaxed skew-x-1">
             {currentQuestionData.q}
           </h3>
 
-          <div className="space-y-3">
+          {/* Options Grid */}
+          <div className="space-y-3 skew-x-1">
             {currentQuestionData.opts.map((opt, idx) => {
               const letters = ['A', 'B', 'C', 'D'];
               
-              let btnClass = "w-full text-left p-4 rounded-xl border transition-all duration-300 relative overflow-hidden flex items-center gap-4 ";
+              let btnClass = "w-full text-left p-3 md:p-4 border-[3px] transition-all duration-150 flex items-center gap-3 md:gap-4 -skew-x-2 outline-none font-space-mono font-bold text-xs md:text-sm ";
               let icon = null;
 
               if (!isRevealed) {
-                btnClass += "bg-gradient-to-br from-dark-slate/40 to-obsidian/30 border-pale-pink/10 text-light-gray/80 hover:border-crimson/50 hover:from-dark-slate/60 hover:to-obsidian/40 hover:-translate-y-0.5 active:translate-y-0 hover:shadow-[0_4px_20px_rgba(218,45,70,0.15)]";
+                // Default State
+                btnClass += "bg-[#2a2d43] border-[#0f0c0c] text-[#e0e5ed] shadow-[4px_4px_0px_0px_#0f0c0c] hover:-translate-y-0.5 hover:-translate-x-0.5 hover:shadow-[6px_6px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none cursor-pointer";
               } else {
+                // Revealed State
+                btnClass += " cursor-default pointer-events-none "; // disable interaction
+                
                 if (idx === currentQuestionData.correctIdx) {
-                  btnClass += "bg-gradient-to-br from-green-950/40 to-green-900/20 border-green-500/40 text-green-100 shadow-[0_0_25px_rgba(34,197,94,0.2)]";
-                  icon = <Check size={18} className="text-green-400 shrink-0 ml-auto" />;
+                  // CORRECT ANSWER
+                  btnClass += "bg-[#4ade80] border-[#0f0c0c] text-[#0f0c0c] shadow-none translate-y-1 translate-x-1";
+                  icon = <div className="bg-[#0f0c0c] p-1 rounded-sm skew-x-2 ml-auto"><Check size={16} className="text-[#4ade80] stroke-[4px]" /></div>;
                 } else if (idx === selectedIdx) {
-                  btnClass += "bg-gradient-to-br from-red-950/40 to-red-900/20 border-red-500/40 text-red-100 shadow-[0_0_25px_rgba(239,68,68,0.25)]";
-                  icon = <X size={18} className="text-red-400 shrink-0 ml-auto" />;
+                  // WRONG SELECTED ANSWER
+                  btnClass += "bg-[#da2d46] border-[#0f0c0c] text-[#0f0c0c] shadow-none translate-y-1 translate-x-1";
+                  icon = <div className="bg-[#0f0c0c] p-1 rounded-sm skew-x-2 ml-auto"><X size={16} className="text-[#da2d46] stroke-[4px]" /></div>;
                 } else {
-                  btnClass += "bg-obsidian/20 border-light-gray/5 text-light-gray/30 opacity-40";
+                  // UNSELECTED WRONG ANSWER
+                  btnClass += "bg-[#e0e5ed] border-[#888ea1] border-dashed text-[#888ea1] shadow-none opacity-60";
                 }
               }
 
@@ -191,19 +204,16 @@ export function QuizScreen({ profile, onComplete, onBack }: QuizScreenProps) {
                   className={btnClass}
                   disabled={isRevealed}
                 >
-                  <span className={`font-space-mono text-xs px-2 py-0.5 rounded border transition-colors shrink-0 ${
-                    !isRevealed 
-                      ? 'border-pale-pink/20 bg-obsidian/50 text-pale-pink/60' 
-                      : idx === currentQuestionData.correctIdx
-                        ? 'border-green-500/30 bg-green-950/50 text-green-400'
-                        : idx === selectedIdx
-                          ? 'border-red-500/30 bg-red-950/50 text-red-400'
-                          : 'border-light-gray/5 bg-obsidian/20 text-light-gray/20'
+                  <div className={`shrink-0 flex items-center justify-center w-6 h-6 md:w-8 md:h-8 border-[2px] skew-x-2 ${
+                    !isRevealed ? 'bg-[#0f0c0c] border-[#0f0c0c] text-[#e0e5ed]' : 
+                    idx === currentQuestionData.correctIdx ? 'bg-[#0f0c0c] border-[#0f0c0c] text-[#4ade80]' :
+                    idx === selectedIdx ? 'bg-[#0f0c0c] border-[#0f0c0c] text-[#da2d46]' :
+                    'bg-transparent border-[#888ea1] text-[#888ea1]'
                   }`}>
-                    {letters[idx]}
-                  </span>
+                    <span className="font-orbitron font-black">{letters[idx]}</span>
+                  </div>
                   
-                  <span className="flex-1 font-sans text-sm leading-relaxed">{opt}</span>
+                  <span className="flex-1 leading-snug skew-x-2">{opt}</span>
                   {icon}
                 </button>
               );
@@ -211,18 +221,29 @@ export function QuizScreen({ profile, onComplete, onBack }: QuizScreenProps) {
           </div>
         </div>
 
+        {/* Continue Button */}
         {isRevealed && (
-          <button 
-            onClick={handleNext}
-            className="w-full py-4 rounded-xl font-orbitron text-xs font-black tracking-widest uppercase
-              bg-gradient-to-r from-crimson to-pale-pink text-obsidian
-              hover:shadow-lg hover:shadow-crimson/30 hover:-translate-y-0.5 active:translate-y-0
-              transition-all duration-200 flex items-center justify-center gap-3 animate-judgement-pop"
-          >
-            CONTINUE <ChevronRight size={18} />
-          </button>
+          <div className="w-full flex justify-end animate-comic-pop">
+            <button 
+              onClick={handleNext}
+              className="px-8 py-4 bg-[#da2d46] border-[4px] border-[#0f0c0c] font-orbitron text-sm md:text-base font-black tracking-widest uppercase text-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[8px_8px_0px_0px_#0f0c0c] active:translate-y-2 active:translate-x-2 active:shadow-none transition-all flex items-center gap-2 -skew-x-6"
+            >
+              <span className="skew-x-6">CONTINUE</span> <ChevronRight size={20} className="skew-x-6 stroke-[3px]" />
+            </button>
+          </div>
         )}
       </div>
+
+      <style>{`
+        @keyframes comic-pop {
+          0% { transform: scale(0.8) translateY(20px); opacity: 0; }
+          60% { transform: scale(1.05) translateY(-5px); opacity: 1; }
+          100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .animate-comic-pop {
+          animation: comic-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+      `}</style>
     </div>
   );
 }
