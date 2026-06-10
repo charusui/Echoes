@@ -1,6 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { Camera, Upload, ChevronRight, ChevronLeft } from 'lucide-react';
-
+import { Camera, Upload, ChevronRight, ChevronLeft, X } from 'lucide-react';
 import type { ScanMode } from '../types';
 
 interface ScannerProps {
@@ -24,6 +23,13 @@ export function Scanner({ onImageReady, onBack }: ScannerProps) {
 
   const startCamera = useCallback(async () => {
     setCameraError(null);
+    
+    // FIX: Guard against missing mediaDevices (prevents fatal crashes on HTTP/Webviews)
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setCameraError('Camera API not supported on this browser. Please use Upload.');
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
@@ -34,8 +40,8 @@ export function Scanner({ onImageReady, onBack }: ScannerProps) {
       const msg = err instanceof Error ? err.message : 'Camera unavailable';
       setCameraError(
         msg.includes('Permission') || msg.includes('NotAllowed')
-          ? 'Camera permission denied. Please use Upload instead.'
-          : 'Camera not available — try uploading a photo.'
+          ? 'Permission denied. Please use Upload.'
+          : 'Camera unavailable — try uploading.'
       );
     }
   }, []);
@@ -83,10 +89,8 @@ export function Scanner({ onImageReady, onBack }: ScannerProps) {
     if (file) handleFile(file);
   }, [handleFile]);
 
-  // Cleanup camera on unmount
   useEffect(() => () => stopCamera(), [stopCamera]);
 
-  // Bind camera stream when active
   useEffect(() => {
     if (cameraActive && videoRef.current && streamRef.current) {
       videoRef.current.srcObject = streamRef.current;
@@ -96,155 +100,152 @@ export function Scanner({ onImageReady, onBack }: ScannerProps) {
     }
   }, [cameraActive]);
 
-  // ── Submit ────────────────────────────────────────────────────────────────
-
   const handleScan = useCallback(() => {
     if (!capturedData) return;
     onImageReady(capturedData.base64, capturedData.mimeType, capturedData.mode);
   }, [capturedData, onImageReady]);
 
   return (
-    <div className="min-h-screen bg-obsidian flex flex-col items-center justify-start px-4 pt-10 pb-20">
+    <div className="min-h-screen bg-[#2a2d43] flex flex-col items-center justify-start px-4 pt-12 pb-20 relative z-0 overflow-hidden">
 
-      {/* Header */}
-      <div className="w-full max-w-md text-center mb-10">
-        <div className="text-pale-pink text-xs font-space-mono tracking-widest mb-3 uppercase">
-          ✦ AI Game On! Hackathon ✦
-        </div>
-        <h1 className="font-orbitron text-3xl font-black text-crimson mb-2 tracking-wider glow-crimson leading-tight">
-          ECHOES OF THE<br />ANCESTORS
-        </h1>
-        <p className="text-light-gray/60 text-sm font-space-mono leading-relaxed">
-          Point your camera at a traditional<br />
-          Philippine instrument to begin
-        </p>
-      </div>
+      {/* Halftone Dot Pattern Background */}
+      <div 
+        className="absolute inset-0 z-[-3] opacity-30 pointer-events-none" 
+        style={{ backgroundImage: 'radial-gradient(#da2d46 2px, transparent 2px)', backgroundSize: '20px 20px' }}
+      />
 
-      {/* Back Button */}
+      <div className="absolute top-0 left-0 w-[120%] h-[50%] bg-[#da2d46] -skew-y-6 -translate-y-20 z-[-2] border-b-[8px] border-[#0f0c0c]" />
+
       <button 
         onClick={onBack}
-        className="absolute top-6 left-6 w-10 h-10 rounded-full bg-dark-slate/80 border border-light-gray/20 flex items-center justify-center text-light-gray active:scale-95 z-50"
+        className="absolute top-6 left-6 md:top-8 md:left-8 w-12 h-12 bg-[#e0e5ed] border-[4px] border-[#0f0c0c] flex items-center justify-center text-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-[0px_0px_0px_0px_#0f0c0c] transition-all -skew-x-6 z-50"
       >
-        <ChevronLeft size={24} />
+        <ChevronLeft size={28} className="skew-x-6 stroke-[3px]" />
       </button>
 
-      {/* Camera / Upload Zone */}
-      <div className="w-full max-w-md mb-6">
-        <div className="glass-card rounded-2xl border border-pale-pink/20 overflow-hidden">
+      <div className="w-full max-w-md text-center mb-8 mt-12 md:mt-6 relative z-10">
+        <div className="inline-block bg-[#0f0c0c] border-[3px] border-[#e0e5ed] px-4 py-1 mb-4 -skew-x-6 shadow-[4px_4px_0px_0px_#e0e5ed]">
+          <span className="text-[#e0e5ed] text-xs font-space-mono font-bold tracking-widest uppercase skew-x-6 block">
+            AI Game On! Hackathon
+          </span>
+        </div>
+        
+        <h1 
+          className="font-orbitron text-4xl md:text-5xl font-black text-[#0f0c0c] mb-2 tracking-wider leading-tight uppercase"
+          style={{ textShadow: '4px 4px 0px #e0e5ed, -2px 0px 0px #da2d46' }}
+        >
+          ECHOES OF THE<br />ANCESTORS
+        </h1>
+        
+        <div className="bg-[#0f0c0c] border-[4px] border-[#da2d46] p-3 -skew-x-2 shadow-[6px_6px_0px_0px_#da2d46] mx-auto w-fit mt-4">
+          <p className="text-[#f0dde0] text-sm md:text-base font-space-mono font-bold skew-x-2">
+            Target a traditional instrument.
+          </p>
+        </div>
+      </div>
 
-          {/* Image Preview */}
+      <div className="w-full max-w-md mb-8 relative z-10">
+        <div className="bg-[#e0e5ed] border-[6px] border-[#0f0c0c] shadow-[12px_12px_0px_0px_#0f0c0c] p-2">
+
           {previewUrl && !cameraActive && (
-            <div className="relative">
-              <img src={previewUrl} alt="Captured instrument" className="w-full object-cover max-h-72" />
-              {/* Cyan border overlay */}
-              <div className="absolute inset-0 border-4 border-crimson/30 rounded-t-2xl pointer-events-none" />
-              {/* Corner brackets */}
-              <div className="absolute top-3 left-3 w-5 h-5 border-t-2 border-l-2 border-crimson pointer-events-none" />
-              <div className="absolute top-3 right-3 w-5 h-5 border-t-2 border-r-2 border-crimson pointer-events-none" />
-              <div className="absolute bottom-3 left-3 w-5 h-5 border-b-2 border-l-2 border-crimson pointer-events-none" />
-              <div className="absolute bottom-3 right-3 w-5 h-5 border-b-2 border-r-2 border-crimson pointer-events-none" />
+            <div className="relative border-[4px] border-[#0f0c0c] overflow-hidden bg-[#0f0c0c]">
+              <img src={previewUrl} alt="Captured instrument" className="w-full object-cover max-h-80 opacity-90" />
+              <div className="absolute inset-0 pointer-events-none border-[8px] border-[#da2d46] mix-blend-overlay" />
+              
               <button
                 id="retake-btn"
-                onClick={() => { setPreviewUrl(null); setCapturedData(null); }}
-                className="absolute top-3 right-10 bg-obsidian/80 border border-danger/40 text-danger text-xs font-space-mono px-3 py-1 rounded-lg"
+                onClick={() => { 
+                  setPreviewUrl(null); 
+                  setCapturedData(null); 
+                  // FIX: Reset the input so they can re-upload the same file if needed
+                  if (fileInputRef.current) fileInputRef.current.value = ''; 
+                }}
+                className="absolute top-4 right-4 bg-[#e0e5ed] border-[3px] border-[#0f0c0c] text-[#0f0c0c] font-black font-space-mono px-4 py-2 -skew-x-6 shadow-[4px_4px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all uppercase"
               >
-                RETAKE
+                <span className="skew-x-6 block">RETAKE</span>
               </button>
-              <div className="absolute bottom-3 left-3 bg-obsidian/80 border border-crimson/30 text-crimson text-xs font-space-mono px-3 py-1 rounded-lg">
-                ✓ Ready to analyze
+              
+              <div className="absolute bottom-4 left-4 bg-[#da2d46] border-[3px] border-[#0f0c0c] text-[#0f0c0c] font-black font-space-mono px-4 py-2 -skew-x-6 shadow-[4px_4px_0px_0px_#0f0c0c] uppercase">
+                <span className="skew-x-6 block">DATA SECURED</span>
               </div>
             </div>
           )}
 
-          {/* Live Camera Viewfinder */}
           {cameraActive && (
-            <div className="relative">
-              <video ref={videoRef} className="w-full max-h-72 object-cover" playsInline muted autoPlay />
-              {/* Viewfinder overlay */}
+            <div className="relative border-[4px] border-[#0f0c0c] overflow-hidden bg-[#0f0c0c]">
+              <video ref={videoRef} className="w-full max-h-80 object-cover" playsInline muted autoPlay />
               <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute inset-8 border-2 border-dashed border-crimson/60 rounded-xl" />
-                <div className="absolute top-10 left-10 w-5 h-5 border-t-2 border-l-2 border-crimson" />
-                <div className="absolute top-10 right-10 w-5 h-5 border-t-2 border-r-2 border-crimson" />
-                <div className="absolute bottom-20 left-10 w-5 h-5 border-b-2 border-l-2 border-crimson" />
-                <div className="absolute bottom-20 right-10 w-5 h-5 border-b-2 border-r-2 border-crimson" />
-                <div className="absolute inset-x-0 bottom-14 text-center text-crimson/60 text-xs font-space-mono">
-                  FRAME THE INSTRUMENT
+                <div className="absolute inset-6 border-[4px] border-dashed border-[#da2d46]" />
+                <div className="absolute inset-x-0 bottom-6 text-center bg-[#0f0c0c] border-y-[4px] border-[#da2d46] py-1">
+                  <span className="text-[#e0e5ed] text-xs font-orbitron font-black uppercase tracking-widest">
+                    ALIGN TARGET
+                  </span>
                 </div>
               </div>
-              {/* Shutter button */}
-              <div className="absolute bottom-4 left-0 right-0 flex justify-center items-center gap-6">
+              <div className="absolute bottom-16 left-0 right-0 flex justify-center items-center gap-8 z-20">
                 <button
                   id="cancel-camera-btn"
                   onClick={stopCamera}
-                  className="w-10 h-10 rounded-full bg-obsidian/70 border border-light-gray/30 text-light-gray text-xs font-space-mono flex items-center justify-center"
+                  className="w-12 h-12 bg-[#e0e5ed] border-[4px] border-[#0f0c0c] text-[#0f0c0c] font-black font-space-mono flex items-center justify-center -skew-x-6 shadow-[4px_4px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all"
                 >
-                  ✕
+                  <X size={24} className="skew-x-6 stroke-[3px]" />
                 </button>
                 <button
                   id="capture-btn"
                   onClick={capturePhoto}
-                  className="w-18 h-18 rounded-full bg-crimson/20 border-4 border-crimson shadow-lg shadow-crimson/40 flex items-center justify-center active:scale-90 transition-transform"
-                  style={{ width: 72, height: 72 }}
+                  className="w-20 h-20 bg-[#da2d46] border-[6px] border-[#0f0c0c] flex items-center justify-center -skew-x-6 shadow-[6px_6px_0px_0px_#0f0c0c] active:translate-y-2 active:translate-x-2 active:shadow-none transition-all"
                 >
-                  <div className="w-12 h-12 rounded-full bg-crimson" />
+                  <div className="w-8 h-8 bg-[#0f0c0c] rounded-sm skew-x-6" />
                 </button>
-                <div className="w-10 h-10" /> {/* spacer */}
+                <div className="w-12 h-12" />
               </div>
             </div>
           )}
 
-          {/* Idle — Camera/Upload Choice */}
           {!cameraActive && !previewUrl && (
             <div
               onDrop={handleDrop}
               onDragOver={e => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
-              className={`p-10 text-center transition-colors ${dragOver ? 'bg-pale-pink/10' : ''}`}
+              className={`p-8 text-center transition-colors border-[4px] border-[#0f0c0c] ${dragOver ? 'bg-[#da2d46]/20' : 'bg-[#e0e5ed]'}`}
             >
-              {/* Animated instrument icon */}
-              <div className="w-24 h-24 mx-auto mb-5 rounded-full bg-gradient-to-br from-pale-pink/20 to-crimson/10 border-2 border-dashed border-pale-pink/40 flex items-center justify-center pulse-glow">
-                <Camera size={36} className="text-pale-pink/70" />
+              <div className="w-24 h-24 mx-auto mb-6 bg-[#0f0c0c] border-[4px] border-[#da2d46] flex items-center justify-center -skew-x-6 shadow-[6px_6px_0px_0px_#da2d46]">
+                <Camera size={40} className="text-[#f0dde0] skew-x-6" />
               </div>
 
-              <p className="text-light-gray/60 text-sm mb-1">
-                Experience traditional Philippine instruments
-              </p>
-              <p className="text-light-gray/30 text-xs font-space-mono mb-6">
-                Kulintang · Kudyapi · Gangsa · Agung · Babarak
-              </p>
+              <div className="bg-[#0f0c0c] px-4 py-2 border-[3px] border-[#0f0c0c] mb-6">
+                <p className="text-[#f0dde0] text-sm font-space-mono font-bold uppercase tracking-widest">
+                  Acquire Instrument Data
+                </p>
+              </div>
 
               {cameraError && (
-                <div className="mb-5 text-danger text-xs font-space-mono bg-danger/10 border border-danger/30 rounded-xl px-4 py-3">
-                  {cameraError}
+                <div className="mb-6 bg-[#da2d46] border-[4px] border-[#0f0c0c] text-[#0f0c0c] font-black font-space-mono p-3 -skew-x-2 shadow-[4px_4px_0px_0px_#0f0c0c]">
+                  <span className="skew-x-2 block uppercase">{cameraError}</span>
                 </div>
               )}
 
-              <div className="flex gap-3 justify-center flex-wrap">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
                 <button
                   id="open-camera-btn"
                   onClick={startCamera}
-                  className="flex items-center gap-2 px-5 py-3 bg-pale-pink/20 border border-pale-pink/50 rounded-xl text-pale-pink text-sm font-space-mono hover:bg-pale-pink/30 active:scale-95 transition-all min-h-[44px]"
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-[#da2d46] border-[4px] border-[#0f0c0c] text-[#0f0c0c] text-sm font-orbitron font-black tracking-widest -skew-x-6 shadow-[6px_6px_0px_0px_#0f0c0c] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[8px_8px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all uppercase"
                 >
-                  <Camera size={18} /> CAMERA
+                  <Camera size={20} className="skew-x-6" /> <span className="skew-x-6">SCAN</span>
                 </button>
                 <button
                   id="upload-btn"
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-2 px-5 py-3 bg-dark-slate/60 border border-light-gray/20 rounded-xl text-light-gray text-sm font-space-mono hover:border-light-gray/40 active:scale-95 transition-all min-h-[44px]"
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-[#2a2d43] border-[4px] border-[#0f0c0c] text-[#e0e5ed] text-sm font-orbitron font-black tracking-widest -skew-x-6 shadow-[6px_6px_0px_0px_#0f0c0c] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[8px_8px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all uppercase"
                 >
-                  <Upload size={18} /> UPLOAD
+                  <Upload size={20} className="skew-x-6" /> <span className="skew-x-6">UPLOAD</span>
                 </button>
               </div>
-
-              <p className="text-light-gray/25 text-xs mt-5 font-space-mono">
-                or drag & drop an image here
-              </p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Hidden elements */}
       <canvas ref={canvasRef} className="hidden" />
       <input
         ref={fileInputRef}
@@ -254,26 +255,20 @@ export function Scanner({ onImageReady, onBack }: ScannerProps) {
         onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
       />
 
-      {/* CTA */}
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md relative z-10 mt-auto">
         <button
           id="scan-instrument-btn"
           onClick={handleScan}
           disabled={!capturedData}
-          className="w-full py-4 rounded-xl font-orbitron text-sm font-bold tracking-widest uppercase
-            bg-gradient-to-r from-pale-pink to-crimson text-obsidian
-            disabled:opacity-25 disabled:cursor-not-allowed
-            enabled:hover:shadow-lg enabled:hover:shadow-crimson/40
-            enabled:active:scale-[0.98]
-            transition-all duration-200 flex items-center justify-center gap-3 min-h-[56px]"
+          className={`w-full py-5 border-[6px] border-[#0f0c0c] font-orbitron text-lg font-black tracking-widest uppercase flex items-center justify-center gap-3 -skew-x-6 transition-all duration-200 ${
+            capturedData 
+              ? 'bg-[#da2d46] text-[#0f0c0c] shadow-[8px_8px_0px_0px_#0f0c0c] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[12px_12px_0px_0px_#0f0c0c] active:translate-y-2 active:translate-x-2 active:shadow-none cursor-pointer' 
+              : 'bg-[#888ea1] text-[#2a2d43] shadow-[4px_4px_0px_0px_#0f0c0c] cursor-not-allowed opacity-80'
+          }`}
         >
-          IDENTIFY &amp; PLAY <ChevronRight size={20} />
+          <span className="skew-x-6 block">IDENTIFY & PLAY</span>
+          <ChevronRight size={24} className="skew-x-6 stroke-[3px]" />
         </button>
-        {!capturedData && (
-          <p className="text-center text-light-gray/30 text-xs mt-3 font-space-mono">
-            Scan or upload an instrument photo first
-          </p>
-        )}
       </div>
     </div>
   );
