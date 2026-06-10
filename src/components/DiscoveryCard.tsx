@@ -58,127 +58,171 @@ export function DiscoveryCard({ profile, onContinue, onBack }: DiscoveryCardProp
   }, [isFlipped]);
 
   return (
-    <div className="min-h-screen bg-obsidian/95 flex flex-col items-center justify-center p-6 relative overflow-hidden backdrop-blur-md pb-12 md:pb-16 pb-safe">
-      {/* Background ambient light */}
-      <div className="absolute top-[-10%] left-[-25%] w-[90%] h-[60%] bg-crimson/15 rounded-full blur-[130px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-25%] w-[90%] h-[60%] bg-gold/10 rounded-full blur-[130px] pointer-events-none" />
+    <div className="min-h-screen bg-[#2a2d43] flex flex-col items-center justify-start p-4 pt-10 md:pt-12 relative overflow-hidden overflow-x-hidden pb-12 md:pb-16 pb-safe z-0">
+      
+      {/* Halftone Background Pattern */}
+      <div 
+        className="absolute inset-0 z-[-3] opacity-30 pointer-events-none" 
+        style={{ backgroundImage: 'radial-gradient(#da2d46 2px, transparent 2px)', backgroundSize: '20px 20px' }}
+      />
+      
+      {/* Sharp Diagonal Background Cut */}
+      <div className="absolute top-0 left-0 w-[120%] h-[35%] bg-[#0f0c0c] -skew-y-3 -translate-y-10 z-[-2] border-b-[8px] border-[#da2d46]" />
 
       <div className="w-full max-w-sm relative z-10 pb-12 flex flex-col items-center">
-        {/* Header Bar with Back Button */}
+        
+        {/* Header Bar */}
         <div className="flex items-center justify-between mb-6 w-full">
           <button 
             onClick={onBack}
-            className="px-3 py-1.5 rounded-lg bg-dark-slate/30 border border-pale-pink/10 hover:border-crimson/50 hover:bg-dark-slate/50 text-pale-pink hover:text-crimson transition-all duration-200 flex items-center justify-center gap-1.5 font-orbitron text-[10px] font-bold tracking-widest uppercase"
+            className="px-4 py-2 bg-[#f0dde0] border-[3px] border-[#0f0c0c] hover:bg-[#da2d46] text-[#0f0c0c] transition-all flex items-center gap-1.5 font-orbitron text-[10px] md:text-xs font-black tracking-widest uppercase -skew-x-6 shadow-[3px_3px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none"
           >
-            <ArrowLeft size={14} /> BACK
+            <ArrowLeft size={16} className="skew-x-6 stroke-[3px]" /> 
+            <span className="skew-x-6 hidden sm:block">ABORT</span>
           </button>
           
-          <div className="text-right">
-            <span className="font-space-mono text-[9px] text-crimson font-black tracking-[0.2em] uppercase block">
-              DISCOVERY
+          <div className="bg-[#0f0c0c] border-[3px] border-[#da2d46] px-3 py-1 -skew-x-6 shadow-[4px_4px_0px_0px_#da2d46]">
+            <span className="font-space-mono text-[9px] md:text-xs text-[#f0dde0] font-black tracking-widest uppercase skew-x-6 block">
+              ACQUISITION
             </span>
           </div>
         </div>
 
-        <div className="text-center mb-6">
-          <h2 className="font-orbitron font-black text-light-gray text-xl tracking-widest uppercase mb-1 glow-crimson">
-            NEW DISCOVERY
+        {/* Title */}
+        <div className="text-center mb-8">
+          <h2 
+            className="font-orbitron font-black text-[#e0e5ed] text-3xl md:text-4xl tracking-widest uppercase leading-none"
+            style={{ textShadow: '4px 4px 0px #0f0c0c, -2px -2px 0px #da2d46' }}
+          >
+            NEW<br/>DISCOVERY
           </h2>
-          <p className="font-space-mono text-slate-gray text-[10px] tracking-widest uppercase">
-            Drag to inspect
-          </p>
+          <div className="inline-block bg-[#0f0c0c] border-[2px] border-[#e0e5ed] px-2 py-0.5 mt-3 -skew-x-6 shadow-[2px_2px_0px_0px_#da2d46] animate-comic-pulse">
+            <p className="font-space-mono text-[#e0e5ed] text-[10px] tracking-widest uppercase font-bold skew-x-6">
+              [ Drag to inspect ]
+            </p>
+          </div>
         </div>
 
-      {/* 3D Scene Container */}
-      <div 
-        className="relative w-full max-w-sm aspect-[3/4] perspective-1000 cursor-grab active:cursor-grabbing"
-        onMouseDown={e => handleStart(e.clientX, e.clientY)}
-        onMouseMove={e => handleMove(e.clientX, e.clientY)}
-        onTouchStart={e => handleStart(e.touches[0].clientX, e.touches[0].clientY)}
-        onTouchMove={e => handleMove(e.touches[0].clientX, e.touches[0].clientY)}
-      >
-        {/* The Card */}
+        {/* 3D Scene Container */}
         <div 
-          ref={cardRef}
-          className="w-full h-full preserve-3d transition-transform duration-300 ease-out"
-          style={{ 
-            transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
-            // Intense glow scales with movement speed/rotation
-            boxShadow: Math.abs(rotation.x) > 5 || Math.abs(rotation.y) > 5 ? '0 0 30px rgba(218, 45, 70, 0.5)' : '0 0 10px rgba(42, 45, 67, 0.5)'
-          }}
+          className="relative w-full max-w-sm aspect-[3/4] perspective-1000 cursor-grab active:cursor-grabbing"
+          onMouseDown={e => handleStart(e.clientX, e.clientY)}
+          onMouseMove={e => handleMove(e.clientX, e.clientY)}
+          onTouchStart={e => handleStart(e.touches[0].clientX, e.touches[0].clientY)}
+          onTouchMove={e => handleMove(e.touches[0].clientX, e.touches[0].clientY)}
         >
-          {/* Front Face */}
-          <div className="absolute inset-0 backface-hidden bg-dark-slate border-2 border-slate-gray rounded-3xl overflow-hidden flex flex-col p-4">
-            <div className="flex-1 bg-obsidian rounded-2xl border border-light-gray/10 relative flex items-center justify-center overflow-hidden mb-4">
-              <img 
-                src={`data:${profile.imageMimeType};base64,${profile.imageBase64}`} 
-                alt={profile.instrument.name}
-                className="w-full h-full object-contain p-4 mix-blend-screen"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-dark-slate to-transparent mix-blend-multiply opacity-50" />
-            </div>
-            <div className="text-center pb-2">
-              <h3 className="font-orbitron font-black text-2xl text-light-gray">{profile.instrument.name}</h3>
-              <p className="font-space-mono text-xs text-pale-pink">{profile.instrument.category.toUpperCase()}</p>
-            </div>
-          </div>
-
-          {/* Back Face */}
+          {/* The Card */}
           <div 
-            className="absolute inset-0 backface-hidden bg-dark-slate border-2 border-slate-gray rounded-3xl overflow-hidden flex flex-col p-6"
-            style={{ transform: 'rotateY(180deg)' }}
+            ref={cardRef}
+            className="w-full h-full preserve-3d transition-transform duration-300 ease-out"
+            style={{ 
+              transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
+            }}
           >
-            <h3 className="font-orbitron font-black text-xl text-light-gray border-b border-light-gray/20 pb-3 mb-4">
-              {profile.instrument.name}
-            </h3>
             
-            <div className="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
-              <div>
-                <span className="block font-orbitron text-[10px] text-slate-gray uppercase">Origin</span>
-                <span className="font-space-mono text-sm text-pale-pink">{profile.instrument.ethnoLinguisticGroup} - {profile.instrument.region}</span>
+            {/* Front Face */}
+            <div 
+              className="absolute inset-0 backface-hidden bg-[#e0e5ed] border-[6px] border-[#0f0c0c] flex flex-col p-4 transition-shadow duration-200"
+              style={{
+                boxShadow: isDragging ? '16px 16px 0px 0px #da2d46' : '8px 8px 0px 0px #0f0c0c'
+              }}
+            >
+              {/* Image Frame */}
+              <div className="flex-1 bg-[#0f0c0c] border-[4px] border-[#0f0c0c] relative flex items-center justify-center overflow-hidden mb-4 shadow-[inset_4px_4px_0px_0px_#da2d46]">
+                <img 
+                  src={`data:${profile.imageMimeType};base64,${profile.imageBase64}`} 
+                  alt={profile.instrument.name}
+                  className="w-full h-full object-contain p-4 mix-blend-screen opacity-90 contrast-125 saturate-50"
+                />
+                {/* Comic Halftone Overlay over image */}
+                <div 
+                  className="absolute inset-0 opacity-20 pointer-events-none mix-blend-overlay" 
+                  style={{ backgroundImage: 'radial-gradient(#f0dde0 2px, transparent 2px)', backgroundSize: '8px 8px' }}
+                />
               </div>
               
-              <div>
-                <span className="block font-orbitron text-[10px] text-slate-gray uppercase">Classification</span>
-                <span className="font-space-mono text-sm text-pale-pink">{profile.instrument.hornbostelSachs}</span>
+              {/* Front Label */}
+              <div className="text-left border-t-[6px] border-[#0f0c0c] pt-3 flex flex-col">
+                <h3 className="font-orbitron font-black text-2xl md:text-3xl text-[#0f0c0c] uppercase leading-none tracking-tighter">
+                  {profile.instrument.name}
+                </h3>
+                <div className="bg-[#0f0c0c] px-2 py-0.5 mt-2 w-fit -skew-x-6">
+                  <p className="font-space-mono text-[10px] md:text-xs text-[#da2d46] font-bold tracking-widest uppercase skew-x-6">
+                    {profile.instrument.category} CLASS
+                  </p>
+                </div>
               </div>
+            </div>
 
-              <div>
-                <span className="block font-orbitron text-[10px] text-slate-gray uppercase">Purpose</span>
-                <p className="font-space-mono text-sm text-light-gray leading-relaxed">{profile.instrument.culturalPurpose}</p>
+            {/* Back Face (Dossier) */}
+            <div 
+              className="absolute inset-0 backface-hidden bg-[#2a2d43] border-[6px] border-[#0f0c0c] flex flex-col p-5 transition-shadow duration-200"
+              style={{ 
+                transform: 'rotateY(180deg)',
+                boxShadow: isDragging ? '-16px 16px 0px 0px #da2d46' : '-8px 8px 0px 0px #0f0c0c'
+              }}
+            >
+              {/* Back Header Tag */}
+              <div className="bg-[#da2d46] border-[4px] border-[#0f0c0c] px-3 py-2 -skew-x-2 shadow-[4px_4px_0px_0px_#0f0c0c] mb-5">
+                <h3 className="font-orbitron font-black text-xl text-[#0f0c0c] uppercase skew-x-2 tracking-widest text-center">
+                  {profile.instrument.name}
+                </h3>
               </div>
+              
+              {/* Scrollable Data Container */}
+              <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
+                
+                <div className="bg-[#0f0c0c] p-3 border-[3px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#da2d46]">
+                  <span className="block font-space-mono text-[9px] text-[#da2d46] font-black uppercase tracking-widest border-b-[2px] border-[#da2d46]/30 pb-1 mb-1.5">Origin</span>
+                  <span className="font-orbitron font-bold text-xs text-[#e0e5ed] uppercase leading-snug">{profile.instrument.ethnoLinguisticGroup} - {profile.instrument.region}</span>
+                </div>
+                
+                <div className="bg-[#0f0c0c] p-3 border-[3px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#da2d46]">
+                  <span className="block font-space-mono text-[9px] text-[#da2d46] font-black uppercase tracking-widest border-b-[2px] border-[#da2d46]/30 pb-1 mb-1.5">Classification</span>
+                  <span className="font-orbitron font-bold text-xs text-[#e0e5ed] uppercase leading-snug">{profile.instrument.hornbostelSachs}</span>
+                </div>
 
-              <div>
-                <span className="block font-orbitron text-[10px] text-slate-gray uppercase">Description</span>
-                <p className="font-space-mono text-sm text-light-gray/80 leading-relaxed">{profile.instrument.description}</p>
+                <div className="bg-[#e0e5ed] p-3 border-[3px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c]">
+                  <span className="block font-space-mono text-[9px] text-[#0f0c0c] font-black uppercase tracking-widest border-b-[2px] border-[#0f0c0c]/30 pb-1 mb-1.5">Purpose</span>
+                  <p className="font-space-mono text-xs text-[#0f0c0c] font-bold leading-relaxed">{profile.instrument.culturalPurpose}</p>
+                </div>
+
+                <div className="bg-[#e0e5ed] p-3 border-[3px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c]">
+                  <span className="block font-space-mono text-[9px] text-[#0f0c0c] font-black uppercase tracking-widest border-b-[2px] border-[#0f0c0c]/30 pb-1 mb-1.5">Description</span>
+                  <p className="font-space-mono text-xs text-[#0f0c0c] font-bold leading-relaxed">{profile.instrument.description}</p>
+                </div>
+
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="mt-12 w-full max-w-sm">
-        <button 
-          onClick={onContinue}
-          className="w-full py-5 rounded-2xl font-orbitron text-sm font-bold tracking-widest uppercase
-            bg-gradient-to-r from-crimson to-pale-pink text-obsidian
-            hover:shadow-lg hover:shadow-crimson/40 active:scale-[0.98]
-            transition-all duration-200 flex items-center justify-center gap-3"
-        >
-          PLAY INSTRUMENT <ChevronRight size={20} />
-        </button>
-      </div>
+        {/* Continue Button */}
+        <div className="mt-10 w-full max-w-sm relative z-10">
+          <button 
+            onClick={onContinue}
+            className="w-full py-4 bg-[#da2d46] border-[6px] border-[#0f0c0c] font-orbitron text-sm md:text-base font-black tracking-widest uppercase text-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[10px_10px_0px_0px_#0f0c0c] active:translate-y-2 active:translate-x-2 active:shadow-none transition-all flex items-center justify-center gap-3 -skew-x-6"
+          >
+            <span className="skew-x-6">PLAY INSTRUMENT</span> <ChevronRight size={24} className="skew-x-6 stroke-[3px]" />
+          </button>
+        </div>
 
       </div>
 
-      {/* Required CSS for 3D */}
       <style>{`
         .perspective-1000 { perspective: 1000px; }
         .preserve-3d { transform-style: preserve-3d; }
         .backface-hidden { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #da2d46; border-radius: 4px; }
+        
+        @keyframes comic-pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(0.95); opacity: 0.9; }
+        }
+        .animate-comic-pulse { animation: comic-pulse 1.5s ease-in-out infinite; }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0f0c0c; border-left: 2px solid #2a2d43; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #da2d46; border: 1px solid #0f0c0c; }
       `}</style>
     </div>
   );
