@@ -88,7 +88,6 @@ export function PipelineConsole({ status, instrumentName }: PipelineConsoleProps
           const Icon = PHASE_ICONS[phase] ?? Zap;
           const isDone = isComplete || currentPhaseIndex > idx;
           const isActive = currentPhaseIndex === idx && !isComplete && !isError;
-          const isPending = currentPhaseIndex < idx && !isComplete;
           const isParallel = phase === 'phase2-acoustic' || phase === 'phase3-mapping';
 
           let panelStyles = 'bg-[#2a2d43] text-[#888ea1] border-[#0f0c0c] opacity-60';
