@@ -17,7 +17,7 @@ interface GameBoardProps {
 
 export function GameBoard({ profile, onQuit, onFinish }: GameBoardProps) {
   const [activeLanes, setActiveLanes] = useState<Set<number>>(new Set());
-  const [hitIndicator, setHitIndicator] = useState<{ type: 'perfect' | 'good' | 'miss', text: string, id: number } | null>(null);
+  const [hitIndicator, setHitIndicator] = useState<{ type: 'Tadhana' | 'Ganda' | 'Sablay', text: string, id: number } | null>(null);
   const [showAlert, setShowAlert] = useState(true);
 
   // Ensure AudioContext is running
@@ -38,8 +38,8 @@ export function GameBoard({ profile, onQuit, onFinish }: GameBoardProps) {
 
   const handlePassiveMiss = useCallback(() => {
     setHitIndicator({
-      type: 'miss',
-      text: 'MISS',
+      type: 'Sablay',
+      text: 'SABLAY',
       id: Math.random()
     });
     setTimeout(() => setHitIndicator(null), 400);
@@ -94,8 +94,8 @@ export function GameBoard({ profile, onQuit, onFinish }: GameBoardProps) {
       setTimeout(() => setHitIndicator(null), 500);
     } else if (gameState.isPlaying) {
       setHitIndicator({
-        type: 'miss',
-        text: 'MISS',
+        type: 'Sablay',
+        text: 'SABLAY',
         id: Math.random()
       });
       setTimeout(() => setHitIndicator(null), 400);
@@ -222,7 +222,7 @@ export function GameBoard({ profile, onQuit, onFinish }: GameBoardProps) {
               key={hitIndicator.id}
               className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 pointer-events-none flex items-center justify-center"
             >
-              {hitIndicator.type === 'perfect' && (
+              {hitIndicator.type === 'Tadhana' && (
                 <div className="relative animate-comic-hit-pop">
                   <div className="absolute inset-0 bg-[#da2d46] blur-md scale-125 -z-10" />
                   <span 
@@ -233,7 +233,7 @@ export function GameBoard({ profile, onQuit, onFinish }: GameBoardProps) {
                   </span>
                 </div>
               )}
-              {hitIndicator.type === 'good' && (
+              {hitIndicator.type === 'Ganda' && (
                 <span 
                   className="font-orbitron font-black text-[#e0e5ed] text-4xl md:text-5xl italic tracking-tight block animate-comic-hit-pop"
                   style={{ textShadow: '4px 4px 0px #0f0c0c' }}
@@ -241,7 +241,7 @@ export function GameBoard({ profile, onQuit, onFinish }: GameBoardProps) {
                   {hitIndicator.text}
                 </span>
               )}
-              {hitIndicator.type === 'miss' && (
+              {hitIndicator.type === 'Sablay' && (
                 <span 
                   className="font-orbitron font-black italic tracking-widest block text-4xl md:text-6xl animate-comic-glitch line-through decoration-[#da2d46] decoration-[8px]"
                 >
