@@ -36,7 +36,6 @@ export function GameBoard({ profile, onQuit, onFinish }: GameBoardProps) {
     if (onFinish) onFinish(state);
   }, [onFinish]);
 
-  // FIX: Callback uses hook-safe state
   const handlePassiveMiss = useCallback(() => {
     setHitIndicator({
       type: 'miss',
@@ -182,27 +181,29 @@ export function GameBoard({ profile, onQuit, onFinish }: GameBoardProps) {
 
       {/* Disclaimers (Comic Warning Box) */}
       {profile.isFallback && showAlert && (
-        <div className="absolute top-24 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 md:px-8 z-50 animate-comic-float">
-          <div className="bg-[#f0dde0] border-[4px] border-[#0f0c0c] text-[#0f0c0c] text-xs md:text-sm font-space-mono font-bold p-4 shadow-[6px_6px_0px_0px_#da2d46] -skew-x-2 relative pr-10">
-            
-            <button 
-              onClick={() => setShowAlert(false)}
-              className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center border-[3px] border-[#0f0c0c] bg-[#da2d46] text-[#0f0c0c] hover:bg-[#0f0c0c] hover:text-[#da2d46] transition-colors skew-x-2 active:translate-y-0.5 active:translate-x-0.5"
-            >
-              <X size={16} className="stroke-[4px]" />
-            </button>
+        <div className="absolute top-24 left-0 right-0 px-4 flex justify-center z-50 pointer-events-none">
+          <div className="w-full max-w-2xl animate-comic-float pointer-events-auto">
+            <div className="bg-[#f0dde0] border-[4px] border-[#0f0c0c] text-[#0f0c0c] text-xs md:text-sm font-space-mono font-bold p-3 md:p-4 shadow-[4px_4px_0px_0px_#da2d46] md:shadow-[6px_6px_0px_0px_#da2d46] -skew-x-2 relative pr-10">
+              
+              <button 
+                onClick={() => setShowAlert(false)}
+                className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center border-[3px] border-[#0f0c0c] bg-[#da2d46] text-[#0f0c0c] hover:bg-[#0f0c0c] hover:text-[#da2d46] transition-colors skew-x-2 active:translate-y-0.5 active:translate-x-0.5"
+              >
+                <X size={16} className="stroke-[4px]" />
+              </button>
 
-            {profile.fallbackReason === 'not-instrument' ? (
-              <p className="skew-x-2">
-                <span className="inline-block bg-[#0f0c0c] text-[#da2d46] px-2 py-0.5 mr-2 font-orbitron uppercase tracking-widest -skew-x-6">! WARNING</span> 
-                Object scanned is not recognized. Booting fallback profile: <span className="font-black border-b-2 border-[#da2d46]">{profile.instrument.name}</span>.
-              </p>
-            ) : (
-              <p className="skew-x-2">
-                <span className="inline-block bg-[#0f0c0c] text-[#da2d46] px-2 py-0.5 mr-2 font-orbitron uppercase tracking-widest -skew-x-6">! ALERT</span> 
-                Acoustic data fragments missing. Loaded closest cultural equivalent for simulation.
-              </p>
-            )}
+              {profile.fallbackReason === 'not-instrument' ? (
+                <p className="skew-x-2">
+                  <span className="inline-block bg-[#0f0c0c] text-[#da2d46] px-2 py-0.5 mr-2 font-orbitron uppercase tracking-widest -skew-x-6">! WARNING</span> 
+                  Object scanned is not recognized. Booting fallback profile: <span className="font-black border-b-2 border-[#da2d46]">{profile.instrument.name}</span>.
+                </p>
+              ) : (
+                <p className="skew-x-2">
+                  <span className="inline-block bg-[#0f0c0c] text-[#da2d46] px-2 py-0.5 mr-2 font-orbitron uppercase tracking-widest -skew-x-6">! ALERT</span> 
+                  Acoustic data fragments missing. Loaded closest cultural equivalent for simulation.
+                </p>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -292,9 +293,10 @@ export function GameBoard({ profile, onQuit, onFinish }: GameBoardProps) {
           100% { transform: scale(1); }
         }
         
+        /* FIX: Removed translateX(-50%) from the keyframes so it doesn't break Flexbox centering! */
         @keyframes comic-float {
-          0%, 100% { transform: translateX(-50%) translateY(0); }
-          50% { transform: translateX(-50%) translateY(-6px); }
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-6px); }
         }
 
         .animate-comic-hit-pop { animation: comic-hit-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }

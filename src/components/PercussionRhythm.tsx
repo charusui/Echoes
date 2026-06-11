@@ -46,7 +46,7 @@ export function PercussionRhythm({ profile, notes, gameState, onLaneHit, activeL
     return mapping.lanes.map((lane) => {
       const isActive = activeLanes.has(lane.id);
       
-      // Render a heavy comic-style drum hit zone
+      // RESTORED: Render a heavy comic-style drum hit zone
       const visualContent = (
         <div className={`w-16 h-16 md:w-24 md:h-24 border-[4px] md:border-[6px] border-[#0f0c0c] transition-all duration-75 flex items-center justify-center z-20 rounded-full
             ${isActive 
