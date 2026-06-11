@@ -35,30 +35,32 @@ function InvalidateMapSize() {
   return null;
 }
 
+// Heavy Comic-Style Target Marker
 const customMarkerIcon = L.divIcon({
   html: `
-    <div style="position: relative; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
-      <div style="position: absolute; width: 30px; height: 30px; border-radius: 50%; background: rgba(218, 45, 70, 0.4); animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-      <div style="position: relative; width: 16px; height: 16px; border-radius: 50%; background: #da2d46; border: 2.5px solid #f0dde0; box-shadow: 0 0 10px #da2d46;"></div>
+    <div style="position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+      <div style="position: absolute; width: 32px; height: 32px; border: 4px solid #da2d46; transform: rotate(45deg);"></div>
+      <div style="position: relative; width: 16px; height: 16px; background: #da2d46; border: 3px solid #0f0c0c; box-shadow: 4px 4px 0px 0px #0f0c0c;"></div>
     </div>
   `,
   className: 'custom-marker-icon',
-  iconSize: [30, 30],
-  iconAnchor: [15, 15],
-  popupAnchor: [0, -15]
+  iconSize: [40, 40],
+  iconAnchor: [20, 20],
+  popupAnchor: [0, -20]
 });
 
+// Heavy Comic-Style User Marker (Cyan)
 const userMarkerIcon = L.divIcon({
   html: `
-    <div style="position: relative; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
-      <div style="position: absolute; width: 30px; height: 30px; border-radius: 50%; background: rgba(102, 252, 241, 0.4); animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-      <div style="position: relative; width: 16px; height: 16px; border-radius: 50%; background: #66FCF1; border: 2.5px solid #0f0c0c; box-shadow: 0 0 10px #66FCF1;"></div>
+    <div style="position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+      <div style="position: absolute; width: 32px; height: 32px; border: 4px solid #66FCF1; border-radius: 50%; animation: comic-ping 2s steps(2) infinite;"></div>
+      <div style="position: relative; width: 16px; height: 16px; border-radius: 50%; background: #66FCF1; border: 3px solid #0f0c0c; box-shadow: 4px 4px 0px 0px #0f0c0c;"></div>
     </div>
   `,
   className: 'user-marker-icon',
-  iconSize: [30, 30],
-  iconAnchor: [15, 15],
-  popupAnchor: [0, -15]
+  iconSize: [40, 40],
+  iconAnchor: [20, 20],
+  popupAnchor: [0, -20]
 });
 
 const DEFAULT_MUSEUMS = [
@@ -325,24 +327,15 @@ export function LocationServicesScreen({ onBack }: { onBack: () => void }) {
   };
 
   return (
-    <div className="h-screen w-screen bg-obsidian relative overflow-hidden">
-      {/* Header */}
-      <div className="absolute top-0 inset-x-0 z-[1000] p-4 bg-gradient-to-b from-obsidian via-obsidian/80 to-transparent flex justify-between items-start pointer-events-none">
-        <button
-          onClick={onBack}
-          className="w-10 h-10 rounded-full bg-dark-slate/85 border border-light-gray/20 flex items-center justify-center text-light-gray backdrop-blur-md pointer-events-auto active:scale-95 transition-all hover:bg-dark-slate"
-        >
-          <ChevronLeft size={24} />
-        </button>
-      </div>
-
+    <div className="h-screen w-screen bg-[#2a2d43] relative overflow-hidden">
+      
       {/* Map Container */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0 border-[6px] md:border-[12px] border-[#0f0c0c] pointer-events-auto">
         <MapContainer center={mapCenter} zoom={mapZoom} style={{ height: '100%', width: '100%' }} zoomControl={false}>
           <InvalidateMapSize />
           <ChangeView center={mapCenter} zoom={mapZoom} />
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            attribution='&copy; OpenStreetMap'
             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           />
 
@@ -350,20 +343,28 @@ export function LocationServicesScreen({ onBack }: { onBack: () => void }) {
           {museums.map(museum => (
             <Marker key={museum.id} position={[museum.lat, museum.lng]} icon={customMarkerIcon}>
               <Popup className="custom-popup">
-                <div className="p-1 max-w-[200px]">
-                  <h3 className="font-orbitron font-bold text-obsidian text-[13px] leading-tight mb-1">{museum.name}</h3>
-                  <p className="font-space-mono text-[9px] text-obsidian/70 mb-1.5 uppercase">{museum.region}</p>
+                <div className="p-1 max-w-[220px]">
+                  {/* Comic Header */}
+                  <div className="bg-[#0f0c0c] border-[3px] border-[#da2d46] px-2 py-1 -skew-x-2 shadow-[2px_2px_0px_0px_#da2d46] mb-3 w-fit">
+                    <h3 className="font-orbitron font-black text-[#f0dde0] text-[10px] md:text-xs leading-none skew-x-2 tracking-widest uppercase">
+                      {museum.name}
+                    </h3>
+                  </div>
+                  
+                  <p className="font-space-mono font-bold text-[9px] text-[#0f0c0c] mb-2 uppercase border-b-[2px] border-[#0f0c0c] pb-1 tracking-widest">
+                    LOC: {museum.region}
+                  </p>
                   
                   {museum.description && (
-                    <p className="text-[10px] text-obsidian/85 leading-relaxed italic mb-2 border-t border-obsidian/10 pt-1.5">
+                    <p className="font-space-mono text-[10px] text-[#0f0c0c] leading-relaxed mb-3">
                       {museum.description}
                     </p>
                   )}
 
-                  <p className="text-[10px] font-bold text-crimson mb-0.5">Exhibited Instruments:</p>
+                  <p className="font-space-mono text-[9px] font-black text-[#da2d46] mb-1.5 uppercase tracking-widest">ACQUIRED DATA:</p>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {museum.instruments.map((inst: string) => (
-                      <span key={inst} className="bg-obsidian/5 px-1.5 py-0.5 rounded text-[9px] text-obsidian border border-obsidian/10 font-space-mono">
+                      <span key={inst} className="bg-[#e0e5ed] px-1.5 py-0.5 text-[9px] text-[#0f0c0c] border-[2px] border-[#0f0c0c] font-space-mono font-bold shadow-[2px_2px_0px_0px_#0f0c0c] uppercase">
                         {inst}
                       </span>
                     ))}
@@ -376,50 +377,60 @@ export function LocationServicesScreen({ onBack }: { onBack: () => void }) {
           {/* Render User Location if available */}
           {userLocation && (
             <Marker position={userLocation} icon={userMarkerIcon}>
-              <Popup>
-                <div className="p-1 text-obsidian font-space-mono text-xs font-bold">
-                  You are here
+              <Popup className="custom-popup user-popup">
+                <div className="p-1 text-[#0f0c0c] font-orbitron text-[10px] font-black uppercase tracking-widest text-center">
+                  USER SIGNAL
                 </div>
               </Popup>
             </Marker>
           )}
         </MapContainer>
+
+        {/* Diagonal Screen Tint Overlay (Pointer events none so you can still click the map) */}
+        <div className="absolute inset-0 z-10 pointer-events-none mix-blend-overlay opacity-30" style={{ backgroundImage: 'linear-gradient(45deg, #da2d46 25%, transparent 25%, transparent 50%, #da2d46 50%, #da2d46 75%, transparent 75%, transparent)' }} />
+      </div>
+
+      {/* Header Back Button */}
+      <div className="absolute top-4 left-4 z-[1000] pointer-events-none">
+        <button
+          onClick={onBack}
+          className="w-12 h-12 bg-[#f0dde0] border-[4px] border-[#0f0c0c] flex items-center justify-center text-[#0f0c0c] pointer-events-auto shadow-[4px_4px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all -skew-x-6"
+        >
+          <ChevronLeft size={28} className="skew-x-6 stroke-[4px]" />
+        </button>
       </div>
 
       {/* Control Panel (Bottom) */}
-      <div className="absolute bottom-0 inset-x-0 z-[1000] p-4 bg-gradient-to-t from-obsidian via-obsidian/95 to-transparent">
-        <div className="glass-card p-4 rounded-2xl border border-pale-pink/20 shadow-2xl relative overflow-hidden bg-dark-slate/60 backdrop-blur-md">
+      <div className="absolute bottom-4 inset-x-4 z-[1000] flex justify-center pointer-events-none">
+        <div className="w-full max-w-lg bg-[#2a2d43] border-[6px] border-[#0f0c0c] p-4 shadow-[12px_12px_0px_0px_#0f0c0c] pointer-events-auto -skew-x-1">
           
-          {/* Sparkle Glow for AI Radar */}
-          <div className="absolute -top-10 -right-10 w-24 h-24 bg-crimson/10 rounded-full blur-xl pointer-events-none" />
-
-          <h2 className="font-orbitron font-black text-light-gray text-xs tracking-wider mb-3 flex items-center justify-between">
+          <h2 className="font-orbitron font-black text-[#e0e5ed] text-sm tracking-widest mb-3 flex items-center justify-between skew-x-1 uppercase">
             <span className="flex items-center gap-2">
-              <MapPin size={16} className="text-crimson" /> INDIGENOUS RADAR
+              <MapPin size={18} className="text-[#da2d46] stroke-[3px]" /> INDIGENOUS RADAR
             </span>
             {isSearchingAI && (
-              <span className="flex items-center gap-1 text-[9px] font-space-mono text-crimson animate-pulse">
-                <Sparkles size={10} /> AI CONSULTING...
+              <span className="flex items-center gap-1 text-[10px] font-space-mono text-[#f0dde0] bg-[#da2d46] px-2 py-0.5 border-[2px] border-[#0f0c0c] animate-comic-pulse shadow-[2px_2px_0px_0px_#0f0c0c]">
+                <Sparkles size={12} className="stroke-[3px]" /> AI ACTIVE
               </span>
             )}
           </h2>
           
-          <form onSubmit={handleSearch} className="flex gap-2 mb-3">
+          <form onSubmit={handleSearch} className="flex gap-2 mb-3 skew-x-1">
             <div className="flex-1 relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-light-gray/40" />
+              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#888ea1] stroke-[3px]" />
               <input
                 type="text"
-                placeholder="Search region, city or museum..."
+                placeholder="SEARCH REGION OR MUSEUM..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 disabled={isSearchingAI}
-                className="w-full bg-obsidian border border-light-gray/10 rounded-xl py-2.5 pl-9 pr-3 text-xs text-light-gray focus:border-crimson/50 focus:ring-1 focus:ring-crimson/50 transition-all outline-none font-space-mono"
+                className="w-full bg-[#e0e5ed] border-[4px] border-[#0f0c0c] py-3 pl-10 pr-3 text-xs md:text-sm text-[#0f0c0c] font-space-mono font-bold focus:outline-none focus:border-[#da2d46] transition-all placeholder:text-[#888ea1] placeholder:uppercase shadow-[4px_4px_0px_0px_#0f0c0c] disabled:opacity-50"
               />
             </div>
             <button 
               type="submit" 
               disabled={isSearchingAI || !searchQuery.trim()}
-              className="bg-crimson text-obsidian font-bold px-4 rounded-xl text-xs font-orbitron hover:shadow-lg hover:shadow-crimson/30 active:scale-95 transition-all disabled:opacity-50"
+              className="bg-[#da2d46] text-[#0f0c0c] border-[4px] border-[#0f0c0c] font-black px-4 md:px-6 text-sm font-orbitron shadow-[4px_4px_0px_0px_#0f0c0c] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all disabled:opacity-50 uppercase tracking-widest"
             >
               FIND
             </button>
@@ -428,38 +439,53 @@ export function LocationServicesScreen({ onBack }: { onBack: () => void }) {
           <button
             onClick={handleUseMyLocation}
             disabled={isLocating || isSearchingAI}
-            className="w-full py-3 rounded-xl bg-crimson/10 border border-crimson/30 text-crimson font-space-mono text-xs flex items-center justify-center gap-2 hover:bg-crimson/20 active:scale-95 transition-all"
+            className="w-full py-4 bg-[#e0e5ed] border-[4px] border-[#0f0c0c] text-[#0f0c0c] font-orbitron font-black text-sm tracking-widest flex items-center justify-center gap-3 shadow-[4px_4px_0px_0px_#0f0c0c] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all disabled:opacity-50 uppercase skew-x-1"
           >
             {isLocating ? (
-              <div className="w-4 h-4 border-2 border-crimson border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-[3px] border-[#0f0c0c] border-t-transparent rounded-full animate-spin" />
             ) : (
-              <Navigation size={14} />
+              <Navigation size={18} className="stroke-[3px]" />
             )}
             {isLocating ? 'DETERMINING GPS...' : 'SCAN NEAR MY POSITION'}
           </button>
         </div>
       </div>
 
-      {/* Global CSS for the Leaflet popup */}
+      {/* Global CSS for the Leaflet popup and animations */}
       <style>{`
-        @keyframes ping {
-          75%, 100% {
-            transform: scale(2.2);
-            opacity: 0;
-          }
+        @keyframes comic-ping {
+          0% { transform: scale(1); opacity: 1; border-width: 4px; }
+          100% { transform: scale(2.5); opacity: 0; border-width: 1px; }
         }
+        @keyframes comic-pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(0.95); opacity: 0.9; }
+        }
+        .animate-comic-pulse { animation: comic-pulse 1s ease-in-out infinite; }
+        
+        /* Restyled Leaflet Popups for Comic Book Look */
         .leaflet-popup-content-wrapper {
           background-color: #f0dde0; /* pale pink */
           color: #0f0c0c;
-          border-radius: 16px;
-          border: 2px solid #da2d46;
-          box-shadow: 0 4px 20px rgba(218, 45, 70, 0.3);
+          border-radius: 0px !important;
+          border: 4px solid #0f0c0c !important;
+          box-shadow: 6px 6px 0px 0px #0f0c0c !important;
+          transform: skewX(-2deg);
         }
         .leaflet-popup-tip {
-          background-color: #da2d46;
+          background-color: #0f0c0c !important;
+          width: 20px !important;
+          height: 20px !important;
+          margin-top: -10px !important;
         }
         .custom-popup .leaflet-popup-content {
-          margin: 10px 12px;
+          margin: 12px 14px !important;
+          transform: skewX(2deg);
+        }
+        /* Specific override for user location popup */
+        .user-popup .leaflet-popup-content-wrapper {
+          background-color: #66FCF1;
+          box-shadow: 4px 4px 0px 0px #0f0c0c !important;
         }
       `}</style>
     </div>
