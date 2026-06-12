@@ -6,7 +6,7 @@ interface DevMenuProps {
   onOpenStudentSession: () => void;
 }
 
-const DEV_STORAGE_KEY = 'echoes_dev_mode';
+// const DEV_STORAGE_KEY = 'echoes_dev_mode';
 
 /** Returns true if the dev menu should be visible */
 export function isDevMenuEnabled(): boolean {
