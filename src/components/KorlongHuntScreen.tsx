@@ -128,13 +128,13 @@ export function KorlongHuntScreen({ onBack, onDiscovered }: KorlongHuntScreenPro
       setSpawn({
         lat: 11.2730,
         lng: 125.7360, // Directly North
-        createdAt: Date.now(),
         expiresAt: Date.now() + 25 * 60 * 1000,
         nearSite: {
-          id: 'basey',
           name: 'Basey, Samar',
+          significance: 'Ancient abaca trade hub',
           lat: 11.2729,
           lng: 125.7360,
+          spawnRadiusMeters: 500,
           loreFragment: 'Near the 17th-century St. Michael the Archangel Church, faint echoes of an ancient two-stringed fiddle remain.'
         }
       });
