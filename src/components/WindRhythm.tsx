@@ -211,10 +211,10 @@ export function WindRhythm({ profile, notes, gameState, onLaneHit, activeLanes }
           const isHit = lane && activeLanes.has(lane.id);
           
           return (
-            <div key={idx} className="relative flex-1 flex justify-center items-center w-full group cursor-pointer"
-                 onPointerDown={(e) => { e.preventDefault(); openHole(idx); }} 
-                 onPointerUp={() => closeHole(idx)} 
-                 onPointerLeave={() => closeHole(idx)}
+            <div key={idx} className="relative flex-1 flex justify-center items-center w-full group cursor-pointer touch-none"
+                 onPointerDown={(e) => { e.preventDefault(); e.currentTarget.setPointerCapture(e.pointerId); openHole(idx); }} 
+                 onPointerUp={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); closeHole(idx); }} 
+                 onPointerCancel={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); closeHole(idx); }}
             >
               {/* Comic-style Flute Hole */}
               <div className={`w-12 h-12 md:w-16 md:h-16 rounded-full border-[6px] transition-all duration-75 relative z-10

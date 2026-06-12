@@ -123,17 +123,9 @@ function InnerApp() {
     setView('gameplay');
   }, []);
 
-  // 1. Scanner captures image → intercept for verification
-  const handleImageReady = useCallback(async (base64: string, mimeType: string, _mode: ScanMode) => {
-    // Store image and open verification overlay
-    setPendingImageData({ base64, mimeType });
-    setView('scanVerification');
-  }, []);
-
-  // 1b. Verification complete → run pipeline
-  const handleVerificationComplete = useCallback(async (verificationResult: VerificationResult) => {
-    if (!client || !pendingImageData) return;
-    const { base64, mimeType } = pendingImageData;
+  // Shared pipeline processor
+  const processImage = useCallback(async (base64: string, mimeType: string, verificationResult: VerificationResult) => {
+    if (!client) return;
     setPipelineImage({ base64, mimeType });
     setActiveProfile(null);
     setView('pipeline');
@@ -141,7 +133,8 @@ function InnerApp() {
     // XP multiplier based on verification method
     const xpMultiplier = verificationResult.method === 'gps' ? 1.0
       : verificationResult.method === 'webxr' ? 0.8
-      : 0.2; // community
+      : verificationResult.method === 'community' ? 0.2
+      : 0; // upload gives no XP
 
     try {
       const profile = await initializeInstrumentPipeline(
@@ -174,10 +167,10 @@ function InnerApp() {
         profile.instrument.name = matchedMaster.name;
         const isNew = recordScan(matchedMaster.name);
         if (isNew) {
-          addXP(Math.round(50 * xpMultiplier), 'discovery');
+          if (xpMultiplier > 0) addXP(Math.round(50 * xpMultiplier), 'discovery');
           setView('discoveryCard');
         } else {
-          addXP(Math.round(10 * xpMultiplier), 'scan');
+          if (xpMultiplier > 0) addXP(Math.round(10 * xpMultiplier), 'scan');
           setView('gameplay');
         }
       } else {
@@ -185,10 +178,10 @@ function InnerApp() {
         const isNewCustom = !progress.customProfiles || !progress.customProfiles[profileId];
         saveCustomProfile(profileId, profile);
         if (isNewCustom) {
-          addXP(Math.round(20 * xpMultiplier), 'custom_discovery');
+          if (xpMultiplier > 0) addXP(Math.round(20 * xpMultiplier), 'custom_discovery');
           setView('discoveryCard');
         } else {
-          addXP(Math.round(5 * xpMultiplier), 'custom_scan');
+          if (xpMultiplier > 0) addXP(Math.round(5 * xpMultiplier), 'custom_scan');
           setView('gameplay');
         }
       }
@@ -203,7 +196,22 @@ function InnerApp() {
       }
       setView('gameplay');
     }
-  }, [client, pendingImageData, activeProfile, recordScan, addXP, saveCustomProfile, addPendingReview, progress.customProfiles]);
+  }, [client, activeProfile, recordScan, addXP, saveCustomProfile, addPendingReview, progress.customProfiles]);
+
+  const handleVerificationComplete = useCallback(async (verificationResult: VerificationResult) => {
+    if (!pendingImageData) return;
+    processImage(pendingImageData.base64, pendingImageData.mimeType, verificationResult);
+  }, [pendingImageData, processImage]);
+
+  // 1. Scanner captures image → intercept for verification
+  const handleImageReady = useCallback(async (base64: string, mimeType: string, mode: ScanMode) => {
+    if (mode === 'upload') {
+      processImage(base64, mimeType, { method: 'upload', timestamp: new Date().toISOString() });
+    } else {
+      setPendingImageData({ base64, mimeType });
+      setView('scanVerification');
+    }
+  }, [processImage]);
 
   const handleVerificationCancel = useCallback(() => {
     setPendingImageData(null);
@@ -262,8 +270,8 @@ function InnerApp() {
 
   return (
     <div className="min-h-screen bg-obsidian text-light-gray overflow-x-hidden">
-      {/* Dev Menu — always rendered, self-hides when not in dev mode */}
-      <DevMenu onOpenStudentSession={() => setView('teachableStudent')} />
+      {/* Dev Menu — only show on map screen */}
+      {view === 'map' && <DevMenu onOpenStudentSession={() => setView('teachableStudent')} />}
       {view === 'title' && (
         <TitleScreen onStart={handleStartTitle} />
       )}
