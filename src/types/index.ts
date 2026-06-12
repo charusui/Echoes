@@ -48,6 +48,17 @@ export interface InputMapping {
   lanes: Lane[];
 }
 
+// ─── Verification ────────────────────────────────────────────────────────────
+
+export type VerificationMethod = 'gps' | 'webxr' | 'community';
+
+export interface VerificationResult {
+  method: VerificationMethod;
+  venue?: string | null;
+  ticketId?: string;
+  timestamp: string;
+}
+
 // ─── Fused Active Instrument (Phase 5 output) ─────────────────────────────────
 
 export interface ActiveInstrumentProfile {
@@ -58,6 +69,7 @@ export interface ActiveInstrumentProfile {
   imageMimeType: string;
   isFallback?: boolean;
   fallbackReason?: 'not-instrument' | 'error' | 'map-selection';
+  verificationResult?: VerificationResult;
 }
 
 // ─── Gameplay ─────────────────────────────────────────────────────────────────
@@ -121,7 +133,7 @@ export interface PipelineStatus {
 
 // ─── App Views ────────────────────────────────────────────────────────────────
 
-export type AppView = 'title' | 'onboarding' | 'map' | 'locationServices' | 'setup' | 'pipeline' | 'discoveryCard' | 'gameplay' | 'quiz' | 'story' | 'results' | 'teachMode' | 'collection' | 'scanner';
+export type AppView = 'title' | 'onboarding' | 'map' | 'locationServices' | 'setup' | 'pipeline' | 'discoveryCard' | 'gameplay' | 'quiz' | 'story' | 'results' | 'teachMode' | 'collection' | 'scanner' | 'scanVerification' | 'korlongHunt' | 'teachableStudent';
 
 // ─── User Progress & Persistence ──────────────────────────────────────────────
 
@@ -137,6 +149,7 @@ export interface UserProgress {
   unlockedRegions: string[];
   streakShields: number;
   customProfiles: Record<string, any>; // Stores Omit<ActiveInstrumentProfile, 'imageBase64'>
+  pendingReviews: VerificationResult[];
 }
 
 // ─── Quizzes & Story ──────────────────────────────────────────────────────────

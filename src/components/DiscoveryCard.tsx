@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import type { ActiveInstrumentProfile } from '../types';
 import { ChevronRight, ArrowLeft } from 'lucide-react';
+import { IMAGE_BASE } from '../constants';
 
 interface DiscoveryCardProps {
   profile: ActiveInstrumentProfile;
@@ -130,7 +131,7 @@ export function DiscoveryCard({ profile, onContinue, onBack }: DiscoveryCardProp
               {/* Image Frame */}
               <div className="flex-1 bg-[#0f0c0c] border-[4px] border-[#0f0c0c] relative flex items-center justify-center overflow-hidden mb-4 shadow-[inset_4px_4px_0px_0px_#da2d46]">
                 <img 
-                  src={`data:${profile.imageMimeType};base64,${profile.imageBase64}`} 
+                  src={profile.imageBase64 ? `data:${profile.imageMimeType};base64,${profile.imageBase64}` : `/${IMAGE_BASE}${profile.instrument.name.toLowerCase().replace(/ /g, '_')}.png`} 
                   alt={profile.instrument.name}
                   className="w-full h-full object-contain p-4 mix-blend-screen opacity-90 contrast-125 saturate-50"
                 />

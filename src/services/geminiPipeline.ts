@@ -133,27 +133,19 @@ CRITICAL INSTRUCTION: Completely IGNORE the color of the instrument. In real lif
 
 CRITICAL CONTEXT: This application specializes in traditional Philippine Visayan instruments. Look closely for visual cues that match:
 
-**Western Visayas:**
+**Western Visayas (Verified Scannable):**
 - Tultugan: A bamboo percussion instrument. Look for suspended or mounted bamboo nodes/tubes that are struck with bamboo sticks.
-- Buktot: A Visayan lute. CRITICAL VISUAL CUE: The body features a distinct, deep, rounded, bowl-like back (traditionally a coconut shell) with a flat soundboard. It has a neck with tuning pegs and typically exactly 4 strings.
-- Pasiyak: A water whistle. CRITICAL VISUAL CUE: Shaped like a bird, featuring a mouthpiece at the tail section. 
-- Tulali: A slender bamboo transverse or vertical flute with a blowing hole and finger holes along a single long tube.
-- Tugo: A cylindrical or barrel-shaped drum. CRITICAL VISUAL CUE: It has a membrane/skin head on top, tensioned by distinct laced cords running down the sides of the wooden body.
-- Litgit: A traditional bowed string instrument. Look for a slender main body (often bamboo or wood) with a small soundbox, strings, and it is played with a curved stringed bow.
+- Tulali: A slender bamboo end-blown or transverse flute with a blowing hole and finger holes along a single long tube. Played for courtship and messaging.
+- Litgit: A dual-purpose bamboo instrument — it can be bowed like a fiddle OR scraped like an idiophone. Look for a small resonating body with strings or a notched surface.
 
-**Central Visayas:**
+**Central Visayas (Verified Scannable):**
 - Cebuano Gitara: Handcrafted acoustic guitar. Look for the classic figure-eight guitar shape, a flat top and flat back, a central circular soundhole, and exactly 6 strings.
-- Bandurria: A plucked melody instrument. CRITICAL VISUAL CUE: A teardrop or pear-shaped body with a FLAT back. It has a short, wide neck, a central soundhole, and exactly 14 strings arranged in courses. (Do not confuse with the bowl-backed Buktot).
+- Bandurria: A plucked melody instrument. CRITICAL VISUAL CUE: A teardrop or pear-shaped body with a FLAT back. It has a short, wide neck, a central soundhole, and exactly 14 strings arranged in courses.
 - Laud: A string instrument similar to the bandurria. CRITICAL VISUAL CUE: Teardrop-shaped body with a flat back, but features a visibly longer neck than the bandurria. Often features f-holes instead of a central round soundhole. Has 14 strings.
 - Octavina: A Rondalla string instrument. CRITICAL VISUAL CUE: Shaped exactly like a miniature acoustic guitar (figure-eight body) with a flat back, but has a shorter neck and 14 strings like a bandurria.
 - Bajo de Uñas: A massive acoustic bass. Very large, upright stringed bass instrument (resembling a large cello or double bass), featuring a carved body, f-holes, a long neck, and typically 4 thick strings.
 
-**Eastern Visayas:**
-- Lantoy: A small, simple, slender bamboo mouth or nose flute with small finger holes. 
-- Subing: A bamboo jaw harp. CRITICAL VISUAL CUE: A small, slender, flat piece of carved bamboo with a highly flexible, distinct vibrating tongue in the center and a pointed/tapered end.
-- Korlong: A rare two-stringed fiddle. Look for a small body, often made from bamboo or coconut, and exactly two strings, played with a distinct bow.
-
-If the image matches or closely resembles one of these, identify it accurately as the Philippine instrument. Provide its ethno-linguistic group (e.g., Visayan), cultural purpose, and Hornbostel-Sachs classification.
+If the image matches or closely resembles one of these Visayan instruments, identify it accurately.
 If it is ANY other instrument from around the world (e.g. American drum kit, modern electric guitar, piano), identify it accurately and provide its general origin instead. 
 Classify it strictly as one of: string, percussion, or wind.
 If the image is NOT a musical instrument at all, you MUST set the name exactly to "NOT_AN_INSTRUMENT".

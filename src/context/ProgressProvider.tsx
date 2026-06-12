@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { UserProgress } from '../types';
+import type { UserProgress, VerificationResult } from '../types';
+import { MASTER_INSTRUMENTS, FIELD_MISSION_INSTRUMENTS, KORLONG_INSTRUMENT } from '../constants';
 
 interface ProgressContextType {
   progress: UserProgress;
@@ -11,6 +12,8 @@ interface ProgressContextType {
   useStreakShield: () => boolean;
   getClassroomLeaderboard: () => { name: string; xp: number; isPlayer: boolean }[];
   saveCustomProfile: (profileId: string, profileData: any) => void;
+  unlockAllInstruments: () => void;
+  addPendingReview: (result: VerificationResult) => void;
 }
 
 const DEFAULT_PROGRESS: UserProgress = {
@@ -23,6 +26,7 @@ const DEFAULT_PROGRESS: UserProgress = {
   unlockedRegions: ['Western Visayas'],
   streakShields: 0,
   customProfiles: {},
+  pendingReviews: [],
 };
 
 const ProgressContext = createContext<ProgressContextType | null>(null);
@@ -69,6 +73,29 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
         ...prev.customProfiles,
         [profileId]: profileData
       }
+    }));
+  };
+
+  const unlockAllInstruments = () => {
+    const allNames = [
+      ...MASTER_INSTRUMENTS.map(i => i.name),
+      ...FIELD_MISSION_INSTRUMENTS.map(i => i.name),
+      KORLONG_INSTRUMENT.name,
+    ];
+    setProgress(prev => ({
+      ...prev,
+      xp: Math.max(prev.xp, 999),
+      level: 5,
+      unlockedInstruments: allNames,
+      unlockedRegions: ['Western Visayas', 'Central Visayas', 'Eastern Visayas'],
+      badges: [...new Set([...prev.badges, 'trailblazer', 'collector', 'legend'])],
+    }));
+  };
+
+  const addPendingReview = (result: VerificationResult) => {
+    setProgress(prev => ({
+      ...prev,
+      pendingReviews: [...(prev.pendingReviews ?? []), result],
     }));
   };
 
@@ -124,7 +151,9 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ProgressContext.Provider value={{
-      progress, addXP, recordScan, updateStreak, unlockRegion, awardBadge, useStreakShield, getClassroomLeaderboard, saveCustomProfile
+      progress, addXP, recordScan, updateStreak, unlockRegion, awardBadge,
+      useStreakShield, getClassroomLeaderboard, saveCustomProfile,
+      unlockAllInstruments, addPendingReview,
     }}>
       {children}
     </ProgressContext.Provider>

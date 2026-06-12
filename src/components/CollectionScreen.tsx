@@ -1,51 +1,60 @@
 import { useState } from 'react';
-import { ChevronLeft, BookOpen, Music, Tag, FileText, CheckCircle, HelpCircle } from 'lucide-react';
+import { ChevronLeft, BookOpen, Music, Tag, FileText, CheckCircle, HelpCircle, Flag, Star } from 'lucide-react';
 import { useProgress } from '../context/ProgressProvider';
-import { IMAGE_BASE, MASTER_INSTRUMENTS } from '../constants';
+import { IMAGE_BASE, MASTER_INSTRUMENTS, FIELD_MISSION_INSTRUMENTS, KORLONG_INSTRUMENT } from '../constants';
 
+// Updated verified scanning locations matching the new confirmed dataset
 const SCANNING_LOCATIONS: Record<string, string[]> = {
-  'tultugan': ['National Museum of Western Visayas', 'Museo Iloilo', 'Maasin Heritage Display'],
-  'buktot': ['Jose R. Gullas Halad Museum', 'National Museum of Western Visayas', 'USC Museum'],
-  'pasiyak': ['Jose R. Gullas Halad Museum', 'Museo Sugbo', 'UPV MACH'],
-  'tulali': ['National Museum of Western Visayas', 'UPV MACH', 'SLT Cultural Gallery'],
-  'tugo': ['Museo Iloilo', 'National Museum of Western Visayas', 'UPV MACH'],
-  'litguit': ['National Museum of Western Visayas', 'UPV MACH', 'Jose R. Gullas Halad Museum'],
-  'cebuano gitara': ['Alegre Guitar Factory', 'Jose R. Gullas Halad Museum', 'USC Museum'],
-  'bandurria': ['Alegre Guitar Factory', 'Jose R. Gullas Halad Museum', 'USC Museum'],
-  'laud': ['Jose R. Gullas Halad Museum', 'USC Museum', 'Alegre Guitar Factory'],
-  'octavina': ['Jose R. Gullas Halad Museum', 'USC Museum', 'Alegre Guitar Factory'],
-  'bajo de uñas': ['Jose R. Gullas Halad Museum', 'USC Museum', 'Alegre Guitar Factory'],
-  'lantoy': ['Samar Archaeological Museum', 'People\'s Center', 'USC Museum'],
-  'subing': ['Samar Archaeological Museum', 'National Museum of Western Visayas', 'Leyte Capitol Museum'],
-  'korlong': ['Samar Archaeological Museum', 'USC Museum', 'National Museum Exhibitions']
+  'tultugan':      ['Tultugan Festival, Maasin, Iloilo'],
+  'tulali':        ['UPV Museum of Art & Cultural Heritage (UPV MACH), Iloilo City'],
+  'litgit':        ['UPV Museum of Art & Cultural Heritage (UPV MACH), Iloilo City'],
+  'cebuano gitara':['Alegre Guitar Factory, Lapu-Lapu City', 'National Museum of the Philippines – Cebu'],
+  'bandurria':     ['Alegre Guitar Factory Showroom, Abuno, Lapu-Lapu City'],
+  'laud':          ['Ferangeli Guitar Handcrafter Showroom, Cebu'],
+  'octavina':      ['Ferangeli Guitar Handcrafter Showroom, Cebu'],
+  'bajo de uñas':  ['Alegre Guitar Factory Showroom, Abuno, Lapu-Lapu City'],
 };
 
 interface CollectionScreenProps {
   onBack: () => void;
   onSelectInstrument: (name: string) => void;
   onSelectCustomProfile: (profile: any) => void;
+  onOpenKorlongHunt: () => void;
+  onOpenScanner: () => void;
 }
 
-export function CollectionScreen({ onBack, onSelectInstrument, onSelectCustomProfile }: CollectionScreenProps) {
+export function CollectionScreen({ onBack, onSelectInstrument, onSelectCustomProfile, onOpenKorlongHunt, onOpenScanner }: CollectionScreenProps) {
   const { progress } = useProgress();
   const [activeTab, setActiveTab] = useState<'Western Visayas' | 'Central Visayas' | 'Eastern Visayas'>('Western Visayas');
   const [selectedHintInstrument, setSelectedHintInstrument] = useState<any | null>(null);
   const [activeDetail, setActiveDetail] = useState<{ type: 'master' | 'custom', data: any } | null>(null);
 
   const regionInstruments = MASTER_INSTRUMENTS.filter(inst => inst.region === activeTab);
-  const totalInstruments = MASTER_INSTRUMENTS.length;
+  const regionFieldMissions = FIELD_MISSION_INSTRUMENTS.filter(inst => inst.region === activeTab);
+  
+  // Total includes verified + field missions + Korlong
+  const totalInstruments = MASTER_INSTRUMENTS.length + FIELD_MISSION_INSTRUMENTS.length + 1;
   const unlockedList = progress.unlockedInstruments.map(u => u.toLowerCase());
   
-  const totalUnlocked = MASTER_INSTRUMENTS.filter(inst => 
-    unlockedList.includes(inst.id.toLowerCase()) || unlockedList.includes(inst.name.toLowerCase())
-  ).length;
+  const isUnlocked = (id: string, name: string) =>
+    unlockedList.includes(id.toLowerCase()) || unlockedList.includes(name.toLowerCase());
+
+  const totalUnlocked = [
+    ...MASTER_INSTRUMENTS,
+    ...FIELD_MISSION_INSTRUMENTS,
+    KORLONG_INSTRUMENT,
+  ].filter(inst => isUnlocked(inst.id, inst.name)).length;
 
   const getRegionStats = (regionName: string) => {
-    const total = MASTER_INSTRUMENTS.filter(inst => inst.region === regionName).length;
-    const unlocked = MASTER_INSTRUMENTS.filter(inst => 
-      inst.region === regionName && 
-      (unlockedList.includes(inst.id.toLowerCase()) || unlockedList.includes(inst.name.toLowerCase()))
-    ).length;
+    const masterCount = MASTER_INSTRUMENTS.filter(i => i.region === regionName).length;
+    const fieldCount = FIELD_MISSION_INSTRUMENTS.filter(i => i.region === regionName).length;
+    const korlongCount = KORLONG_INSTRUMENT.region === regionName ? 1 : 0;
+    const total = masterCount + fieldCount + korlongCount;
+    const unlocked = [
+      ...MASTER_INSTRUMENTS.filter(i => i.region === regionName),
+      ...FIELD_MISSION_INSTRUMENTS.filter(i => i.region === regionName),
+      ...(KORLONG_INSTRUMENT.region === regionName ? [KORLONG_INSTRUMENT] : []),
+    ].filter(i => isUnlocked(i.id, i.name)).length;
     return { unlocked, total };
   };
 
@@ -55,6 +64,8 @@ export function CollectionScreen({ onBack, onSelectInstrument, onSelectCustomPro
 
   const customProfileKeys = Object.keys(progress.customProfiles || {});
   const hasCustomProfiles = customProfileKeys.length > 0;
+
+  const korlongUnlocked = isUnlocked(KORLONG_INSTRUMENT.id, KORLONG_INSTRUMENT.name);
 
   return (
     // Base Container - Dark Slate
@@ -140,7 +151,7 @@ export function CollectionScreen({ onBack, onSelectInstrument, onSelectCustomPro
 
               <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
                 {regionInstruments.map(inst => {
-                  const isUnlocked = unlockedList.includes(inst.id.toLowerCase()) || unlockedList.includes(inst.name.toLowerCase());
+                  const unlocked = isUnlocked(inst.id, inst.name);
                   const isSelected = activeDetail?.type === 'master' && activeDetail.data.id === inst.id;
                   
                   return (
@@ -150,25 +161,137 @@ export function CollectionScreen({ onBack, onSelectInstrument, onSelectCustomPro
                       className={`aspect-square border-[4px] transition-all duration-200 relative group overflow-hidden ${
                         isSelected 
                           ? 'border-[#f0dde0] bg-[#da2d46] shadow-[6px_6px_0px_0px_#0f0c0c] translate-y-1 translate-x-1' 
-                          : isUnlocked 
+                          : unlocked 
                             ? 'border-[#0f0c0c] bg-[#e0e5ed] shadow-[6px_6px_0px_0px_#0f0c0c] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[8px_8px_0px_0px_#0f0c0c]' 
                             : 'border-[#0f0c0c] bg-[#2a2d43] shadow-[4px_4px_0px_0px_#0f0c0c] opacity-80 hover:bg-[#0f0c0c]'
                       }`}
                     >
-                      {/* CSS Speedlines for active/unlocked items */}
-                      {isUnlocked && <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, #0f0c0c 10px, #0f0c0c 12px)' }} />}
+                      {unlocked && <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, #0f0c0c 10px, #0f0c0c 12px)' }} />}
                       
                       <img 
-                        src={isUnlocked ? `${IMAGE_BASE}${inst.id}.png` : `${IMAGE_BASE}locked_${inst.id}.png`} 
+                        src={unlocked ? `${IMAGE_BASE}${inst.id}.png` : `${IMAGE_BASE}locked_${inst.id}.png`} 
                         alt={inst.name}
                         className={`w-full h-full object-contain p-4 relative z-10 transition-transform duration-300 ${
-                          isUnlocked ? 'drop-shadow-[4px_4px_0px_#0f0c0c] group-hover:scale-110' : 'opacity-40 grayscale'
+                          unlocked ? 'drop-shadow-[4px_4px_0px_#0f0c0c] group-hover:scale-110' : 'opacity-40 grayscale'
                         }`}
                       />
                     </button>
                   );
                 })}
               </div>
+
+              {/* ── Field Mission Ghost Cards ── */}
+              {regionFieldMissions.length > 0 && (
+                <div className="mt-6">
+                  <div className="inline-block bg-[#0f0c0c] border-[3px] border-[#888ea1] px-3 py-1 -skew-x-6 shadow-[3px_3px_0px_0px_#888ea1] mb-4">
+                    <h3 className="font-orbitron text-xs font-black tracking-widest text-[#888ea1] skew-x-6 uppercase flex items-center gap-2">
+                      <Flag size={13} className="text-[#888ea1]" />
+                      FIELD MISSIONS — UNVERIFIED
+                    </h3>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {regionFieldMissions.map(inst => {
+                      const unlocked = isUnlocked(inst.id, inst.name);
+                      return (
+                        <div key={inst.id} className="aspect-square border-[4px] border-dashed border-[#888ea1] bg-[#0f0c0c] relative flex flex-col items-center justify-center p-3 gap-2">
+                          {/* Silhouette */}
+                          <img
+                            src={`${IMAGE_BASE}locked_${inst.id}.png`}
+                            alt={inst.name}
+                            className="w-14 h-14 object-contain opacity-20 grayscale"
+                          />
+                          <div className="text-center">
+                            <p className="font-orbitron font-black text-[9px] text-[#888ea1] tracking-widest uppercase leading-tight">
+                              {unlocked ? inst.name : '???'}
+                            </p>
+                          </div>
+                          {/* Field Mission badge */}
+                          <div className="absolute top-1 left-1 bg-[#888ea1] border-[2px] border-[#0f0c0c] px-1 py-0 -skew-x-6">
+                            <span className="font-space-mono text-[7px] font-black text-[#0f0c0c] skew-x-6 block">⚑ FIELD</span>
+                          </div>
+                          {!unlocked && (
+                            <button
+                              onClick={onOpenScanner}
+                              className="absolute bottom-1 right-1 bg-[#2a2d43] border-[2px] border-[#888ea1] px-1 py-0 font-space-mono text-[7px] font-black text-[#888ea1] hover:border-[#da2d46] hover:text-[#da2d46] transition-colors"
+                            >
+                              SUBMIT
+                            </button>
+                          )}
+                          {unlocked && (
+                            <div className="absolute bottom-1 right-1 bg-[#da2d46] border-[2px] border-[#0f0c0c] px-1 py-0">
+                              <span className="font-space-mono text-[7px] font-black text-[#0f0c0c]">✓ FOUND</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {/* Cryptic hint for first field mission in region */}
+                  {regionFieldMissions[0] && !isUnlocked(regionFieldMissions[0].id, regionFieldMissions[0].name) && (
+                    <div className="mt-3 bg-[#0f0c0c] border-[3px] border-dashed border-[#888ea1] p-3">
+                      <p className="font-space-mono text-[10px] text-[#888ea1] italic leading-relaxed">
+                        {regionFieldMissions[0].crypticHint}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── Korlong Legendary Card (Eastern Visayas only) ── */}
+              {activeTab === 'Eastern Visayas' && (
+                <div className="mt-6">
+                  <div className="inline-block bg-[#0f0c0c] border-[3px] border-[#da2d46] px-3 py-1 -skew-x-6 shadow-[3px_3px_0px_0px_#da2d46] mb-4">
+                    <h3 className="font-orbitron text-xs font-black tracking-widest text-[#da2d46] skew-x-6 uppercase flex items-center gap-2">
+                      <Star size={13} className="text-[#da2d46]" />
+                      LEGENDARY — GPS HUNT ONLY
+                    </h3>
+                  </div>
+                  <div
+                    className="border-[4px] border-[#da2d46] bg-[#0f0c0c] p-4 shadow-[6px_6px_0px_0px_#da2d46] relative overflow-hidden"
+                    style={{ backgroundImage: 'radial-gradient(rgba(218,45,70,0.08) 1px, transparent 1px)', backgroundSize: '10px 10px' }}
+                  >
+                    {/* Animated pulse border */}
+                    <div className="absolute inset-0 border-[3px] border-[#da2d46] opacity-30 animate-pulse" />
+
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 border-[3px] border-[#da2d46] flex items-center justify-center shrink-0 bg-[#2a2d43]">
+                        <img
+                          src={`${IMAGE_BASE}locked_${KORLONG_INSTRUMENT.id}.png`}
+                          alt={KORLONG_INSTRUMENT.name}
+                          className={`w-12 h-12 object-contain ${korlongUnlocked ? 'opacity-100' : 'opacity-30 grayscale'}`}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-orbitron font-black text-lg text-[#da2d46] tracking-widest uppercase">
+                            {korlongUnlocked ? KORLONG_INSTRUMENT.name : '???'}
+                          </h3>
+                          <span className="inline-block bg-[#da2d46] border-[2px] border-[#0f0c0c] px-2 py-0 font-space-mono text-[8px] font-black text-[#0f0c0c] -skew-x-6">
+                            <span className="skew-x-6 block">★ LEGENDARY</span>
+                          </span>
+                        </div>
+                        <p className="font-space-mono text-[10px] text-[#888ea1] mt-1 leading-relaxed">
+                          {korlongUnlocked
+                            ? KORLONG_INSTRUMENT.hint
+                            : 'Critically endangered. Cannot be scanned. Only GPS proximity reveals this instrument.'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={onOpenKorlongHunt}
+                      className={`w-full mt-4 py-3 border-[4px] border-[#0f0c0c] font-orbitron font-black text-sm tracking-widest uppercase -skew-x-6 shadow-[4px_4px_0px_0px_#0f0c0c] transition-all flex items-center justify-center gap-2 ${
+                        korlongUnlocked
+                          ? 'bg-[#e0e5ed] text-[#0f0c0c] hover:bg-[#da2d46]'
+                          : 'bg-[#da2d46] text-[#0f0c0c] hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_#0f0c0c] active:translate-y-1 active:shadow-none'
+                      }`}
+                    >
+                      <Star size={16} className="skew-x-6" />
+                      <span className="skew-x-6">{korlongUnlocked ? 'HUNT AGAIN' : 'START HUNT'}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Custom Profiles Area */}

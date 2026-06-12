@@ -69,26 +69,74 @@ export interface MasterInstrument {
 export const IMAGE_BASE = 'src/assets/instruments/';
 
 export const MASTER_INSTRUMENTS: MasterInstrument[] = [
-  // Western Visayas (6 Instruments)
-  { id: 'tultugan', name: 'Tultugan', region: 'Western Visayas', hint: 'Massive bamboo drums struck with sticks.' },
-  { id: 'buktot', name: 'Buktot', region: 'Western Visayas', hint: 'A four-stringed native lute crafted from a dried coconut husk.' },
-  { id: 'pasiyak', name: 'Pasiyak', region: 'Western Visayas', hint: 'A unique bamboo whistle that requires water inside to produce a bird-like chirp.' },
-  { id: 'tulali', name: 'Tulali', region: 'Western Visayas', hint: 'A ceremonial bamboo flute with six finger holes.' },
-  { id: 'tugo', name: 'Tugo', region: 'Western Visayas', hint: 'A guitar-shaped wooden drum played by hitting the base with the hands.' },
-  { id: 'litgit', name: 'Litgit', region: 'Western Visayas', hint: 'A wooden percussion instrument scraped with a stick to mimic the sound of maracas.' },
-  
-  // Central Visayas (5 Instruments)
-  { id: 'cebuano_gitara', name: 'Cebuano Gitara', region: 'Central Visayas', hint: 'The iconic, handcrafted 6-string acoustic guitar.' },
-  { id: 'bandurria', name: 'Bandurria', region: 'Central Visayas', hint: 'A 14-string pear-shaped lead melody instrument played with a plectrum.' },
-  { id: 'laud', name: 'Laud', region: 'Central Visayas', hint: 'A teardrop-shaped string instrument tuned lower than the bandurria.' },
-  { id: 'octavina', name: 'Octavina', region: 'Central Visayas', hint: 'A small, guitar-shaped Rondalla string instrument.' },
-  { id: 'bajo_de_unas', name: 'Bajo de Uñas', region: 'Central Visayas', hint: 'The giant acoustic bass that provides the foundational rhythm.' },
+  // Western Visayas (2 Verified)
+  { id: 'tultugan', name: 'Tultugan', region: 'Western Visayas', hint: 'Massive bamboo drums used for communication and rhythms. Found at the Tultugan Festival in Maasin, Iloilo.' },
+  { id: 'tulali',   name: 'Tulali',   region: 'Western Visayas', hint: 'End-blown bamboo flute for courtship and encoded messaging. On display at UPV MACH, Iloilo City.' },
+  { id: 'litgit',   name: 'Litgit',   region: 'Western Visayas', hint: 'Dual-purpose bamboo bowed fiddle and scraped idiophone. On display at UPV MACH, Iloilo City.' },
 
-  // Eastern Visayas (3 Instruments)
-  { id: 'lantoy', name: 'Lantoy', region: 'Eastern Visayas', hint: 'A slender bamboo flute that can be played using the mouth or the nose.' },
-  { id: 'subing', name: 'Subing', region: 'Eastern Visayas', hint: 'A twangy, vibrating bamboo jaw harp.' },
-  { id: 'korlong', name: 'Korlong', region: 'Eastern Visayas', hint: 'A rare two-stringed fiddle traditionally utilizing abaca or horsehair strings.' },
+  // Central Visayas (5 Verified)
+  { id: 'cebuano_gitara', name: 'Cebuano Gitara', region: 'Central Visayas', hint: 'Highly crafted six-string acoustic guitar. Found at Alegre Guitar Factory, Lapu-Lapu City and the National Museum of the Philippines – Cebu.' },
+  { id: 'bandurria',      name: 'Bandurria',      region: 'Central Visayas', hint: '14-string, pear-shaped lead melodic instrument of the Rondalla. Found at Alegre Guitar Factory Showroom, Lapu-Lapu City.' },
+  { id: 'laud',           name: 'Laud',           region: 'Central Visayas', hint: 'Teardrop chordophone with f-holes, tuned an octave lower than the bandurria. Found at Ferangeli Guitar Handcrafter Showroom, Cebu.' },
+  { id: 'octavina',       name: 'Octavina',       region: 'Central Visayas', hint: 'Locally innovated, guitar-shaped chordophone serving a tenor role. Found at Ferangeli Guitar Handcrafter Showroom, Cebu.' },
+  { id: 'bajo_de_unas',   name: 'Bajo de Uñas',   region: 'Central Visayas', hint: 'Massive four-stringed acoustic bass plucked with a plectrum. Found at Alegre Guitar Factory Showroom, Lapu-Lapu City.' },
 ];
+
+// ─── Field Mission Instruments (no verified location — community-unlockable) ───────────
+// Visible in Collection as ghost cards. Players submit sightings via community review.
+
+export interface FieldMissionInstrument extends MasterInstrument {
+  crypticHint: string;
+}
+
+export const FIELD_MISSION_INSTRUMENTS: FieldMissionInstrument[] = [
+  {
+    id: 'buktot',
+    name: 'Buktot',
+    region: 'Western Visayas',
+    hint: 'A four-stringed native lute crafted from a dried coconut husk.',
+    crypticHint: 'Whispers of this coconut-bodied lute echo through the festivals of Panay. A barangay celebration may hold the answer...'
+  },
+  {
+    id: 'pasiyak',
+    name: 'Pasiyak',
+    region: 'Western Visayas',
+    hint: 'A unique bamboo whistle requiring water inside to produce a bird-like chirp.',
+    crypticHint: 'They say children still craft these near the rice paddies of Iloilo. Look where birds and water meet...'
+  },
+  {
+    id: 'tugo',
+    name: 'Tugo',
+    region: 'Western Visayas',
+    hint: 'A guitar-shaped wooden drum played by hitting the base with the hands.',
+    crypticHint: 'This drum’s voice is rare — perhaps a cultural center or local festival in Antique still keeps it alive...'
+  },
+  {
+    id: 'lantoy',
+    name: 'Lantoy',
+    region: 'Eastern Visayas',
+    hint: 'A slender bamboo flute that can be played using the mouth or the nose.',
+    crypticHint: 'The nose-flute tradition survives quietly. Seek out indigenous cultural communities in Samar or Leyte...'
+  },
+  {
+    id: 'subing',
+    name: 'Subing',
+    region: 'Eastern Visayas',
+    hint: 'A twangy, vibrating bamboo jaw harp.',
+    crypticHint: 'A jaw harp that hums with memory. Try the Leyte Cultural Center or ask elders in Basey, Samar...'
+  },
+];
+
+// ─── Korlong — Legendary GPS Hunt Instrument ────────────────────────────────────────
+// Not scannable. Discovered only via GPS proximity hunt.
+
+export const KORLONG_INSTRUMENT: MasterInstrument = {
+  id: 'korlong',
+  name: 'Korlong',
+  region: 'Eastern Visayas',
+  hint: 'Critically endangered two-stringed fiddle. Unverified in Visayas; likely restricted to climate-controlled national or private academic vaults due to rapid degradation.',
+};
+
 
 // ─── Fallback Instrument Profiles ─────────────────────────────────────────────
 // Used when the Gemini pipeline fails or image is unrecognizable

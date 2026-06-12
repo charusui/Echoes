@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import type { AppView, ActiveInstrumentProfile, ScanMode, PipelineStatus, GameplayState } from './types';
+import type { AppView, ActiveInstrumentProfile, ScanMode, PipelineStatus, GameplayState, VerificationResult } from './types';
 import { GeminiProvider } from './context/GeminiProvider';
 import { audioEngine } from './services/audioSynth';
 import { useGemini } from './context/GeminiProvider';
@@ -17,9 +17,13 @@ import { QuizScreen } from './components/QuizScreen';
 import { StoryScreen } from './components/StoryScreen';
 import { ResultsScreen } from './components/ResultsScreen';
 import { CollectionScreen } from './components/CollectionScreen';
+import { ScanVerificationScreen } from './components/ScanVerificationScreen';
+import { KorlongHuntScreen } from './components/KorlongHuntScreen';
+import { TeachableStudentScreen } from './components/TeachableStudentScreen';
+import { DevMenu } from './components/DevMenu';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { initializeInstrumentPipeline } from './services/geminiPipeline';
-import { MASTER_INSTRUMENTS, FALLBACK_PROFILES } from './constants';
+import { MASTER_INSTRUMENTS, FALLBACK_PROFILES, KORLONG_INSTRUMENT } from './constants';
 
 function InnerApp() {
   const { client } = useGemini();
@@ -33,8 +37,10 @@ function InnerApp() {
   const [instrumentName, setInstrumentName] = useState<string | undefined>();
   const [pipelineImage, setPipelineImage] = useState<{base64: string, mimeType: string} | null>(null);
   const [finalGameState, setFinalGameState] = useState<GameplayState | null>(null);
+  // Pending image held while ScanVerificationScreen runs
+  const [pendingImageData, setPendingImageData] = useState<{base64: string; mimeType: string} | null>(null);
 
-  const { recordScan, updateStreak, addXP, progress, saveCustomProfile } = useProgress();
+  const { recordScan, updateStreak, addXP, progress, saveCustomProfile, addPendingReview } = useProgress();
 
   useEffect(() => {
     updateStreak();
@@ -117,12 +123,25 @@ function InnerApp() {
     setView('gameplay');
   }, []);
 
-  // 1. Scanner Ready
+  // 1. Scanner captures image → intercept for verification
   const handleImageReady = useCallback(async (base64: string, mimeType: string, _mode: ScanMode) => {
-    if (!client) return;
+    // Store image and open verification overlay
+    setPendingImageData({ base64, mimeType });
+    setView('scanVerification');
+  }, []);
+
+  // 1b. Verification complete → run pipeline
+  const handleVerificationComplete = useCallback(async (verificationResult: VerificationResult) => {
+    if (!client || !pendingImageData) return;
+    const { base64, mimeType } = pendingImageData;
     setPipelineImage({ base64, mimeType });
     setActiveProfile(null);
     setView('pipeline');
+
+    // XP multiplier based on verification method
+    const xpMultiplier = verificationResult.method === 'gps' ? 1.0
+      : verificationResult.method === 'webxr' ? 0.8
+      : 0.2; // community
 
     try {
       const profile = await initializeInstrumentPipeline(
@@ -135,40 +154,41 @@ function InnerApp() {
         },
       );
 
+      // Attach verification result to profile
+      profile.verificationResult = verificationResult;
       setActiveProfile(profile);
       setInstrumentName(profile.instrument.name);
-      
+
+      if (verificationResult.method === 'community') {
+        addPendingReview(verificationResult);
+      }
+
       await new Promise(r => setTimeout(r, 1200));
-      
-      // Route based on master vs custom instrument
+
       const parsedName = profile.instrument.name;
       const matchedMaster = MASTER_INSTRUMENTS.find(
         inst => inst.name.toLowerCase() === parsedName.toLowerCase()
       );
 
       if (matchedMaster) {
-        // Master Visayan instrument
         profile.instrument.name = matchedMaster.name;
         const isNew = recordScan(matchedMaster.name);
         if (isNew) {
-          addXP(50, 'discovery');
+          addXP(Math.round(50 * xpMultiplier), 'discovery');
           setView('discoveryCard');
         } else {
-          addXP(10, 'scan');
+          addXP(Math.round(10 * xpMultiplier), 'scan');
           setView('gameplay');
         }
       } else {
-        // Custom instrument scanned
         const profileId = parsedName || `Custom Instrument ${Date.now()}`;
         const isNewCustom = !progress.customProfiles || !progress.customProfiles[profileId];
-        
         saveCustomProfile(profileId, profile);
-        
         if (isNewCustom) {
-          addXP(20, 'custom_discovery');
+          addXP(Math.round(20 * xpMultiplier), 'custom_discovery');
           setView('discoveryCard');
         } else {
-          addXP(5, 'custom_scan');
+          addXP(Math.round(5 * xpMultiplier), 'custom_scan');
           setView('gameplay');
         }
       }
@@ -176,8 +196,6 @@ function InnerApp() {
       console.error('[App] Pipeline error:', err);
       setPipelineStatus(prev => ({ ...prev, phase: 'error', error: err instanceof Error ? err.message : 'Unknown error', progress: 100 }));
       await new Promise(r => setTimeout(r, 2000));
-      
-      // Fallback
       if (!activeProfile) {
         const fallback = { ...FALLBACK_PROFILES.percussion, imageBase64: base64, imageMimeType: mimeType, isFallback: true };
         setActiveProfile(fallback);
@@ -185,7 +203,39 @@ function InnerApp() {
       }
       setView('gameplay');
     }
-  }, [client, activeProfile, recordScan, addXP, saveCustomProfile, progress.customProfiles]);
+  }, [client, pendingImageData, activeProfile, recordScan, addXP, saveCustomProfile, addPendingReview, progress.customProfiles]);
+
+  const handleVerificationCancel = useCallback(() => {
+    setPendingImageData(null);
+    setView('scanner');
+  }, []);
+
+  // Korlong discovered via GPS hunt
+  const handleKorlongDiscovered = useCallback(() => {
+    const isNew = recordScan(KORLONG_INSTRUMENT.name);
+    if (isNew) addXP(100, 'korlong_hunt');
+    // Build a minimal profile for the discovery card
+    const korlongProfile: ActiveInstrumentProfile = {
+      ...FALLBACK_PROFILES.string,
+      isFallback: true,
+      fallbackReason: 'map-selection',
+      imageBase64: '',
+      imageMimeType: '',
+    };
+    korlongProfile.instrument = {
+      ...FALLBACK_PROFILES.string.instrument,
+      name: KORLONG_INSTRUMENT.name,
+      localName: 'Korlong',
+      ethnoLinguisticGroup: 'Waray-Waray / Eastern Visayan',
+      culturalPurpose: 'Critically endangered two-stringed fiddle, rarely heard today',
+      category: 'string',
+      description: 'A critically endangered two-stringed fiddle from Eastern Visayas, traditionally using abaca or horsehair strings. One of the rarest instruments in the Visayan archipelago.',
+      region: 'Eastern Visayas',
+    };
+    setActiveProfile(korlongProfile);
+    setInstrumentName(KORLONG_INSTRUMENT.name);
+    setView('discoveryCard');
+  }, [recordScan, addXP]);
 
   // 3. Gameplay finishes
   const handleGameFinish = useCallback((gameState?: GameplayState) => {
@@ -212,6 +262,8 @@ function InnerApp() {
 
   return (
     <div className="min-h-screen bg-obsidian text-light-gray overflow-x-hidden">
+      {/* Dev Menu — always rendered, self-hides when not in dev mode */}
+      <DevMenu onOpenStudentSession={() => setView('teachableStudent')} />
       {view === 'title' && (
         <TitleScreen onStart={handleStartTitle} />
       )}
@@ -234,6 +286,8 @@ function InnerApp() {
           onBack={() => setView('map')} 
           onSelectInstrument={handleSelectInstrument}
           onSelectCustomProfile={handleSelectCustomProfile}
+          onOpenKorlongHunt={() => setView('korlongHunt')}
+          onOpenScanner={() => setView('scanner')}
         />
       )}
 
@@ -245,6 +299,33 @@ function InnerApp() {
         <Scanner 
           onImageReady={handleImageReady}
           onBack={handleQuit} 
+        />
+      )}
+
+      {/* Scan Verification Overlay */}
+      {view === 'scanVerification' && pendingImageData && (
+        <ScanVerificationScreen
+          imageBase64={pendingImageData.base64}
+          imageMimeType={pendingImageData.mimeType}
+          onVerified={handleVerificationComplete}
+          onCancel={handleVerificationCancel}
+        />
+      )}
+
+      {/* Korlong GPS Hunt */}
+      {view === 'korlongHunt' && (
+        <KorlongHuntScreen
+          onBack={() => setView('collection')}
+          onDiscovered={handleKorlongDiscovered}
+        />
+      )}
+
+      {/* Teachable Student */}
+      {view === 'teachableStudent' && (
+        <TeachableStudentScreen
+          unlockedInstruments={progress.unlockedInstruments}
+          onBack={() => setView('map')}
+          onSessionComplete={() => { addXP(30, 'teaching'); setView('map'); }}
         />
       )}
 
