@@ -10,7 +10,7 @@ const DEV_STORAGE_KEY = 'echoes_dev_mode';
 
 /** Returns true if the dev menu should be visible */
 export function isDevMenuEnabled(): boolean {
-  return import.meta.env.DEV || localStorage.getItem(DEV_STORAGE_KEY) === '1';
+  return true; // Forced to always show for testing
 }
 
 export function DevMenu({ onOpenStudentSession }: DevMenuProps) {
