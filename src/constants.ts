@@ -67,7 +67,7 @@ export interface MasterInstrument {
   extendedInfo?: string;
 }
 
-export const IMAGE_BASE = 'src/assets/instruments/';
+export const IMAGE_BASE = '/instruments/';
 
 export const MASTER_INSTRUMENTS: MasterInstrument[] = [
   // Western Visayas (2 Verified)
