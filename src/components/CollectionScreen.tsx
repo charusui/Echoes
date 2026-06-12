@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronLeft, BookOpen, Music, Tag, FileText, CheckCircle, HelpCircle, Flag, Star } from 'lucide-react';
 import { useProgress } from '../context/ProgressProvider';
 import { IMAGE_BASE, MASTER_INSTRUMENTS, FIELD_MISSION_INSTRUMENTS, KORLONG_INSTRUMENT } from '../constants';
@@ -28,6 +28,11 @@ export function CollectionScreen({ onBack, onSelectInstrument, onSelectCustomPro
   const [activeTab, setActiveTab] = useState<'Western Visayas' | 'Central Visayas' | 'Eastern Visayas'>('Western Visayas');
   const [selectedHintInstrument, setSelectedHintInstrument] = useState<any | null>(null);
   const [activeDetail, setActiveDetail] = useState<{ type: 'master' | 'custom', data: any } | null>(null);
+  const [isInfoExpanded, setIsInfoExpanded] = useState(false);
+
+  useEffect(() => {
+    setIsInfoExpanded(false);
+  }, [activeDetail]);
 
   const regionInstruments = MASTER_INSTRUMENTS.filter(inst => inst.region === activeTab);
   const regionFieldMissions = FIELD_MISSION_INSTRUMENTS.filter(inst => inst.region === activeTab);
@@ -413,9 +418,28 @@ export function CollectionScreen({ onBack, onSelectInstrument, onSelectCustomPro
                       {/* Rigid Caption Box for Text */}
                       <div className="flex-1 bg-[#f0dde0] border-[4px] border-[#0f0c0c] p-4 mb-6 shadow-[6px_6px_0px_0px_#0f0c0c]">
                         {isUnlocked ? (
-                          <p className="font-space-mono text-sm text-[#0f0c0c] font-bold leading-relaxed">
-                            {inst.hint}
-                          </p>
+                          <div className="flex flex-col h-full">
+                            <p className="font-space-mono text-sm text-[#0f0c0c] font-bold leading-relaxed flex-1">
+                              {inst.hint}
+                            </p>
+                            {inst.extendedInfo && !isInfoExpanded && (
+                              <div className="mt-4 text-center">
+                                <button 
+                                  onClick={() => setIsInfoExpanded(true)}
+                                  className="inline-block font-orbitron text-xs font-black tracking-widest text-[#da2d46] uppercase hover:underline decoration-2 underline-offset-4"
+                                >
+                                  [ READ MORE ]
+                                </button>
+                              </div>
+                            )}
+                            {isInfoExpanded && inst.extendedInfo && (
+                              <div className="mt-4 border-t-[3px] border-[#0f0c0c]/10 pt-4">
+                                <p className="font-space-mono text-sm text-[#0f0c0c] font-bold leading-relaxed">
+                                  {inst.extendedInfo}
+                                </p>
+                              </div>
+                            )}
+                          </div>
                         ) : (
                           <div>
                             <span className="block font-orbitron text-xs text-[#da2d46] font-black uppercase tracking-wider mb-2">Location Teaser:</span>

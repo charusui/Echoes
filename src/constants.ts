@@ -64,22 +64,23 @@ export interface MasterInstrument {
   name: string;
   region: string;
   hint: string;
+  extendedInfo?: string;
 }
 
 export const IMAGE_BASE = 'src/assets/instruments/';
 
 export const MASTER_INSTRUMENTS: MasterInstrument[] = [
   // Western Visayas (2 Verified)
-  { id: 'tultugan', name: 'Tultugan', region: 'Western Visayas', hint: 'Massive bamboo drums used for communication and rhythms. Found at the Tultugan Festival in Maasin, Iloilo.' },
-  { id: 'tulali',   name: 'Tulali',   region: 'Western Visayas', hint: 'End-blown bamboo flute for courtship and encoded messaging. On display at UPV MACH, Iloilo City.' },
-  { id: 'litgit',   name: 'Litgit',   region: 'Western Visayas', hint: 'Dual-purpose bamboo bowed fiddle and scraped idiophone. On display at UPV MACH, Iloilo City.' },
+  { id: 'tultugan', name: 'Tultugan', region: 'Western Visayas', hint: 'Massive bamboo drums used for communication and rhythms. Found at the Tultugan Festival in Maasin, Iloilo.', extendedInfo: 'Originating from Panay Island, the Tultugan is a traditional percussion instrument made from bamboo. It was historically used by natives for communication, signaling, and rhythmic accompaniment during tribal gatherings and rituals.' },
+  { id: 'tulali',   name: 'Tulali',   region: 'Western Visayas', hint: 'End-blown bamboo flute for courtship and encoded messaging. On display at UPV MACH, Iloilo City.', extendedInfo: 'The Tulali is an indigenous bamboo flute with six finger holes. It is traditionally played during courtship rituals and special occasions, producing a gentle, melancholic sound that carries emotional weight in Visayan culture.' },
+  { id: 'litgit',   name: 'Litgit',   region: 'Western Visayas', hint: 'Dual-purpose bamboo bowed fiddle and scraped idiophone. On display at UPV MACH, Iloilo City.', extendedInfo: 'The Litgit is a traditional two-stringed bowed instrument crafted from bamboo. Often played alongside other indigenous instruments, its rustic, scratching tone (resembling its name, which mimics the sound of friction) is a staple of early Visayan folk music.' },
 
   // Central Visayas (5 Verified)
-  { id: 'cebuano_gitara', name: 'Cebuano Gitara', region: 'Central Visayas', hint: 'Highly crafted six-string acoustic guitar. Found at Alegre Guitar Factory, Lapu-Lapu City and the National Museum of the Philippines – Cebu.' },
-  { id: 'bandurria',      name: 'Bandurria',      region: 'Central Visayas', hint: '14-string, pear-shaped lead melodic instrument of the Rondalla. Found at Alegre Guitar Factory Showroom, Lapu-Lapu City.' },
-  { id: 'laud',           name: 'Laud',           region: 'Central Visayas', hint: 'Teardrop chordophone with f-holes, tuned an octave lower than the bandurria. Found at Ferangeli Guitar Handcrafter Showroom, Cebu.' },
-  { id: 'octavina',       name: 'Octavina',       region: 'Central Visayas', hint: 'Locally innovated, guitar-shaped chordophone serving a tenor role. Found at Ferangeli Guitar Handcrafter Showroom, Cebu.' },
-  { id: 'bajo_de_unas',   name: 'Bajo de Uñas',   region: 'Central Visayas', hint: 'Massive four-stringed acoustic bass plucked with a plectrum. Found at Alegre Guitar Factory Showroom, Lapu-Lapu City.' },
+  { id: 'cebuano_gitara', name: 'Cebuano Gitara', region: 'Central Visayas', hint: 'Highly crafted six-string acoustic guitar. Found at Alegre Guitar Factory, Lapu-Lapu City and the National Museum of the Philippines – Cebu.', extendedInfo: 'The Cebuano guitar is renowned for its exceptional craftsmanship, primarily produced in Mactan, Cebu. Made from high-quality imported and local woods, these guitars are prized for their bright acoustic resonance and durable build.' },
+  { id: 'bandurria',      name: 'Bandurria',      region: 'Central Visayas', hint: '14-string, pear-shaped lead melodic instrument of the Rondalla. Found at Alegre Guitar Factory Showroom, Lapu-Lapu City.', extendedInfo: 'A vital part of the Philippine Rondalla ensemble, the Bandurria is a pear-shaped plucked lute with 14 strings. It typically plays the main melody and features a short neck, allowing for rapid, intricate picking.' },
+  { id: 'laud',           name: 'Laud',           region: 'Central Visayas', hint: 'Teardrop chordophone with f-holes, tuned an octave lower than the bandurria. Found at Ferangeli Guitar Handcrafter Showroom, Cebu.', extendedInfo: 'The Laud is a plectrum-plucked chordophone shaped like a teardrop with f-holes. Tuned an octave below the bandurria, it provides harmonic support and counter-melodies in the traditional Rondalla string band.' },
+  { id: 'octavina',       name: 'Octavina',       region: 'Central Visayas', hint: 'Locally innovated, guitar-shaped chordophone serving a tenor role. Found at Ferangeli Guitar Handcrafter Showroom, Cebu.', extendedInfo: 'Unique to the Philippines, the Octavina resembles a small acoustic guitar but is tuned like a Laud. It serves an alto or tenor role in the Rondalla, bridging the gap between the high-pitched bandurria and the deep acoustic bass.' },
+  { id: 'bajo_de_unas',   name: 'Bajo de Uñas',   region: 'Central Visayas', hint: 'Massive four-stringed acoustic bass plucked with a plectrum. Found at Alegre Guitar Factory Showroom, Lapu-Lapu City.', extendedInfo: 'The Bajo de Uñas is the largest instrument in the Rondalla ensemble. This massive four-stringed acoustic bass provides the rhythmic and harmonic foundation of the group, traditionally plucked using a heavy plectrum.' },
 ];
 
 // ─── Field Mission Instruments (no verified location — community-unlockable) ───────────
@@ -95,35 +96,40 @@ export const FIELD_MISSION_INSTRUMENTS: FieldMissionInstrument[] = [
     name: 'Buktot',
     region: 'Western Visayas',
     hint: 'A four-stringed native lute crafted from a dried coconut husk.',
-    crypticHint: 'Whispers of this coconut-bodied lute echo through the festivals of Panay. A barangay celebration may hold the answer...'
+    crypticHint: 'Whispers of this coconut-bodied lute echo through the festivals of Panay. A barangay celebration may hold the answer...',
+    extendedInfo: 'The Buktot, meaning "hunchback" in Visayan, is a native four-stringed lute. Its body is traditionally crafted from a dried coconut husk, which gives the instrument its distinct rounded back and a hollow, resonant sound.'
   },
   {
     id: 'pasiyak',
     name: 'Pasiyak',
     region: 'Western Visayas',
     hint: 'A unique bamboo whistle requiring water inside to produce a bird-like chirp.',
-    crypticHint: 'They say children still craft these near the rice paddies of Iloilo. Look where birds and water meet...'
+    crypticHint: 'They say children still craft these near the rice paddies of Iloilo. Look where birds and water meet...',
+    extendedInfo: 'The Pasiyak is a unique indigenous whistle made from a cut piece of bamboo. When a small amount of water is poured inside, blowing into it produces a warbling, bird-like chirp used for signaling or entertainment.'
   },
   {
     id: 'tugo',
     name: 'Tugo',
     region: 'Western Visayas',
     hint: 'A guitar-shaped wooden drum played by hitting the base with the hands.',
-    crypticHint: 'This drum’s voice is rare — perhaps a cultural center or local festival in Antique still keeps it alive...'
+    crypticHint: 'This drum’s voice is rare — perhaps a cultural center or local festival in Antique still keeps it alive...',
+    extendedInfo: 'The Tugo is a traditional wooden percussion instrument, distinctively carved into a guitar-like shape but played as a drum. Performers strike its hollowed base with their hands to produce deep, rhythmic beats.'
   },
   {
     id: 'lantoy',
     name: 'Lantoy',
     region: 'Eastern Visayas',
     hint: 'A slender bamboo flute that can be played using the mouth or the nose.',
-    crypticHint: 'The nose-flute tradition survives quietly. Seek out indigenous cultural communities in Samar or Leyte...'
+    crypticHint: 'The nose-flute tradition survives quietly. Seek out indigenous cultural communities in Samar or Leyte...',
+    extendedInfo: 'The Lantoy is a tiny bamboo flute of the Visayan people, often played by blowing through the nose or mouth. It produces a soft, ethereal tone and was traditionally played to appease nature spirits or during quiet courtship.'
   },
   {
     id: 'subing',
     name: 'Subing',
     region: 'Eastern Visayas',
     hint: 'A twangy, vibrating bamboo jaw harp.',
-    crypticHint: 'A jaw harp that hums with memory. Try the Leyte Cultural Center or ask elders in Basey, Samar...'
+    crypticHint: 'A jaw harp that hums with memory. Try the Leyte Cultural Center or ask elders in Basey, Samar...',
+    extendedInfo: 'The Subing is a traditional Visayan jaw harp made from a single, carefully carved piece of bamboo. Played by plucking the vibrating tongue while using the mouth as a resonator, it was often used for intimate communication and poetry.'
   },
 ];
 
@@ -135,6 +141,7 @@ export const KORLONG_INSTRUMENT: MasterInstrument = {
   name: 'Korlong',
   region: 'Eastern Visayas',
   hint: 'Critically endangered two-stringed fiddle. Unverified in Visayas; likely restricted to climate-controlled national or private academic vaults due to rapid degradation.',
+  extendedInfo: 'The Korlong is a critically endangered traditional fiddle of the Eastern Visayas. Crafted with two strings, it was historically used to accompany epic chanting and storytelling, though very few authentic pieces remain today.'
 };
 
 
