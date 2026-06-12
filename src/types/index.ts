@@ -50,7 +50,7 @@ export interface InputMapping {
 
 // ─── Verification ────────────────────────────────────────────────────────────
 
-export type VerificationMethod = 'gps' | 'webxr' | 'community';
+export type VerificationMethod = 'gps' | 'webxr' | 'community' | 'upload';
 
 export interface VerificationResult {
   method: VerificationMethod;

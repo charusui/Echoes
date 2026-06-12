@@ -256,19 +256,20 @@ export function WindEngine({ profile }: WindEngineProps) {
           {holes.map((isCovered, idx) => (
             <div key={idx} className="flex items-center gap-4 w-full justify-center relative">
               <span className="absolute -left-8 text-light-gray/40 font-space-mono text-xs">({idx + 1})</span>
-              <button
-                onMouseDown={() => openHole(idx)}
-                onMouseUp={() => closeHole(idx)}
-                onMouseLeave={() => closeHole(idx)}
-                onTouchStart={(e) => { e.preventDefault(); openHole(idx); }}
-                onTouchEnd={() => closeHole(idx)}
-                onTouchCancel={() => closeHole(idx)}
-                className={`w-12 h-12 rounded-full border-4 transition-all duration-75 select-none ${
-                  !isCovered
-                    ? 'bg-crimson/80 border-crimson shadow-[0_0_20px_rgba(254,213,107,0.7)] scale-110'
-                    : 'bg-obsidian border-crimson/60 shadow-[inset_0_0_15px_rgba(254,213,107,0.3)]'
-                }`}
-              />
+              <div
+                onPointerDown={(e) => { e.preventDefault(); e.currentTarget.setPointerCapture(e.pointerId); openHole(idx); }}
+                onPointerUp={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); closeHole(idx); }}
+                onPointerCancel={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); closeHole(idx); }}
+                className="p-6 -m-6 cursor-pointer touch-none flex items-center justify-center"
+              >
+                <div
+                  className={`w-12 h-12 rounded-full border-4 transition-all duration-75 select-none ${
+                    !isCovered
+                      ? 'bg-crimson/80 border-crimson shadow-[0_0_20px_rgba(254,213,107,0.7)] scale-110'
+                      : 'bg-obsidian border-crimson/60 shadow-[inset_0_0_15px_rgba(254,213,107,0.3)]'
+                  }`}
+                />
+              </div>
               <span className={`absolute -right-12 font-space-mono text-xs font-bold ${!isCovered ? 'text-crimson' : 'text-light-gray/40'}`}>
                 {!isCovered ? 'OPEN' : 'CLOSED'}
               </span>
