@@ -146,9 +146,47 @@ export function ScanVerificationScreen({
 
   // ── Step 3: Community ──────────────────────────────────────────────────────
 
-  const handleCommunitySubmit = useCallback(() => {
+  const handleCommunitySubmit = useCallback(async () => {
+    // Generate a tiny thumbnail specifically for local storage to prevent bloat
+    let thumbBase64 = imageBase64;
+    try {
+      const img = new Image();
+      img.src = `data:${imageMimeType};base64,${imageBase64}`;
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+      
+      const canvas = document.createElement('canvas');
+      const MAX_SIZE = 150; // max width/height for the thumbnail
+      let width = img.width;
+      let height = img.height;
+      if (width > height) {
+        if (width > MAX_SIZE) {
+          height *= MAX_SIZE / width;
+          width = MAX_SIZE;
+        }
+      } else {
+        if (height > MAX_SIZE) {
+          width *= MAX_SIZE / height;
+          height = MAX_SIZE;
+        }
+      }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(img, 0, 0, width, height);
+        // Get the base64 string without the data URL prefix, compress to 50% quality
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+        thumbBase64 = dataUrl.split(',')[1];
+      }
+    } catch (e) {
+      console.error('Failed to create thumbnail', e);
+    }
+
     const id = submitForCommunityReview({
-      imageBase64Thumb: imageBase64.slice(0, 500),
+      imageBase64Thumb: thumbBase64,
       playerNote: playerNote.trim() || undefined,
       timestamp: new Date().toISOString(),
     });
