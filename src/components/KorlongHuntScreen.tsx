@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronLeft, MapPin, RefreshCw, Star } from 'lucide-react';
+import { KorlongCutscene } from './KorlongCutscene';
 import visayasMap from '../assets/png/visayas_map.png';
 import {
   loadKorlongSpawn,
@@ -112,30 +113,63 @@ export function KorlongHuntScreen({ onBack, onDiscovered }: KorlongHuntScreenPro
       discoveredRef.current = true;
       setShowDiscovery(true);
       clearKorlongSpawn();
-      // Wait 4 seconds for the player to read the discovery popup
-      setTimeout(() => {
-        setHuntState('discovered');
-        onDiscovered();
-      }, 4000);
     }
-  }, [distanceMeters, huntState, onDiscovered]);
+  }, [distanceMeters, huntState]);
+
+  const handleCutsceneComplete = useCallback(() => {
+    setHuntState('discovered');
+    onDiscovered();
+  }, [onDiscovered]);
 
   useEffect(() => {
     // ── DEMO MODE INTERCEPT ──
     if (localStorage.getItem('echoes_korlong_demo_mode') === '1') {
-      setHuntState('hunting');
-      setPlayerCoords({ lat: 11.2729, lng: 125.7360 });
-      setSpawn({
-        lat: 11.2730,
-        lng: 125.7360, // Directly North
-        expiresAt: Date.now() + 25 * 60 * 1000,
-        nearSite: {
+      const demoLocations = [
+        {
           name: 'Basey, Samar',
           significance: 'Ancient abaca trade hub',
           lat: 11.2729,
           lng: 125.7360,
-          spawnRadiusMeters: 500,
           loreFragment: 'Near the 17th-century St. Michael the Archangel Church, faint echoes of an ancient two-stringed fiddle remain.'
+        },
+        {
+          name: 'Guiuan, Eastern Samar',
+          significance: 'Historic coastal town',
+          lat: 11.0333,
+          lng: 125.7222,
+          loreFragment: 'Amidst the historic Guiuan Church ruins, whispers of the Korlong echo through the sea breeze.'
+        },
+        {
+          name: 'Tacloban City, Leyte',
+          significance: 'Cultural center',
+          lat: 11.2430,
+          lng: 125.0081,
+          loreFragment: 'Near the San Juanico bridge, locals say the Korlong was once played to appease the river spirits.'
+        },
+        {
+          name: 'Palo, Leyte',
+          significance: 'Religious heritage',
+          lat: 11.1594,
+          lng: 124.9892,
+          loreFragment: 'Behind the Palo Cathedral, ancient strings were once plucked during evening vigils.'
+        }
+      ];
+
+      const randomLoc = demoLocations[Math.floor(Math.random() * demoLocations.length)];
+
+      setHuntState('hunting');
+      setPlayerCoords({ lat: randomLoc.lat, lng: randomLoc.lng });
+      setSpawn({
+        lat: randomLoc.lat + 0.00052, // Approx 58m North
+        lng: randomLoc.lng, 
+        expiresAt: Date.now() + 25 * 60 * 1000,
+        nearSite: {
+          name: randomLoc.name,
+          significance: randomLoc.significance,
+          lat: randomLoc.lat,
+          lng: randomLoc.lng,
+          spawnRadiusMeters: 500,
+          loreFragment: randomLoc.loreFragment
         }
       });
 
@@ -451,31 +485,14 @@ export function KorlongHuntScreen({ onBack, onDiscovered }: KorlongHuntScreenPro
           </div>
         )}
 
-        {/* ── Discovery ── */}
+        {/* ── Cinematic Discovery Cutscene ── */}
         {showDiscovery && (
-          <div className="fixed inset-0 z-50 bg-[#0f0c0c] flex flex-col items-center justify-center gap-6 px-6">
-            <div className="relative">
-              <div className="absolute inset-0 bg-[#da2d46] blur-3xl opacity-30 animate-pulse" />
-              <Star size={80} className="text-[#da2d46] fill-[#da2d46] relative z-10 animate-bounce" />
-            </div>
-            <h2
-              className="font-orbitron font-black text-3xl text-center text-[#e0e5ed] tracking-widest uppercase"
-              style={{ textShadow: '4px 4px 0px #da2d46' }}
-            >
-              KORLONG<br />DISCOVERED!
-            </h2>
-            <div className="bg-[#da2d46] border-[4px] border-[#0f0c0c] px-6 py-2 -skew-x-6 shadow-[6px_6px_0px_0px_#0f0c0c]">
-              <span className="font-space-mono font-black text-[#0f0c0c] skew-x-6 block">+100 XP — LEGENDARY FIND</span>
-            </div>
-            <p className="font-space-mono text-sm text-[#888ea1] text-center leading-relaxed">
-              The critically endangered Korlong reveals itself to those who seek it...
-            </p>
-          </div>
+          <KorlongCutscene onComplete={handleCutsceneComplete} />
         )}
       </div>
 
       {/* Bottom info */}
-      {huntState === 'hunting' && (
+      {huntState === 'hunting' && !showDiscovery && (
         <div className="relative z-10 border-t-[4px] border-[#0f0c0c] bg-[#0f0c0c] px-6 py-3">
           <p className="font-space-mono text-[10px] text-[#888ea1] text-center leading-relaxed">
             The Korlong can spawn anywhere, but appears 75% more often near historical Eastern Visayas sites.

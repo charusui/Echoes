@@ -6,6 +6,7 @@ import type { CommunityReviewPayload } from '../services/verificationService';
 
 interface DevMenuProps {
   onOpenStudentSession: () => void;
+  onOpenKorlongHunt: () => void;
 }
 
 // const DEV_STORAGE_KEY = 'echoes_dev_mode';
@@ -15,7 +16,7 @@ export function isDevMenuEnabled(): boolean {
   return true; // Forced to always show for testing
 }
 
-export function DevMenu({ onOpenStudentSession }: DevMenuProps) {
+export function DevMenu({ onOpenStudentSession, onOpenKorlongHunt }: DevMenuProps) {
   const [open, setOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [showReviews, setShowReviews] = useState(false);
@@ -82,7 +83,11 @@ export function DevMenu({ onOpenStudentSession }: DevMenuProps) {
       icon: <Star size={16} className="stroke-[2.5px]" />,
       onClick: () => {
         localStorage.setItem('echoes_korlong_demo_mode', '1');
-        showToast('✓ Demo mode enabled. Open Korlong Hunt from Collection.');
+        showToast('✓ Demo mode enabled. Launching Korlong Hunt...');
+        setTimeout(() => {
+          setOpen(false);
+          onOpenKorlongHunt();
+        }, 800);
       },
       color: '#888ea1',
     },

@@ -65,6 +65,7 @@ export interface MasterInstrument {
   region: string;
   hint: string;
   extendedInfo?: string;
+  history?: string;
 }
 
 export const IMAGE_BASE = '/instruments/';
@@ -141,7 +142,8 @@ export const KORLONG_INSTRUMENT: MasterInstrument = {
   name: 'Korlong',
   region: 'Eastern Visayas',
   hint: 'Critically endangered two-stringed fiddle. Unverified in Visayas; likely restricted to climate-controlled national or private academic vaults due to rapid degradation.',
-  extendedInfo: 'The Korlong is a critically endangered traditional fiddle of the Eastern Visayas. Crafted with two strings, it was historically used to accompany epic chanting and storytelling, though very few authentic pieces remain today.'
+  extendedInfo: 'The Korlong is a critically endangered traditional fiddle of the Eastern Visayas. Crafted with two strings, it was historically used to accompany epic chanting and storytelling, though very few authentic pieces remain today.',
+  history: 'Historical accounts—notably by historian William Henry Scott in "Barangay: 16th-Century Philippine Culture and Society"—describe the korlong as the female counterpart to the kudyapi. While men played the kudyapi (a wooden lute) to accompany their love songs, women played the korlong. It was traditionally a zither-like instrument crafted from a single node of bamboo with strings cut directly from the surface and raised by small bridges, played with both hands like a harp or lyre.'
 };
 
 

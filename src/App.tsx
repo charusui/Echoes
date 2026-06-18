@@ -238,6 +238,7 @@ function InnerApp() {
       culturalPurpose: 'Critically endangered two-stringed fiddle, rarely heard today',
       category: 'string',
       description: 'A critically endangered two-stringed fiddle from Eastern Visayas, traditionally using abaca or horsehair strings. One of the rarest instruments in the Visayan archipelago.',
+      history: KORLONG_INSTRUMENT.history,
       region: 'Eastern Visayas',
     };
     setActiveProfile(korlongProfile);
@@ -271,7 +272,10 @@ function InnerApp() {
   return (
     <div className="min-h-screen bg-obsidian text-light-gray overflow-x-hidden">
       {/* Dev Menu — only show on map screen */}
-      {view === 'map' && <DevMenu onOpenStudentSession={() => setView('teachableStudent')} />}
+      {view === 'map' && <DevMenu 
+        onOpenStudentSession={() => setView('teachableStudent')} 
+        onOpenKorlongHunt={() => setView('korlongHunt')}
+      />}
       {view === 'title' && (
         <TitleScreen onStart={handleStartTitle} />
       )}

@@ -10,6 +10,7 @@ export interface InstrumentProfile {
   culturalPurpose: string;
   category: InstrumentCategory;
   description: string;
+  history?: string;
   region: string;
 }
 

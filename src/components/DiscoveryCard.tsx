@@ -193,6 +193,13 @@ export function DiscoveryCard({ profile, onContinue, onBack }: DiscoveryCardProp
                   <p className="font-space-mono text-xs text-[#0f0c0c] font-bold leading-relaxed">{profile.instrument.description}</p>
                 </div>
 
+                {profile.instrument.history && (
+                  <div className="bg-[#e0e5ed] p-3 border-[3px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c]">
+                    <span className="block font-space-mono text-[9px] text-[#0f0c0c] font-black uppercase tracking-widest border-b-[2px] border-[#0f0c0c]/30 pb-1 mb-1.5">History</span>
+                    <p className="font-space-mono text-xs text-[#0f0c0c] font-bold leading-relaxed">{profile.instrument.history}</p>
+                  </div>
+                )}
+
               </div>
             </div>
           </div>
