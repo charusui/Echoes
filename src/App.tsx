@@ -29,6 +29,8 @@ function InnerApp() {
   const { client } = useGemini();
   const [view, setView] = useState<AppView>('title');
   
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  
   // Pipeline tracking
   const [pipelineStatus, setPipelineStatus] = useState<PipelineStatus>({
     phase: 'idle', label: '', detail: '', progress: 0,
@@ -37,7 +39,6 @@ function InnerApp() {
   const [instrumentName, setInstrumentName] = useState<string | undefined>();
   const [pipelineImage, setPipelineImage] = useState<{base64: string, mimeType: string} | null>(null);
   const [finalGameState, setFinalGameState] = useState<GameplayState | null>(null);
-  // Pending image held while ScanVerificationScreen runs
   const [pendingImageData, setPendingImageData] = useState<{base64: string; mimeType: string} | null>(null);
 
   const { recordScan, updateStreak, addXP, progress, saveCustomProfile, addPendingReview } = useProgress();
@@ -69,25 +70,10 @@ function InnerApp() {
   }, []);
 
   const handleSelectInstrument = useCallback((selectedInstrumentName: string) => {
-    // Determine which fallback profile template to use based on categories of the 14 instruments
     const INSTRUMENT_CATEGORIES: Record<string, 'string' | 'wind' | 'percussion'> = {
-      // Western
-      'tultugan': 'percussion',
-      'buktot': 'string',
-      'pasiyak': 'wind',
-      'tulali': 'wind',
-      'tugo': 'percussion',
-      'litguit': 'percussion',
-      // Central
-      'cebuano gitara': 'string',
-      'bandurria': 'string',
-      'laud': 'string',
-      'octavina': 'string',
-      'bajo de uñas': 'string',
-      // Eastern
-      'lantoy': 'wind',
-      'subing': 'percussion',
-      'korlong': 'string',
+      'tultugan': 'percussion', 'buktot': 'string', 'pasiyak': 'wind', 'tulali': 'wind', 'tugo': 'percussion', 'litguit': 'percussion',
+      'cebuano gitara': 'string', 'bandurria': 'string', 'laud': 'string', 'octavina': 'string', 'bajo de uñas': 'string',
+      'lantoy': 'wind', 'subing': 'percussion', 'korlong': 'string',
     };
 
     const nameLower = selectedInstrumentName.toLowerCase();
@@ -102,7 +88,6 @@ function InnerApp() {
        imageMimeType: ''
     };
     
-    // Override the generic name with the specific regional instrument
     profile.instrument = {
       ...profileTemplate.instrument,
       name: selectedInstrumentName,
@@ -112,8 +97,6 @@ function InnerApp() {
     
     setActiveProfile(profile);
     setInstrumentName(selectedInstrumentName);
-    
-    // Skip scanner pipeline, go straight to gameplay
     setView('gameplay');
   }, []);
 
@@ -123,18 +106,16 @@ function InnerApp() {
     setView('gameplay');
   }, []);
 
-  // Shared pipeline processor
   const processImage = useCallback(async (base64: string, mimeType: string, verificationResult: VerificationResult) => {
     if (!client) return;
     setPipelineImage({ base64, mimeType });
     setActiveProfile(null);
     setView('pipeline');
 
-    // XP multiplier based on verification method
     const xpMultiplier = verificationResult.method === 'gps' ? 1.0
       : verificationResult.method === 'webxr' ? 0.8
       : verificationResult.method === 'community' ? 0.2
-      : 0; // upload gives no XP
+      : 0; 
 
     try {
       const profile = await initializeInstrumentPipeline(
@@ -147,7 +128,6 @@ function InnerApp() {
         },
       );
 
-      // Attach verification result to profile
       profile.verificationResult = verificationResult;
       setActiveProfile(profile);
       setInstrumentName(profile.instrument.name);
@@ -203,7 +183,6 @@ function InnerApp() {
     processImage(pendingImageData.base64, pendingImageData.mimeType, verificationResult);
   }, [pendingImageData, processImage]);
 
-  // 1. Scanner captures image → intercept for verification
   const handleImageReady = useCallback(async (base64: string, mimeType: string, mode: ScanMode) => {
     if (mode === 'upload') {
       processImage(base64, mimeType, { method: 'upload', timestamp: new Date().toISOString() });
@@ -218,11 +197,15 @@ function InnerApp() {
     setView('scanner');
   }, []);
 
-  // Korlong discovered via GPS hunt
   const handleKorlongDiscovered = useCallback(() => {
+  // 1. Drop the curtain INSTANTLY (0ms delay)
+  setIsTransitioning(true);
+
+  // 2. Wait just 50ms to ensure the browser paints the solid color
+  setTimeout(() => {
     const isNew = recordScan(KORLONG_INSTRUMENT.name);
     if (isNew) addXP(100, 'korlong_hunt');
-    // Build a minimal profile for the discovery card
+    
     const korlongProfile: ActiveInstrumentProfile = {
       ...FALLBACK_PROFILES.string,
       isFallback: true,
@@ -232,45 +215,61 @@ function InnerApp() {
     };
     korlongProfile.instrument = {
       ...FALLBACK_PROFILES.string.instrument,
-      name: KORLONG_INSTRUMENT.name,
-      localName: 'Korlong',
-      ethnoLinguisticGroup: 'Waray-Waray / Eastern Visayan',
-      culturalPurpose: 'Critically endangered two-stringed fiddle, rarely heard today',
-      category: 'string',
-      description: 'A critically endangered two-stringed fiddle from Eastern Visayas, traditionally using abaca or horsehair strings. One of the rarest instruments in the Visayan archipelago.',
-      history: KORLONG_INSTRUMENT.history,
-      region: 'Eastern Visayas',
-    };
-    setActiveProfile(korlongProfile);
-    setInstrumentName(KORLONG_INSTRUMENT.name);
-    setView('discoveryCard');
-  }, [recordScan, addXP]);
+          name: KORLONG_INSTRUMENT.name,
+          localName: 'Korlong',
+          ethnoLinguisticGroup: 'Waray-Waray / Eastern Visayan',
+          culturalPurpose: 'Critically endangered two-stringed fiddle, rarely heard today',
+          category: 'string',
+          description: 'A critically endangered two-stringed fiddle from Eastern Visayas, traditionally using abaca or horsehair strings. One of the rarest instruments in the Visayan archipelago.',
+          history: KORLONG_INSTRUMENT.history,
+          region: 'Eastern Visayas',
+        };
+        
+        setActiveProfile(korlongProfile);
+        setInstrumentName(KORLONG_INSTRUMENT.name);
+        
+        // 3. Swap the components behind the solid curtain
+        setView('discoveryCard');
 
-  // 3. Gameplay finishes
+        // 4. Lift the curtain smoothly to reveal the card
+        setTimeout(() => {
+          setIsTransitioning(false);
+        }, 50);
+        
+      }, 50); 
+    }, [recordScan, addXP]);
+
   const handleGameFinish = useCallback((gameState?: GameplayState) => {
     if (gameState) setFinalGameState(gameState);
-    // Always guide the player through the Quiz and Story screens to explore the full game content
     setView('quiz');
   }, []);
 
-  // 4. Quiz finishes
   const handleQuizComplete = useCallback(() => {
     setView('story');
   }, []);
 
-  // 5. Story finishes
   const handleStoryComplete = useCallback(() => {
     setView('results');
   }, []);
 
-  // 6. Play Again from results
   const handlePlayAgain = useCallback(() => {
     setFinalGameState(null);
     setView('gameplay');
   }, []);
 
   return (
-    <div className="min-h-screen bg-obsidian text-light-gray overflow-x-hidden">
+    // Note the added 'relative' class here to contain the fixed overlay properly if needed
+    <div className="min-h-screen bg-obsidian text-light-gray overflow-x-hidden relative">
+      
+      <div 
+        className="fixed inset-0 bg-[#2a2d43] pointer-events-none"
+        style={{ 
+          opacity: isTransitioning ? 1 : 0,
+          transition: isTransitioning ? 'none' : 'opacity 0.4s ease-out',
+          zIndex: 99999 
+        }}
+      />
+
       {/* Dev Menu — only show on map screen */}
       {view === 'map' && <DevMenu 
         onOpenStudentSession={() => setView('teachableStudent')} 
@@ -314,7 +313,6 @@ function InnerApp() {
         />
       )}
 
-      {/* Scan Verification Overlay */}
       {view === 'scanVerification' && pendingImageData && (
         <ScanVerificationScreen
           imageBase64={pendingImageData.base64}
@@ -324,7 +322,6 @@ function InnerApp() {
         />
       )}
 
-      {/* Korlong GPS Hunt */}
       {view === 'korlongHunt' && (
         <KorlongHuntScreen
           onBack={() => setView('collection')}
@@ -332,7 +329,6 @@ function InnerApp() {
         />
       )}
 
-      {/* Teachable Student */}
       {view === 'teachableStudent' && (
         <TeachableStudentScreen
           unlockedInstruments={progress.unlockedInstruments}
