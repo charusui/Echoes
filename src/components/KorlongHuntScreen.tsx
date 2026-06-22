@@ -15,7 +15,7 @@ interface KorlongHuntScreenProps {
   onDiscovered: () => void;
 }
 
-const DISCOVERY_RADIUS_METERS = 30;
+const DISCOVERY_RADIUS_METERS = 5;
 const RETRY_COOLDOWN_SECONDS = 60;
 
 function formatDistance(meters: number): string {
@@ -188,7 +188,7 @@ export function KorlongHuntScreen({ onBack, onDiscovered }: KorlongHuntScreenPro
       const interval = setInterval(() => {
         d -= 4;
         setDistanceMeters(d);
-        if (d <= 25) clearInterval(interval);
+        if (d <= 0) clearInterval(interval);
       }, 1000);
 
       return () => clearInterval(interval);

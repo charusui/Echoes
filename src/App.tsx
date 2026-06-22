@@ -353,14 +353,15 @@ function InnerApp() {
         />
       )}
 
-      {view === 'gameplay' && activeProfile && (
-        <GameBoard
-          profile={activeProfile}
-          onFinish={handleGameFinish}
-          onQuit={handleQuit}
-          onKorlongDiscovered={handleKorlongDiscovered}
-        />
-      )}
+        {view === 'gameplay' && activeProfile && (
+          <GameBoard
+            profile={activeProfile}
+            onFinish={handleGameFinish}
+            onQuit={handleQuit}
+            onKorlongDiscovered={handleKorlongDiscovered}
+            onKorlongHunt={() => setView('korlongHunt')}
+          />
+        )}
 
       {view === 'quiz' && activeProfile && (
         <QuizScreen 

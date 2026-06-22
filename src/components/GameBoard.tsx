@@ -8,21 +8,20 @@ import { PercussionRhythm } from './PercussionRhythm';
 import { StringRhythm } from './StringRhythm';
 import { WindRhythm } from './WindRhythm';
 import { TnalakWeave } from './TnalakWeave';
-import { KorlongCutscene } from './KorlongCutscene';
 
 interface GameBoardProps {
   profile: ActiveInstrumentProfile;
   onQuit: () => void;
   onFinish?: (state?: GameplayState) => void;
   onKorlongDiscovered?: () => void;
+  onKorlongHunt?: () => void;
 }
 
-export function GameBoard({ profile, onQuit, onFinish, onKorlongDiscovered }: GameBoardProps) {
+export function GameBoard({ profile, onQuit, onFinish, onKorlongDiscovered, onKorlongHunt }: GameBoardProps) {
   const [activeLanes, setActiveLanes] = useState<Set<number>>(new Set());
   const [hitIndicator, setHitIndicator] = useState<{ type: 'Tadhana' | 'Ganda' | 'Sablay', text: string, id: number } | null>(null);
   const [showAlert, setShowAlert] = useState(true);
   const [showKorlongPopup, setShowKorlongPopup] = useState(false);
-  const [showKorlongCutscene, setShowKorlongCutscene] = useState(false);
 
   // Ensure AudioContext is running
   useEffect(() => {
@@ -136,47 +135,14 @@ export function GameBoard({ profile, onQuit, onFinish, onKorlongDiscovered }: Ga
 
   const handleKorlongPopupClick = useCallback(() => {
     setShowKorlongPopup(false);
-    setShowKorlongCutscene(true);
     
     // Pause the rhythmic gameplay music
     audioEngine.suspend();
     
-    // Start the cinematic Korlong music at the intense segment
-    const audio = new Audio('/audio/korlong_music.mp3');
-    
-    // Play immediately to satisfy user gesture requirements
-    audio.play().catch(e => console.log('Audio autoplay prevented:', e));
-    
-    // True brute force: hammer the currentTime until the browser actually has the data
-    const seekInterval = setInterval(() => {
-      if (audio.readyState >= 2) { // 2 = HAVE_CURRENT_DATA
-        audio.currentTime = 20;
-        clearInterval(seekInterval);
-      }
-    }, 50);
-    
-    // Fallback cleanup just in case
-    setTimeout(() => clearInterval(seekInterval), 5000);
-    
-    // Assign it globally so the DiscoveryCard can inherit it and clean it up
-    if (typeof window !== 'undefined') {
-      (window as any).korlongHuntAudio = audio;
+    if (onKorlongHunt) {
+      onKorlongHunt();
     }
-  }, []);
-
-  const handleCutsceneComplete = useCallback(() => {
-    localStorage.removeItem('echoes_demo_korlong_gameplay');
-    setShowKorlongCutscene(false);
-    if (onKorlongDiscovered) {
-      onKorlongDiscovered();
-    } else {
-      if (typeof window !== 'undefined' && (window as any).korlongHuntAudio) {
-        (window as any).korlongHuntAudio.pause();
-        (window as any).korlongHuntAudio = null;
-      }
-      onQuit();
-    }
-  }, [onKorlongDiscovered, onQuit]);
+  }, [onKorlongHunt]);
 
   return (
     <div className="fixed inset-0 bg-[#2a2d43] flex flex-col select-none overflow-hidden pb-12 md:pb-16 pb-safe z-0">
@@ -347,12 +313,6 @@ export function GameBoard({ profile, onQuit, onFinish, onKorlongDiscovered }: Ga
               KORLONG NEARBY - TAP TO INTERCEPT!
             </span>
           </div>
-        </div>
-      )}
-
-      {showKorlongCutscene && (
-        <div className="absolute inset-0 z-[200]">
-          <KorlongCutscene onComplete={handleCutsceneComplete} />
         </div>
       )}
 

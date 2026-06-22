@@ -58,15 +58,39 @@ export function DiscoveryCard({ profile, onContinue, onBack }: DiscoveryCardProp
     };
   }, [isFlipped]);
 
-  // Cleanup global Korlong music when leaving discovery screen
+  // Let the cinematic Korlong music continue playing on this screen!
   useEffect(() => {
-    return () => {
-      if (typeof window !== 'undefined' && (window as any).korlongHuntAudio) {
-        (window as any).korlongHuntAudio.pause();
-        (window as any).korlongHuntAudio = null;
+    if (typeof window !== 'undefined' && (window as any).korlongHuntAudio) {
+      const audio = (window as any).korlongHuntAudio as HTMLAudioElement;
+      
+      // If the audio somehow already ended or paused, restart the intense loop
+      if (audio.ended || audio.paused) {
+         audio.currentTime = 20;
+         audio.play().catch(() => {});
       }
-    };
+
+      // When the song reaches the end of its natural climax, loop back to the intense drop!
+      const handleEnded = () => {
+         audio.currentTime = 20;
+         audio.play().catch(() => {});
+      };
+      
+      audio.addEventListener('ended', handleEnded);
+      
+      return () => {
+        audio.removeEventListener('ended', handleEnded);
+        // Audio is now strictly cleaned up by the button click handlers.
+      };
+    }
   }, []);
+
+  const handleLeave = (action: () => void) => {
+    if (typeof window !== 'undefined' && (window as any).korlongHuntAudio) {
+      (window as any).korlongHuntAudio.pause();
+      (window as any).korlongHuntAudio = null;
+    }
+    action();
+  };
 
   return (
     <div className="min-h-screen bg-[#2a2d43] flex flex-col items-center justify-start p-4 pt-10 md:pt-12 relative overflow-hidden overflow-x-hidden pb-12 md:pb-16 pb-safe z-0">
@@ -85,7 +109,7 @@ export function DiscoveryCard({ profile, onContinue, onBack }: DiscoveryCardProp
         {/* Header Bar */}
         <div className="flex items-center justify-between mb-6 w-full">
           <button 
-            onClick={onBack}
+            onClick={() => handleLeave(onBack)}
             className="px-4 py-2 bg-[#f0dde0] border-[3px] border-[#0f0c0c] hover:bg-[#da2d46] text-[#0f0c0c] transition-all flex items-center gap-1.5 font-orbitron text-[10px] md:text-xs font-black tracking-widest uppercase -skew-x-6 shadow-[3px_3px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none"
           >
             <ArrowLeft size={16} className="skew-x-6 stroke-[3px]" /> 
@@ -100,7 +124,7 @@ export function DiscoveryCard({ profile, onContinue, onBack }: DiscoveryCardProp
         </div>
 
         {/* Title */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-4 md:mb-8 shrink-0">
           <h2 
             className="font-orbitron font-black text-[#e0e5ed] text-3xl md:text-4xl tracking-widest uppercase leading-none"
             style={{ textShadow: '4px 4px 0px #0f0c0c, -2px -2px 0px #da2d46' }}
@@ -116,7 +140,7 @@ export function DiscoveryCard({ profile, onContinue, onBack }: DiscoveryCardProp
 
         {/* 3D Scene Container */}
         <div 
-          className={`relative w-full max-w-sm aspect-[3/4] perspective-1000 cursor-grab active:cursor-grabbing ${profile.instrument.name.toLowerCase() === 'korlong' ? 'animate-card-bounce-in' : ''}`}
+          className={`relative w-full max-w-[260px] sm:max-w-xs md:max-w-sm aspect-[3/4] perspective-1000 cursor-grab active:cursor-grabbing shrink ${profile.instrument.name.toLowerCase() === 'korlong' ? 'animate-card-bounce-in' : ''}`}
           onMouseDown={e => handleStart(e.clientX, e.clientY)}
           onMouseMove={e => handleMove(e.clientX, e.clientY)}
           onTouchStart={e => handleStart(e.touches[0].clientX, e.touches[0].clientY)}
@@ -216,9 +240,9 @@ export function DiscoveryCard({ profile, onContinue, onBack }: DiscoveryCardProp
         </div>
 
         {/* Continue Button */}
-        <div className="mt-10 w-full max-w-sm relative z-10">
+        <div className="mt-5 md:mt-10 w-full max-w-[260px] sm:max-w-xs md:max-w-sm relative z-10 shrink-0">
           <button 
-            onClick={onContinue}
+            onClick={() => handleLeave(onContinue)}
             className="w-full py-4 bg-[#da2d46] border-[6px] border-[#0f0c0c] font-orbitron text-sm md:text-base font-black tracking-widest uppercase text-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[10px_10px_0px_0px_#0f0c0c] active:translate-y-2 active:translate-x-2 active:shadow-none transition-all flex items-center justify-center gap-3 -skew-x-6"
           >
             <span className="skew-x-6">PLAY INSTRUMENT</span> <ChevronRight size={24} className="skew-x-6 stroke-[3px]" />
