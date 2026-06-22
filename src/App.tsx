@@ -274,6 +274,7 @@ function InnerApp() {
       {view === 'map' && <DevMenu 
         onOpenStudentSession={() => setView('teachableStudent')} 
         onOpenKorlongHunt={() => setView('korlongHunt')}
+        onStartGameplay={handleSelectInstrument}
       />}
       {view === 'title' && (
         <TitleScreen onStart={handleStartTitle} />
@@ -357,6 +358,7 @@ function InnerApp() {
           profile={activeProfile}
           onFinish={handleGameFinish}
           onQuit={handleQuit}
+          onKorlongDiscovered={handleKorlongDiscovered}
         />
       )}
 

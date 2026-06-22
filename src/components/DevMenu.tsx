@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Settings, Unlock, Zap, Star, BookOpen, Trash2, X, Users } from 'lucide-react';
+import { Settings, Unlock, Zap, Star, BookOpen, Trash2, X, Users, Play } from 'lucide-react';
 import { useProgress } from '../context/ProgressProvider';
 import { getPendingReviews } from '../services/verificationService';
 import type { CommunityReviewPayload } from '../services/verificationService';
@@ -7,6 +7,7 @@ import type { CommunityReviewPayload } from '../services/verificationService';
 interface DevMenuProps {
   onOpenStudentSession: () => void;
   onOpenKorlongHunt: () => void;
+  onStartGameplay?: (instrument: string) => void;
 }
 
 // const DEV_STORAGE_KEY = 'echoes_dev_mode';
@@ -16,10 +17,11 @@ export function isDevMenuEnabled(): boolean {
   return true; // Forced to always show for testing
 }
 
-export function DevMenu({ onOpenStudentSession, onOpenKorlongHunt }: DevMenuProps) {
+export function DevMenu({ onOpenStudentSession, onOpenKorlongHunt, onStartGameplay }: DevMenuProps) {
   const [open, setOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [showReviews, setShowReviews] = useState(false);
+  const [showGameplayDemoModal, setShowGameplayDemoModal] = useState(false);
   const [reviews, setReviews] = useState<Array<CommunityReviewPayload & { ticketId: string }>>([]);
   const { unlockAllInstruments, addXP } = useProgress();
 
@@ -90,6 +92,16 @@ export function DevMenu({ onOpenStudentSession, onOpenKorlongHunt }: DevMenuProp
         }, 800);
       },
       color: '#888ea1',
+    },
+    {
+      label: 'KORLONG GAMEPLAY DEMO',
+      sublabel: 'Demo cutscene during gameplay',
+      icon: <Play size={16} className="stroke-[2.5px]" />,
+      onClick: () => {
+        setOpen(false);
+        setShowGameplayDemoModal(true);
+      },
+      color: '#e0e5ed',
     },
     {
       label: 'TEACH A STUDENT',
@@ -217,6 +229,41 @@ export function DevMenu({ onOpenStudentSession, onOpenKorlongHunt }: DevMenuProp
               >
                 CLEAR QUEUE
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Gameplay Demo Modal */}
+      {showGameplayDemoModal && (
+        <div className="fixed inset-0 z-[250] bg-[#0f0c0c]/80 flex items-center justify-center p-4">
+          <div className="bg-[#2a2d43] border-[4px] border-[#da2d46] w-full max-w-sm flex flex-col shadow-[8px_8px_0px_0px_#0f0c0c] -skew-x-2">
+            <div className="flex justify-between items-center bg-[#da2d46] p-3 border-b-[4px] border-[#0f0c0c] skew-x-2">
+              <h3 className="font-orbitron font-black text-[#0f0c0c] text-sm tracking-widest uppercase">Gameplay Demo Select</h3>
+              <button onClick={() => setShowGameplayDemoModal(false)} className="text-[#0f0c0c] hover:scale-110 transition-transform">
+                <X size={20} className="stroke-[3px]" />
+              </button>
+            </div>
+            <div className="p-4 flex flex-col gap-3 skew-x-2">
+              <p className="font-space-mono text-xs text-[#e0e5ed] mb-2 text-center">Select an instrument class to test the mid-game Korlong trigger.</p>
+              
+              {[
+                { label: 'String (Buktot)', val: 'Buktot' },
+                { label: 'Drum (Tultugan)', val: 'Tultugan' },
+                { label: 'Wind (Tulali)', val: 'Tulali' }
+              ].map(opt => (
+                <button
+                  key={opt.val}
+                  onClick={() => {
+                    localStorage.setItem('echoes_demo_korlong_gameplay', '1');
+                    setShowGameplayDemoModal(false);
+                    onStartGameplay?.(opt.val);
+                  }}
+                  className="w-full py-3 bg-[#0f0c0c] border-[3px] border-[#888ea1] text-[#e0e5ed] font-orbitron font-black text-xs uppercase hover:border-[#da2d46] hover:text-[#da2d46] transition-colors"
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>

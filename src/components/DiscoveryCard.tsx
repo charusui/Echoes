@@ -116,7 +116,7 @@ export function DiscoveryCard({ profile, onContinue, onBack }: DiscoveryCardProp
 
         {/* 3D Scene Container */}
         <div 
-          className="relative w-full max-w-sm aspect-[3/4] perspective-1000 cursor-grab active:cursor-grabbing"
+          className={`relative w-full max-w-sm aspect-[3/4] perspective-1000 cursor-grab active:cursor-grabbing ${profile.instrument.name.toLowerCase() === 'korlong' ? 'animate-card-bounce-in' : ''}`}
           onMouseDown={e => handleStart(e.clientX, e.clientY)}
           onMouseMove={e => handleMove(e.clientX, e.clientY)}
           onTouchStart={e => handleStart(e.touches[0].clientX, e.touches[0].clientY)}
@@ -237,6 +237,14 @@ export function DiscoveryCard({ profile, onContinue, onBack }: DiscoveryCardProp
           50% { transform: scale(0.95); opacity: 0.9; }
         }
         .animate-comic-pulse { animation: comic-pulse 1.5s ease-in-out infinite; }
+        
+        @keyframes card-bounce-in {
+          0% { transform: scale(0.3) translateY(300px) rotate(-10deg); opacity: 0; }
+          50% { transform: scale(1.1) translateY(-30px) rotate(5deg); opacity: 1; }
+          75% { transform: scale(0.95) translateY(10px) rotate(-2deg); }
+          100% { transform: scale(1) translateY(0) rotate(0deg); }
+        }
+        .animate-card-bounce-in { animation: card-bounce-in 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
 
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #0f0c0c; border-left: 2px solid #2a2d43; }

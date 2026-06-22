@@ -1,6 +1,6 @@
 //UI Update
 import { useEffect, useState, useCallback } from 'react';
-import { X, Play, FastForward } from 'lucide-react';
+import { X, Play, FastForward, Star } from 'lucide-react';
 import type { ActiveInstrumentProfile, GameplayState } from '../types';
 import { audioEngine } from '../services/audioSynth';
 import { useRhythmGame } from '../hooks/useRhythmGame';
@@ -8,17 +8,21 @@ import { PercussionRhythm } from './PercussionRhythm';
 import { StringRhythm } from './StringRhythm';
 import { WindRhythm } from './WindRhythm';
 import { TnalakWeave } from './TnalakWeave';
+import { KorlongCutscene } from './KorlongCutscene';
 
 interface GameBoardProps {
   profile: ActiveInstrumentProfile;
   onQuit: () => void;
   onFinish?: (state?: GameplayState) => void;
+  onKorlongDiscovered?: () => void;
 }
 
-export function GameBoard({ profile, onQuit, onFinish }: GameBoardProps) {
+export function GameBoard({ profile, onQuit, onFinish, onKorlongDiscovered }: GameBoardProps) {
   const [activeLanes, setActiveLanes] = useState<Set<number>>(new Set());
   const [hitIndicator, setHitIndicator] = useState<{ type: 'Tadhana' | 'Ganda' | 'Sablay', text: string, id: number } | null>(null);
   const [showAlert, setShowAlert] = useState(true);
+  const [showKorlongPopup, setShowKorlongPopup] = useState(false);
+  const [showKorlongCutscene, setShowKorlongCutscene] = useState(false);
 
   // Ensure AudioContext is running
   useEffect(() => {
@@ -86,9 +90,13 @@ export function GameBoard({ profile, onQuit, onFinish }: GameBoardProps) {
     const hitResult = hitLane(laneId);
     
     if (hitResult) {
+      const typeMap = { perfect: 'Tadhana', good: 'Ganda' } as const;
+      const textMap = { perfect: 'TADHANA', good: 'GANDA' };
+      const jType = hitResult.judgement as 'perfect' | 'good';
+      
       setHitIndicator({
-        type: hitResult.judgement as any,
-        text: hitResult.judgement.toUpperCase(),
+        type: typeMap[jType] as any,
+        text: textMap[jType],
         id: Math.random() 
       });
       setTimeout(() => setHitIndicator(null), 500);
@@ -116,13 +124,73 @@ export function GameBoard({ profile, onQuit, onFinish }: GameBoardProps) {
     }, 100);
   }, [profile.inputMapping.lanes, hitLane, gameState.isPlaying, profile.instrument.category, profile.acoustic.scaleNotes.length]);
 
+  // Demo Logic for Korlong
+  useEffect(() => {
+    if (gameState.isPlaying && localStorage.getItem('echoes_demo_korlong_gameplay') === '1') {
+      const t = setTimeout(() => {
+        setShowKorlongPopup(true);
+      }, 5000); // Popup appears 5 seconds into gameplay
+      return () => clearTimeout(t);
+    }
+  }, [gameState.isPlaying]);
+
+  const handleKorlongPopupClick = useCallback(() => {
+    setShowKorlongPopup(false);
+    setShowKorlongCutscene(true);
+    
+    // Pause the rhythmic gameplay music
+    audioEngine.suspend();
+    
+    // Start the cinematic Korlong music at the intense segment
+    const audio = new Audio('/audio/korlong_music.mp3');
+    
+    // Play immediately to satisfy user gesture requirements
+    audio.play().catch(e => console.log('Audio autoplay prevented:', e));
+    
+    // True brute force: hammer the currentTime until the browser actually has the data
+    const seekInterval = setInterval(() => {
+      if (audio.readyState >= 2) { // 2 = HAVE_CURRENT_DATA
+        audio.currentTime = 20;
+        clearInterval(seekInterval);
+      }
+    }, 50);
+    
+    // Fallback cleanup just in case
+    setTimeout(() => clearInterval(seekInterval), 5000);
+    
+    // Assign it globally so the DiscoveryCard can inherit it and clean it up
+    if (typeof window !== 'undefined') {
+      (window as any).korlongHuntAudio = audio;
+    }
+  }, []);
+
+  const handleCutsceneComplete = useCallback(() => {
+    localStorage.removeItem('echoes_demo_korlong_gameplay');
+    setShowKorlongCutscene(false);
+    if (onKorlongDiscovered) {
+      onKorlongDiscovered();
+    } else {
+      if (typeof window !== 'undefined' && (window as any).korlongHuntAudio) {
+        (window as any).korlongHuntAudio.pause();
+        (window as any).korlongHuntAudio = null;
+      }
+      onQuit();
+    }
+  }, [onKorlongDiscovered, onQuit]);
+
   return (
     <div className="fixed inset-0 bg-[#2a2d43] flex flex-col select-none overflow-hidden pb-12 md:pb-16 pb-safe z-0">
       
       {/* HUD — Top Navigation */}
       <div className="flex items-center justify-between px-4 md:px-6 pt-safe pt-6 pb-4 bg-[#e0e5ed] z-20 border-b-[6px] border-[#0f0c0c] shadow-[0px_8px_0px_0px_rgba(15,12,12,0.4)]">
         <button 
-          onClick={onQuit}
+          onClick={() => {
+            if (typeof window !== 'undefined' && (window as any).korlongHuntAudio) {
+              (window as any).korlongHuntAudio.pause();
+              (window as any).korlongHuntAudio = null;
+            }
+            onQuit();
+          }}
           className="mr-2 md:mr-4 px-3 md:px-4 py-2 bg-[#f0dde0] border-[3px] border-[#0f0c0c] hover:bg-[#da2d46] text-[#0f0c0c] transition-all duration-200 flex items-center justify-center gap-1.5 font-orbitron text-[10px] md:text-xs font-black tracking-widest uppercase shrink-0 -skew-x-6 shadow-[3px_3px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none"
         >
           <X size={16} className="skew-x-6 stroke-[3px]" /> <span className="skew-x-6 hidden sm:block">ABORT</span>
@@ -169,7 +237,13 @@ export function GameBoard({ profile, onQuit, onFinish }: GameBoardProps) {
           )}
           {onFinish && !gameState.isFinished && (
             <button
-              onClick={() => onFinish(gameState)}
+              onClick={() => {
+                if (typeof window !== 'undefined' && (window as any).korlongHuntAudio) {
+                  (window as any).korlongHuntAudio.pause();
+                  (window as any).korlongHuntAudio = null;
+                }
+                onFinish(gameState);
+              }}
               className="px-3 md:px-4 h-10 md:h-12 border-[3px] md:border-[4px] border-[#0f0c0c] bg-[#2a2d43] text-[#e0e5ed] font-space-mono font-bold text-xs -skew-x-6 shadow-[4px_4px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all hover:bg-[#888ea1] hover:text-[#0f0c0c] flex items-center gap-1 group"
             >
               <FastForward size={14} className="skew-x-6 stroke-[3px]" />
@@ -265,6 +339,23 @@ export function GameBoard({ profile, onQuit, onFinish }: GameBoardProps) {
         </div>
       </div>
       
+      {showKorlongPopup && (
+        <div className="absolute top-[15%] md:top-[12%] left-1/2 -translate-x-1/2 z-[100] animate-comic-float cursor-pointer hover:scale-105 transition-transform" onClick={handleKorlongPopupClick}>
+          <div className="bg-[#da2d46] border-[4px] border-[#0f0c0c] px-6 py-3 shadow-[6px_6px_0px_0px_#0f0c0c] -skew-x-6 flex items-center gap-3">
+            <Star size={24} className="text-[#0f0c0c] skew-x-6 fill-current animate-pulse" />
+            <span className="font-orbitron font-black text-[#0f0c0c] text-sm md:text-base uppercase tracking-widest skew-x-6 block">
+              KORLONG NEARBY - TAP TO INTERCEPT!
+            </span>
+          </div>
+        </div>
+      )}
+
+      {showKorlongCutscene && (
+        <div className="absolute inset-0 z-[200]">
+          <KorlongCutscene onComplete={handleCutsceneComplete} />
+        </div>
+      )}
+
       <div className="absolute inset-0 z-[-1] opacity-50">
         <TnalakWeave />
       </div>
