@@ -58,6 +58,16 @@ export function DiscoveryCard({ profile, onContinue, onBack }: DiscoveryCardProp
     };
   }, [isFlipped]);
 
+  // Cleanup global Korlong music when leaving discovery screen
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && (window as any).korlongHuntAudio) {
+        (window as any).korlongHuntAudio.pause();
+        (window as any).korlongHuntAudio = null;
+      }
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#2a2d43] flex flex-col items-center justify-start p-4 pt-10 md:pt-12 relative overflow-hidden overflow-x-hidden pb-12 md:pb-16 pb-safe z-0">
       

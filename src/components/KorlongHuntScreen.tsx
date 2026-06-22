@@ -51,12 +51,21 @@ export function KorlongHuntScreen({ onBack, onDiscovered }: KorlongHuntScreenPro
     const audio = new Audio('/audio/korlong_music.mp3');
     audio.loop = false; // Manually loop specific segments
     audioRef.current = audio;
+    if (typeof window !== 'undefined') {
+      (window as any).korlongHuntAudio = audio;
+    }
     
     audio.play().catch(e => console.log('Audio autoplay prevented:', e));
     
     return () => {
-      audio.pause();
-      audioRef.current = null;
+      // Only pause if the user is backing out. If discovered, let it persist to the next screen!
+      if (!discoveredRef.current) {
+        audio.pause();
+        audioRef.current = null;
+        if (typeof window !== 'undefined') {
+          (window as any).korlongHuntAudio = null;
+        }
+      }
     };
   }, []);
 
@@ -262,6 +271,9 @@ export function KorlongHuntScreen({ onBack, onDiscovered }: KorlongHuntScreenPro
     const audio = audioRef.current;
     
     const interval = setInterval(() => {
+      // Let the music play out naturally to its climax during the cutscene
+      if (showDiscovery) return;
+
       // Fast beats for close/arrived (20s to 40s), slow beats for far/near (0s to 20s)
       const isFast = tier === 'close' || tier === 'arrived';
       const minTime = isFast ? 20 : 0;
@@ -276,7 +288,7 @@ export function KorlongHuntScreen({ onBack, onDiscovered }: KorlongHuntScreenPro
     }, 50);
 
     return () => clearInterval(interval);
-  }, [tier]);
+  }, [tier, showDiscovery]);
 
   return (
     <div className="min-h-screen bg-[#2a2d43] flex flex-col relative overflow-hidden">
