@@ -13,11 +13,10 @@ interface GameBoardProps {
   profile: ActiveInstrumentProfile;
   onQuit: () => void;
   onFinish?: (state?: GameplayState) => void;
-  onKorlongDiscovered?: () => void;
   onKorlongHunt?: () => void;
 }
 
-export function GameBoard({ profile, onQuit, onFinish, onKorlongDiscovered, onKorlongHunt }: GameBoardProps) {
+export function GameBoard({ profile, onQuit, onFinish, onKorlongHunt }: GameBoardProps) {
   const [activeLanes, setActiveLanes] = useState<Set<number>>(new Set());
   const [hitIndicator, setHitIndicator] = useState<{ type: 'Tadhana' | 'Ganda' | 'Sablay', text: string, id: number } | null>(null);
   const [showAlert, setShowAlert] = useState(true);

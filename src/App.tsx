@@ -358,7 +358,6 @@ function InnerApp() {
             profile={activeProfile}
             onFinish={handleGameFinish}
             onQuit={handleQuit}
-            onKorlongDiscovered={handleKorlongDiscovered}
             onKorlongHunt={() => setView('korlongHunt')}
           />
         )}
