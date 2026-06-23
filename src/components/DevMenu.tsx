@@ -132,18 +132,18 @@ export function DevMenu({ onOpenStudentSession, onOpenKorlongHunt, onStartGamepl
 
   return (
     <>
-      {/* Floating toggle button */}
+      {/* Floating toggle button - FORCED LEFT */}
       <button
         onClick={() => setOpen(p => !p)}
-        className="fixed top-4 right-4 z-[200] w-10 h-10 bg-[#0f0c0c] border-[3px] border-[#da2d46] flex items-center justify-center text-[#da2d46] shadow-[3px_3px_0px_0px_#da2d46] hover:bg-[#da2d46] hover:text-[#0f0c0c] transition-all active:translate-y-0.5 active:shadow-none"
+        className="fixed top-4 left-4 right-auto z-[200] w-10 h-10 bg-[#0f0c0c] border-[3px] border-[#da2d46] flex items-center justify-center text-[#da2d46] shadow-[3px_3px_0px_0px_#da2d46] hover:bg-[#da2d46] hover:text-[#0f0c0c] transition-all active:translate-y-0.5 active:shadow-none"
         title="Dev Menu"
       >
         {open ? <X size={18} className="stroke-[2.5px]" /> : <Settings size={18} className="stroke-[2.5px]" />}
       </button>
 
-      {/* Panel */}
+      {/* Panel - FORCED LEFT */}
       {open && (
-        <div className="fixed top-16 right-4 z-[199] w-64 bg-[#0f0c0c] border-[4px] border-[#da2d46] shadow-[8px_8px_0px_0px_#da2d46]">
+        <div className="fixed top-16 left-4 right-auto z-[199] w-64 bg-[#0f0c0c] border-[4px] border-[#da2d46] shadow-[8px_8px_0px_0px_#da2d46]">
           {/* Panel header */}
           <div className="bg-[#da2d46] px-3 py-2 border-b-[3px] border-[#0f0c0c]">
             <p className="font-orbitron text-[10px] font-black text-[#0f0c0c] tracking-widest uppercase">
