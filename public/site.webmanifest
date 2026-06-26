@@ -1,6 +1,6 @@
 {
-  "name": "Echoes of the Ancestors",
-  "short_name": "Echoes",
+  "name": "Musikultura",
+  "short_name": "Musikultura",
   "description": "Scan a traditional Philippine instrument and play it in a rhythm game powered by Gemini AI.",
   "start_url": "/",
   "display": "standalone",

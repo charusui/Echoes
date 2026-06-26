@@ -68,13 +68,9 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
               textShadow: '6px 6px 0px #0f0c0c, -5px 0px 0px #da2d46, 5px 0px 0px #f0dde0'
             }}
           >
-            ECHOES<br/>
-            OF THE<br/>
-            ANCESTORS
+            MUSIKULTURA
           </h1>
         </div>
-
-        {/* Heavy comic divider replacing the soft gradient line */}
         <div className="w-[80%] max-w-[250px] md:max-w-md h-3 bg-[#0f0c0c] my-6 md:my-8 border-b-4 border-[#da2d46] ml-auto md:ml-0 -skew-x-12" />
       </div>
 

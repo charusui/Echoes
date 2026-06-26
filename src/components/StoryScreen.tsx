@@ -186,7 +186,7 @@ Return strictly in this JSON format:
             className="font-orbitron font-black text-[#e0e5ed] text-3xl md:text-4xl tracking-widest uppercase leading-none"
             style={{ textShadow: '4px 4px 0px #0f0c0c, -2px -2px 0px #da2d46' }}
           >
-            ECHOES<br/>OF THE PAST
+            MUSIKULTURA
           </h2>
         </div>
 

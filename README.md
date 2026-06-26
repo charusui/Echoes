@@ -1,4 +1,4 @@
-# Echoes of the Ancestors 🪕
+# Musikultura 🪕
 
 A mobile-first rhythm and discovery game that takes players on a journey across the **Visayas** islands of the Philippines, scanning and unlocking traditional indigenous instruments — from the **Cebuano Gitara** and **Octavina** to the **Tultugan**, **Tulali**, and **Korlong** — while learning the folklore, history, and cultural significance behind each one.
 
