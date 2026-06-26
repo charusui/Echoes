@@ -1,4 +1,4 @@
-# Codebase Directory Guide: Echoes of the Ancestors
+# Codebase Directory Guide: Musikultura
 
 This guide explains the project structure, directory layout, and what each file does. Use this reference to quickly locate files and understand how they interact.
 
@@ -10,7 +10,7 @@ This guide explains the project structure, directory layout, and what each file 
 * [tsconfig.json](file:///c:/Users/duvey/Downloads/filinstruments/tsconfig.json) - TypeScript parent configuration.
 * [vercel.json](file:///c:/Users/duvey/Downloads/filinstruments/vercel.json) - Vercel configuration for deployment redirects.
 * [vite.config.ts](file:///c:/Users/duvey/Downloads/filinstruments/vite.config.ts) - Vite configuration utilizing the React compiler plugin.
-* [Echoes of the Ancestors GDD.pdf](file:///c:/Users/duvey/Downloads/filinstruments/Echoes%20of%20the%20Ancestors%20GDD.pdf) - Game Design Document outlining mechanics, levels, and narrative.
+* [Musikultura GDD.pdf](file:///c:/Users/duvey/Downloads/filinstruments/Echoes%20of%20the%20Ancestors%20GDD.pdf) - Game Design Document outlining mechanics, levels, and narrative.
 
 ---
 

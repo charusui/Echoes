@@ -134,7 +134,7 @@ export function Scanner({ onImageReady, onBack }: ScannerProps) {
           className="font-orbitron text-4xl md:text-5xl font-black text-[#0f0c0c] mb-2 tracking-wider leading-tight uppercase"
           style={{ textShadow: '4px 4px 0px #e0e5ed, -2px 0px 0px #da2d46' }}
         >
-          ECHOES OF THE<br />ANCESTORS
+          MUSIKULTURA
         </h1>
         
         <div className="bg-[#0f0c0c] border-[4px] border-[#da2d46] p-3 -skew-x-2 shadow-[6px_6px_0px_0px_#da2d46] mx-auto w-fit mt-4">
