@@ -1,11 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import type { Note, GameplayState, InputMapping, HitJudgement, HitResult } from '../types';
-import { HIT_WINDOWS, SCORE_VALUES, MULTIPLIER_THRESHOLDS, SONG_DURATION } from '../constants';
-import { generateProceduralChart } from '../services/chartGenerator';
+import type { Note, GameplayState, InputMapping, HitJudgement, HitResult, Difficulty } from '../types';
+import { HIT_WINDOWS, SCORE_VALUES, MULTIPLIER_THRESHOLDS } from '../constants';
+import { generateProceduralChart, generateFixedChart } from '../services/chartGenerator';
 
 export function useRhythmGame(
   mapping: InputMapping, 
   onFinish: (state: GameplayState) => void, 
+  difficulty: Difficulty,
+  version: 'v1' | 'v2',
+  duration: number,
   totalLanesOverride?: number,
   onPassiveMiss?: () => void // <-- NEW PARAMETER: Hook calls this when a note drops
 ) {
@@ -33,7 +36,10 @@ export function useRhythmGame(
 
   // Initialize
   useEffect(() => {
-    const chart = generateProceduralChart(mapping, totalLanesOverride);
+    const chart = difficulty === 'mastery' 
+      ? generateProceduralChart(mapping, duration, version, totalLanesOverride)
+      : generateFixedChart(mapping, difficulty, duration, version, totalLanesOverride);
+      
     setNotes(chart);
     notesRef.current = chart;
     
@@ -42,7 +48,7 @@ export function useRhythmGame(
       stateRef.current = newState;
       return newState;
     });
-  }, [mapping, totalLanesOverride]);
+  }, [mapping, difficulty, duration, version, totalLanesOverride]);
 
   // Start the game loop
   const startGame = useCallback(() => {
@@ -102,7 +108,7 @@ export function useRhythmGame(
         return newState;
       });
 
-      if (currentTime >= SONG_DURATION) {
+      if (currentTime >= duration) {
         setGameState(prev => {
           const newState = { ...prev, isPlaying: false, isFinished: true };
           stateRef.current = newState;
@@ -117,7 +123,7 @@ export function useRhythmGame(
 
     reqId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(reqId);
-  }, [gameState.isPlaying, gameState.isFinished, onFinish, onPassiveMiss]);
+  }, [gameState.isPlaying, gameState.isFinished, duration, onFinish, onPassiveMiss]);
 
   const hitLane = useCallback((laneIndex: number): HitResult | null => {
     if (!stateRef.current.isPlaying || stateRef.current.isFinished) return null;

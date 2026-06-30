@@ -75,6 +75,8 @@ export interface ActiveInstrumentProfile {
 
 // ─── Gameplay ─────────────────────────────────────────────────────────────────
 
+export type Difficulty = 'apprentice' | 'musician' | 'virtuoso' | 'mastery';
+
 export interface Note {
   id: string;
   time: number;       // scheduled time in seconds from song start
@@ -151,6 +153,7 @@ export interface UserProgress {
   streakShields: number;
   customProfiles: Record<string, any>; // Stores Omit<ActiveInstrumentProfile, 'imageBase64'>
   pendingReviews: VerificationResult[];
+  masteryUnlocked: Record<string, boolean>;
 }
 
 // ─── Quizzes & Story ──────────────────────────────────────────────────────────

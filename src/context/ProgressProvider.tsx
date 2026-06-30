@@ -27,6 +27,7 @@ const DEFAULT_PROGRESS: UserProgress = {
   streakShields: 0,
   customProfiles: {},
   pendingReviews: [],
+  masteryUnlocked: {},
 };
 
 const ProgressContext = createContext<ProgressContextType | null>(null);
