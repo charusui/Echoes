@@ -136,7 +136,7 @@ export interface PipelineStatus {
 
 // ─── App Views ────────────────────────────────────────────────────────────────
 
-export type AppView = 'title' | 'onboarding' | 'map' | 'locationServices' | 'setup' | 'pipeline' | 'discoveryCard' | 'gameplay' | 'quiz' | 'story' | 'results' | 'teachMode' | 'collection' | 'scanner' | 'scanVerification' | 'korlongHunt' | 'teachableStudent';
+export type AppView = 'title' | 'onboarding' | 'map' | 'locationServices' | 'setup' | 'pipeline' | 'discoveryCard' | 'gameplay' | 'quiz' | 'story' | 'results' | 'teachMode' | 'collection' | 'scanner' | 'scanVerification' | 'korlongHunt' | 'teachableStudent' | 'badges' | 'ranks';
 
 // ─── User Progress & Persistence ──────────────────────────────────────────────
 
@@ -173,4 +173,27 @@ export interface StoryScenario {
   options: string[];
   correctOptionIndex: number;
   explanation: string;
+}
+
+// ─── Badges & Leaderboard Ranks ──────────────────────────────────────────────
+
+export interface BadgeMetadata {
+  id: number;
+  name: string;
+  title: string;
+  description: string;
+  category: 'Exploration' | 'Rhythm' | 'Lore' | 'Mastery';
+  xpReward: number;
+}
+
+export interface LeaderboardEntry {
+  id: string;
+  name: string;
+  xp: number;
+  isPlayer: boolean;
+  title: string;
+  streak: number;
+  badgeId: number;
+  region: string;
+  avatarBg: string;
 }

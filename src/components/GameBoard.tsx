@@ -8,6 +8,7 @@ import { PercussionRhythm } from './PercussionRhythm';
 import { StringRhythm } from './StringRhythm';
 import { WindRhythm } from './WindRhythm';
 import { TnalakWeave } from './TnalakWeave';
+import { RhythmDifficultySelect } from './RhythmDifficultySelect';
 
 interface GameBoardProps {
   profile: ActiveInstrumentProfile;
@@ -312,58 +313,13 @@ export function GameBoard({ profile, onQuit, onFinish, onKorlongHunt }: GameBoar
         </div>
       )}
 
-      {/* Difficulty Selector */}
+      {/* Difficulty Selector (Rhythm Beatmap Menu Style) */}
       {!selectedDifficulty && (
-        <div className="absolute inset-0 bg-[#2a2d43]/95 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="max-w-xl w-full bg-[#e0e5ed] border-[6px] border-[#0f0c0c] shadow-[12px_12px_0px_0px_#0f0c0c] -skew-x-2 p-6 md:p-8 flex flex-col items-center animate-comic-float">
-            <h2 className="font-orbitron font-black text-2xl md:text-4xl text-[#0f0c0c] uppercase tracking-widest skew-x-2 mb-6 text-center">
-              Select Difficulty
-            </h2>
-            <div className="flex flex-col gap-4 w-full skew-x-2">
-              <div className="w-full flex flex-col gap-2">
-                <button onClick={() => handleSelectDifficulty('apprentice', 'v1')} className="w-full bg-[#da2d46] text-[#0f0c0c] border-[4px] border-[#0f0c0c] p-3 md:p-4 font-space-mono font-bold text-lg md:text-xl hover:bg-[#0f0c0c] hover:text-[#da2d46] transition-colors shadow-[4px_4px_0px_0px_#0f0c0c] active:translate-x-1 active:translate-y-1 active:shadow-none flex justify-between items-center group">
-                  <span className="font-black group-hover:scale-105 transition-transform">APPRENTICE (V1)</span> <span className="text-xs md:text-sm bg-[#0f0c0c] text-[#da2d46] px-2 py-1 group-hover:bg-[#da2d46] group-hover:text-[#0f0c0c] transition-colors">Slow</span>
-                </button>
-                <button onClick={() => handleSelectDifficulty('apprentice', 'v2')} className="w-full bg-[#da2d46] text-[#0f0c0c] border-[4px] border-[#0f0c0c] p-3 md:p-4 font-space-mono font-bold text-lg md:text-xl hover:bg-[#0f0c0c] hover:text-[#da2d46] transition-colors shadow-[4px_4px_0px_0px_#0f0c0c] active:translate-x-1 active:translate-y-1 active:shadow-none flex justify-between items-center group">
-                  <span className="font-black group-hover:scale-105 transition-transform">APPRENTICE (V2)</span> <span className="text-xs md:text-sm bg-[#0f0c0c] text-[#da2d46] px-2 py-1 group-hover:bg-[#da2d46] group-hover:text-[#0f0c0c] transition-colors">Slow</span>
-                </button>
-              </div>
-
-              <div className="w-full flex flex-col gap-2">
-                <button onClick={() => handleSelectDifficulty('musician', 'v1')} className="w-full bg-[#da2d46] text-[#0f0c0c] border-[4px] border-[#0f0c0c] p-3 md:p-4 font-space-mono font-bold text-lg md:text-xl hover:bg-[#0f0c0c] hover:text-[#da2d46] transition-colors shadow-[4px_4px_0px_0px_#0f0c0c] active:translate-x-1 active:translate-y-1 active:shadow-none flex justify-between items-center group">
-                  <span className="font-black group-hover:scale-105 transition-transform">MUSICIAN {(profile.instrument.category === 'percussion' || profile.instrument.category === 'string') ? '(V1)' : ''}</span> <span className="text-xs md:text-sm bg-[#0f0c0c] text-[#da2d46] px-2 py-1 group-hover:bg-[#da2d46] group-hover:text-[#0f0c0c] transition-colors">Medium</span>
-                </button>
-                {(profile.instrument.category === 'percussion' || profile.instrument.category === 'string') && (
-                  <button onClick={() => handleSelectDifficulty('musician', 'v2')} className="w-full bg-[#da2d46] text-[#0f0c0c] border-[4px] border-[#0f0c0c] p-3 md:p-4 font-space-mono font-bold text-lg md:text-xl hover:bg-[#0f0c0c] hover:text-[#da2d46] transition-colors shadow-[4px_4px_0px_0px_#0f0c0c] active:translate-x-1 active:translate-y-1 active:shadow-none flex justify-between items-center group">
-                    <span className="font-black group-hover:scale-105 transition-transform">MUSICIAN (V2)</span> <span className="text-xs md:text-sm bg-[#0f0c0c] text-[#da2d46] px-2 py-1 group-hover:bg-[#da2d46] group-hover:text-[#0f0c0c] transition-colors">Medium</span>
-                  </button>
-                )}
-              </div>
-
-              <div className="w-full flex flex-col gap-2">
-                <button onClick={() => handleSelectDifficulty('virtuoso', 'v1')} className="w-full bg-[#da2d46] text-[#0f0c0c] border-[4px] border-[#0f0c0c] p-3 md:p-4 font-space-mono font-bold text-lg md:text-xl hover:bg-[#0f0c0c] hover:text-[#da2d46] transition-colors shadow-[4px_4px_0px_0px_#0f0c0c] active:translate-x-1 active:translate-y-1 active:shadow-none flex justify-between items-center group">
-                  <span className="font-black group-hover:scale-105 transition-transform">VIRTUOSO {profile.instrument.category === 'wind' ? '(V1)' : ''}</span> <span className="text-xs md:text-sm bg-[#0f0c0c] text-[#da2d46] px-2 py-1 group-hover:bg-[#da2d46] group-hover:text-[#0f0c0c] transition-colors">Fast</span>
-                </button>
-                {profile.instrument.category === 'wind' && (
-                  <button onClick={() => handleSelectDifficulty('virtuoso', 'v2')} className="w-full bg-[#da2d46] text-[#0f0c0c] border-[4px] border-[#0f0c0c] p-3 md:p-4 font-space-mono font-bold text-lg md:text-xl hover:bg-[#0f0c0c] hover:text-[#da2d46] transition-colors shadow-[4px_4px_0px_0px_#0f0c0c] active:translate-x-1 active:translate-y-1 active:shadow-none flex justify-between items-center group">
-                    <span className="font-black group-hover:scale-105 transition-transform">VIRTUOSO (V2)</span> <span className="text-xs md:text-sm bg-[#0f0c0c] text-[#da2d46] px-2 py-1 group-hover:bg-[#da2d46] group-hover:text-[#0f0c0c] transition-colors">Fast</span>
-                  </button>
-                )}
-              </div>
-              
-              {localStorage.getItem(`mastery_unlocked_${profile.instrument.category}`) === 'true' ? (
-                <button onClick={() => handleSelectDifficulty('mastery')} className="w-full bg-[#0f0c0c] text-[#da2d46] border-[4px] border-[#da2d46] p-3 md:p-4 font-space-mono font-black text-lg md:text-xl hover:bg-[#da2d46] hover:text-[#0f0c0c] transition-colors shadow-[4px_4px_0px_0px_#da2d46] active:translate-x-1 active:translate-y-1 active:shadow-none flex justify-between items-center mt-2">
-                  <span className="animate-pulse">MASTERY</span> <span className="text-xs md:text-sm bg-[#da2d46] text-[#0f0c0c] px-2 py-1">Endless</span>
-                </button>
-              ) : (
-                <button disabled className="w-full bg-[#888ea1] border-[4px] border-[#0f0c0c] p-3 md:p-4 font-space-mono font-bold text-lg md:text-xl opacity-60 flex flex-col items-start cursor-not-allowed mt-2">
-                  <span className="text-[#0f0c0c]">MASTERY <span className="text-xs ml-2">(Locked)</span></span>
-                  <span className="text-xs mt-1 bg-[#0f0c0c] text-[#888ea1] px-2 py-1">Achieve 100% Perfect on Virtuoso</span>
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
+        <RhythmDifficultySelect
+          profile={profile}
+          onSelectDifficulty={handleSelectDifficulty}
+          onBack={onQuit}
+        />
       )}
 
       {/* Game Area */}

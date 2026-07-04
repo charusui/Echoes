@@ -20,6 +20,8 @@ import { CollectionScreen } from './components/CollectionScreen';
 import { ScanVerificationScreen } from './components/ScanVerificationScreen';
 import { KorlongHuntScreen } from './components/KorlongHuntScreen';
 import { TeachableStudentScreen } from './components/TeachableStudentScreen';
+import { BadgesScreen } from './components/BadgesScreen';
+import { RanksScreen } from './components/RanksScreen';
 import { DevMenu } from './components/DevMenu';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { initializeInstrumentPipeline } from './services/geminiPipeline';
@@ -290,6 +292,19 @@ function InnerApp() {
           onOpenLocationServices={() => setView('locationServices')}
           onSelectInstrument={handleSelectInstrument}
           onOpenCollection={() => setView('collection')}
+          onOpenBadges={() => setView('badges')}
+          onOpenRanks={() => setView('ranks')}
+        />
+      )}
+
+      {view === 'badges' && (
+        <BadgesScreen onBack={() => setView('map')} />
+      )}
+
+      {view === 'ranks' && (
+        <RanksScreen 
+          onBack={() => setView('map')} 
+          onOpenBadges={() => setView('badges')} 
         />
       )}
 

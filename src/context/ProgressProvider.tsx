@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { UserProgress, VerificationResult } from '../types';
+import type { UserProgress, VerificationResult, LeaderboardEntry } from '../types';
 import { MASTER_INSTRUMENTS, FIELD_MISSION_INSTRUMENTS, KORLONG_INSTRUMENT } from '../constants';
+import { MOCK_FILIPINO_LEADERBOARD } from '../constants/badges';
 
 interface ProgressContextType {
   progress: UserProgress;
@@ -10,7 +11,7 @@ interface ProgressContextType {
   unlockRegion: (region: string) => void;
   awardBadge: (badge: string) => void;
   useStreakShield: () => boolean;
-  getClassroomLeaderboard: () => { name: string; xp: number; isPlayer: boolean }[];
+  getClassroomLeaderboard: () => LeaderboardEntry[];
   saveCustomProfile: (profileId: string, profileData: any) => void;
   unlockAllInstruments: () => void;
   addPendingReview: (result: VerificationResult) => void;
@@ -140,14 +141,26 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
     return used;
   };
 
-  const getClassroomLeaderboard = () => {
-    // Mocked leaderboard mixing static data with the real player's XP
-    return [
-      { name: 'Maria D.', xp: Math.max(progress.xp + 90, 480), isPlayer: false },
-      { name: 'Juan S.', xp: Math.max(progress.xp + 20, 410), isPlayer: false },
-      { name: 'You', xp: progress.xp, isPlayer: true },
-      { name: 'Ana B.', xp: Math.max(progress.xp - 30, 200), isPlayer: false },
-    ].sort((a, b) => b.xp - a.xp);
+  const getClassroomLeaderboard = (): LeaderboardEntry[] => {
+    const mockEntries: LeaderboardEntry[] = MOCK_FILIPINO_LEADERBOARD.map(entry => ({
+      ...entry,
+      xp: entry.baseXp,
+      isPlayer: false,
+    }));
+
+    const playerEntry: LeaderboardEntry = {
+      id: 'player_you',
+      name: 'You (Expeditionist)',
+      xp: progress.xp,
+      isPlayer: true,
+      title: progress.level >= 5 ? 'Master of Visayas' : progress.level >= 3 ? 'Visayan Explorer' : 'Cultural Novice',
+      streak: progress.currentStreak,
+      badgeId: progress.badges.length > 0 ? 15 : 1,
+      region: progress.unlockedRegions[progress.unlockedRegions.length - 1] || 'Western Visayas',
+      avatarBg: '#da2d46',
+    };
+
+    return [...mockEntries, playerEntry].sort((a, b) => b.xp - a.xp);
   };
 
   return (

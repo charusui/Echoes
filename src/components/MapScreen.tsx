@@ -10,6 +10,8 @@ interface MapScreenProps {
   onOpenLocationServices: () => void;
   onSelectInstrument: (instrumentName: string) => void;
   onOpenCollection: () => void;
+  onOpenBadges?: () => void;
+  onOpenRanks?: () => void;
 }
 
 const REGION_PINS = [
@@ -19,7 +21,7 @@ const REGION_PINS = [
   { id: 'negros', name: 'Negros Region', instrument: 'Subing', levelRequired: 4, top: '60%', left: '42%', emoji: '🎵'}, 
 ];
 
-export function MapScreen({ onOpenScanner, onOpenLocationServices, onSelectInstrument, onOpenCollection }: MapScreenProps) {
+export function MapScreen({ onOpenScanner, onOpenLocationServices, onSelectInstrument, onOpenCollection, onOpenBadges, onOpenRanks }: MapScreenProps) {
   const { progress } = useProgress();
   const [isExpeditionsExpanded, setIsExpeditionsExpanded] = useState(false);
 
@@ -291,26 +293,34 @@ export function MapScreen({ onOpenScanner, onOpenLocationServices, onSelectInstr
         <div className="flex gap-1.5 sm:gap-3 pointer-events-auto w-full justify-end">
           <button
             onClick={onOpenLocationServices}
-            className="flex-1 max-w-[60px] sm:max-w-[80px] py-1 sm:py-2 bg-[#f0dde0] border-[2px] sm:border-[4px] border-[#0f0c0c] flex flex-col items-center justify-center gap-0.5 sm:gap-1 shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6 active:translate-y-1 active:translate-x-1 active:shadow-none hover:bg-[#da2d46] transition-all group"
+            className="flex-1 max-w-[60px] sm:max-w-[80px] py-1 sm:py-2 bg-[#f0dde0] border-[2px] sm:border-[4px] border-[#0f0c0c] flex flex-col items-center justify-center gap-0.5 sm:gap-1 shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6 active:translate-y-1 active:translate-x-1 active:shadow-none hover:bg-[#da2d46] hover:text-white transition-all group"
           >
-            <Map size={14} className="skew-x-6 text-[#0f0c0c] sm:w-5 sm:h-5" />
-            <span className="font-space-mono uppercase font-black text-[7px] sm:text-[9px] skew-x-6 text-[#0f0c0c]">Radar</span>
+            <Map size={14} className="skew-x-6 text-[#0f0c0c] group-hover:text-white sm:w-5 sm:h-5" />
+            <span className="font-space-mono uppercase font-black text-[7px] sm:text-[9px] skew-x-6 text-[#0f0c0c] group-hover:text-white">Radar</span>
           </button>
 
           <button
             onClick={onOpenCollection}
-            className="flex-1 max-w-[60px] sm:max-w-[80px] py-1 sm:py-2 bg-[#e0e5ed] border-[2px] sm:border-[4px] border-[#0f0c0c] flex flex-col items-center justify-center gap-0.5 sm:gap-1 shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6 active:translate-y-1 active:translate-x-1 active:shadow-none hover:bg-[#da2d46] transition-all group"
+            className="flex-1 max-w-[60px] sm:max-w-[80px] py-1 sm:py-2 bg-[#e0e5ed] border-[2px] sm:border-[4px] border-[#0f0c0c] flex flex-col items-center justify-center gap-0.5 sm:gap-1 shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6 active:translate-y-1 active:translate-x-1 active:shadow-none hover:bg-[#da2d46] hover:text-white transition-all group"
           >
-            <Award size={14} className="skew-x-6 text-[#0f0c0c] sm:w-5 sm:h-5" />
-            <span className="font-space-mono uppercase font-black text-[7px] sm:text-[9px] skew-x-6 text-[#0f0c0c]">Archive</span>
+            <Award size={14} className="skew-x-6 text-[#0f0c0c] group-hover:text-white sm:w-5 sm:h-5" />
+            <span className="font-space-mono uppercase font-black text-[7px] sm:text-[9px] skew-x-6 text-[#0f0c0c] group-hover:text-white">Archive</span>
           </button>
 
           <button
-            disabled
-            className="flex-1 max-w-[60px] sm:max-w-[80px] py-1 sm:py-2 bg-[#2a2d43] border-[2px] sm:border-[4px] border-[#0f0c0c] flex flex-col items-center justify-center gap-0.5 sm:gap-1 shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6 opacity-70 cursor-not-allowed"
+            onClick={onOpenBadges}
+            className="flex-1 max-w-[60px] sm:max-w-[80px] py-1 sm:py-2 bg-[#fbe8eb] border-[2px] sm:border-[4px] border-[#0f0c0c] flex flex-col items-center justify-center gap-0.5 sm:gap-1 shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6 active:translate-y-1 active:translate-x-1 active:shadow-none hover:bg-[#da2d46] hover:text-white transition-all group"
           >
-            <Flame size={14} className="skew-x-6 text-[#888ea1] sm:w-5 sm:h-5" />
-            <span className="font-space-mono uppercase font-black text-[7px] sm:text-[9px] skew-x-6 text-[#888ea1]">Ranks</span>
+            <Shield size={14} className="skew-x-6 text-[#da2d46] group-hover:text-white sm:w-5 sm:h-5" />
+            <span className="font-space-mono uppercase font-black text-[7px] sm:text-[9px] skew-x-6 text-[#0f0c0c] group-hover:text-white">Badges</span>
+          </button>
+
+          <button
+            onClick={onOpenRanks}
+            className="flex-1 max-w-[60px] sm:max-w-[80px] py-1 sm:py-2 bg-[#fef3c7] border-[2px] sm:border-[4px] border-[#0f0c0c] flex flex-col items-center justify-center gap-0.5 sm:gap-1 shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6 active:translate-y-1 active:translate-x-1 active:shadow-none hover:bg-[#da2d46] hover:text-white transition-all group"
+          >
+            <Flame size={14} className="skew-x-6 text-[#d97706] group-hover:text-white sm:w-5 sm:h-5 animate-pulse" />
+            <span className="font-space-mono uppercase font-black text-[7px] sm:text-[9px] skew-x-6 text-[#0f0c0c] group-hover:text-white">Ranks</span>
           </button>
         </div>
 
