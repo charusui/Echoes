@@ -52,21 +52,21 @@ export function RanksScreen({ onBack, onOpenBadges }: RanksScreenProps) {
       <div className="max-w-6xl w-full mx-auto z-10">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 pb-5 border-b-[3px] border-[#da2d46]">
           {/* Title Area */}
-          <div className="flex items-start sm:items-center gap-3 sm:gap-4 flex-1 min-w-0">
+          <div className="flex items-center gap-4 sm:gap-6 flex-1 min-w-0">
             <button
               onClick={onBack}
-              className="p-3 bg-[#2a2d43] border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#da2d46] -skew-x-6 hover:bg-[#da2d46] hover:text-white transition-all flex-shrink-0 mt-1 sm:mt-0 active:translate-x-0.5 active:translate-y-0.5"
+              className="p-2.5 sm:p-3 bg-[#2a2d43] border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#da2d46] -skew-x-6 hover:bg-[#da2d46] hover:text-white transition-all flex-shrink-0 active:translate-x-0.5 active:translate-y-0.5"
             >
-              <ArrowLeft size={22} className="skew-x-6" />
+              <ArrowLeft size={20} className="skew-x-6 sm:w-[22px] sm:h-[22px]" />
             </button>
             <div className="skew-x-2 min-w-0 flex-1">
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <Flame className="text-[#da2d46] animate-pulse flex-shrink-0" size={28} />
-                <h1 className="font-orbitron font-black text-2xl sm:text-3xl md:text-4xl tracking-wide uppercase bg-gradient-to-r from-white via-[#f0dde0] to-[#da2d46] bg-clip-text text-transparent">
+              <div className="flex items-center gap-2 sm:gap-2.5 flex-nowrap">
+                <Flame className="text-[#da2d46] animate-pulse flex-shrink-0 w-6 h-6 sm:w-7 sm:h-7" />
+                <h1 className="font-orbitron font-black text-lg sm:text-3xl md:text-4xl tracking-wide uppercase bg-gradient-to-r from-white via-[#f0dde0] to-[#da2d46] bg-clip-text text-transparent truncate">
                   Expedition Leaderboard
                 </h1>
               </div>
-              <p className="text-xs sm:text-sm text-[#cbd5e1] mt-1 font-bold">
+              <p className="text-xs sm:text-sm text-[#cbd5e1] mt-1 font-bold line-clamp-2 sm:line-clamp-none">
                 Honoring the top Filipino ethnomusicologists, rhythm weavers, and instrument scouts.
               </p>
             </div>
