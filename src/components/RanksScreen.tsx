@@ -197,7 +197,7 @@ export function RanksScreen({ onBack, onOpenBadges }: RanksScreenProps) {
           </div>
 
           {/* Table Rows */}
-          <div className="divide-y divide-[#2a2d43]/50 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar mt-2">
+          <div className="divide-y divide-[#2a2d43]/50 lg:max-h-[50vh] lg:overflow-y-auto pr-2 custom-scrollbar mt-2">
             {filteredLeaderboard.map(entry => {
               const actualRank = leaderboard.findIndex(e => e.id === entry.id) + 1;
               const badgeStyle = getRankBadgeColor(actualRank);

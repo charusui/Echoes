@@ -115,7 +115,7 @@ export function BadgesScreen({ onBack }: BadgesScreenProps) {
       {/* Main Badges Grid & Showcase */}
       <div className="max-w-6xl w-full mx-auto my-6 z-10 flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* Badges Grid (Left 2 Columns) */}
-        <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 max-h-[60vh] lg:max-h-[68vh] overflow-y-auto pr-1 sm:pr-2 custom-scrollbar">
+        <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 lg:max-h-[68vh] lg:overflow-y-auto pr-1 sm:pr-2 custom-scrollbar">
           {filteredBadges.map(badge => {
             const unlocked = isUnlocked(badge);
             const isSelected = selectedBadge?.id === badge.id;
