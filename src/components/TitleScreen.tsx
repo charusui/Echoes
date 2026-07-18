@@ -1,8 +1,35 @@
-import { useEffect, useState } from 'react';
-import { Play } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
 
-// imported picture
-import person from '../assets/images/pose_three.png';
+// Running animation frames
+import one from '../assets/running animation/1.png';
+import two from '../assets/running animation/2.png';
+import three from '../assets/running animation/3.png';
+import four from '../assets/running animation/4.png';
+import five from '../assets/running animation/5.png';
+import six from '../assets/running animation/6.png';
+import seven from '../assets/running animation/7.png';
+import eight from '../assets/running animation/8.png';
+import nine from '../assets/running animation/9.png';
+import ten from '../assets/running animation/10.png';
+import eleven from '../assets/running animation/11.png';
+import twelve from '../assets/running animation/12.png';
+import thirteen from '../assets/running animation/13.png';
+import fourteen from '../assets/running animation/14.png';
+import fifteen from '../assets/running animation/15.png';
+import sixteen from '../assets/running animation/16.png';
+import seventeen from '../assets/running animation/17.png';
+import eighteen from '../assets/running animation/18.png';
+import nineteen from '../assets/running animation/19.png';
+import twenty from '../assets/running animation/20.png';
+import fullbg from '../assets/running animation/fullbg.png';
+
+const FRAMES = [
+  one, two, three, four, five, six, seven, eight, nine, ten,
+  eleven, twelve, thirteen, fourteen, fifteen, sixteen, seventeen,
+  eighteen, nineteen, twenty,
+];
+
+const FRAME_DURATION = 220;
 
 interface TitleScreenProps {
   onStart: () => void;
@@ -10,116 +37,292 @@ interface TitleScreenProps {
 
 export function TitleScreen({ onStart }: TitleScreenProps) {
   const [mounted, setMounted] = useState(false);
+  const [frameIdx, setFrameIdx] = useState(0);
+  const [blink, setBlink] = useState(true);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const blinkRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    setMounted(true);
+    const t = setTimeout(() => setMounted(true), 100);
+    return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    intervalRef.current = setInterval(() => {
+      setFrameIdx(prev => (prev + 1) % FRAMES.length);
+    }, FRAME_DURATION);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, []);
+
+  useEffect(() => {
+    blinkRef.current = setInterval(() => setBlink(b => !b), 800);
+    return () => { if (blinkRef.current) clearInterval(blinkRef.current); };
   }, []);
 
   return (
-    // Base container uses Dark Slate (#2a2d43)
-    <div className="relative min-h-screen bg-[#2a2d43] flex flex-col pt-24 md:pt-0 md:justify-center overflow-hidden pb-safe px-6 md:px-12 z-0">
-      
-      {/* 1. Halftone Dot Pattern Background */}
-      {/* Uses radial-gradient to generate comic dots purely with CSS */}
-      <div 
-        className="absolute inset-0 z-[-3] opacity-30 pointer-events-none" 
+    <div className="relative w-full h-[100dvh] overflow-hidden flex flex-col bg-[#181926]">
+
+      {/* ── SCROLLING BACKGROUND ── */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <div
+          className="flex h-full w-max"
+          style={{ animation: 'scrollBgLoop 60s linear infinite' }}
+        >
+          {[0, 1, 2].map(i => (
+            <img key={i} src={fullbg} alt="" aria-hidden
+              className="h-full w-auto max-w-none object-cover" />
+          ))}
+        </div>
+      </div>
+
+      {/* ── SUBTLE DOT OVERLAY ── */}
+      <div
+        className="absolute inset-0 pointer-events-none z-[1]"
         style={{
-          backgroundImage: 'radial-gradient(#da2d46 2px, transparent 2px)',
-          backgroundSize: '20px 20px'
+          backgroundImage: 'radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px)',
+          backgroundSize: '20px 20px',
         }}
       />
+      <div
+        className="relative z-10 flex flex-col items-center shrink-0"
+        style={{
+          paddingTop: 'max(env(safe-area-inset-top), 120px)',
+          paddingLeft: 16,
+          paddingRight: 16,
+          opacity: mounted ? 1 : 0,
+          transform: mounted ? 'translateY(0)' : 'translateY(-16px)',
+          transition: 'opacity 0.55s ease, transform 0.55s ease',
+        }}
+      >
+        {/* Eyebrow tag */}
+        <div
+          style={{
+            marginBottom: 30,
+            padding: '6px 20px',
+            background: '#0d0d12',
+            borderLeft: '4px solid #e52b35',
+            borderRight: '4px solid #e52b35',
+            transform: 'skewX(-15deg)',
+            boxShadow: '4px 4px 0 rgba(0,0,0,0.5)',
+          }}
+        >
+          <span
+            style={{
+              display: 'block',
+              fontFamily: "'Press Start 2P', monospace",
+              fontSize: 'clamp(9px, 1.8vw, 12px)',
+              letterSpacing: '0.06em',
+              color: '#ffffff',
+              textTransform: 'uppercase',
+              whiteSpace: 'nowrap',
+              transform: 'skewX(15deg)',
+              WebkitFontSmoothing: 'none',
+            }}
+          >
+            The Cultural Resonance Project
+          </span>
+        </div>
 
-      {/* 2. Dynamic Speed Slashes */}
-      {/* A massive, skewed Crimson shape breaking the background */}
-      <div className="absolute top-0 right-0 w-[120%] md:w-[65%] h-[120%] bg-[#da2d46] -skew-x-12 translate-x-20 md:translate-x-32 z-[-2] border-l-[12px] border-[#0f0c0c]" />
+        {/* MUSIKULTURA */}
+        <h1
+          style={{
+            fontFamily: "'Press Start 2P', monospace",
+            fontSize: 'clamp(2rem, 6.5vw, 4.5rem)',
+            fontWeight: 400, // PS2P has built-in weight
+            lineHeight: 1.3,
+            textTransform: 'uppercase',
+            textAlign: 'center',
+            margin: 0,
+            color: '#ffffff',
+            textShadow:
+              '4px 4px 0px #0a0a0f,' +
+              '8px 8px 0px rgba(229,43,53,0.45)',
+            WebkitFontSmoothing: 'none',
+            // Allow wrapping on very narrow screens (< 320px) rather than overflow
+            wordBreak: 'break-word',
+          }}
+        >
+          MUSIKULTURA
+        </h1>
 
-      {/* Abstract comic panel framing the characters */}
-      <div className="absolute bottom-20 right-35 w-[50%] h-[60%] bg-[#f0dde0] border-[8px] border-[#0f0c0c] shadow-[16px_16px_0px_0px_#0f0c0c] -skew-x-6 z-[-1] hidden md:block" />
-
-      {/* 3. Characters */}
-      <div className={`absolute bottom-0 md:-bottom-10 left-[-1rem] md:left-auto md:right-0 z-10 h-[55vh] md:h-[105vh] w-[85%] md:w-auto transition-transform duration-[1200ms] ease-out ${mounted ? 'translate-x-0' : 'translate-x-32'}`}>
-        
-        {/* Applying a hard drop shadow to the PNG itself instead of a soft glow */}
-        <img 
-          src={person} 
-          alt="person posing" 
-          className="h-full w-full md:w-auto object-cover md:object-contain object-bottom md:object-right drop-shadow-[8px_8px_0px_rgba(15,12,12,1)]" 
+        {/* Red underline accent */}
+        <div
+          style={{
+            marginTop: 12,
+            width: mounted ? 'clamp(180px, 55vw, 340px)' : '0px',
+            height: 5,
+            background: '#e52b35',
+            transform: 'skewX(-20deg)',
+            transition: 'width 0.8s 0.3s cubic-bezier(0.2,0.8,0.2,1)',
+            boxShadow: '3px 3px 0 #0a0a0f',
+          }}
         />
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 h-[80vh] z-10 bg-gradient-to-t from-[#0f0c0c] via-[#2a2d43]/40 to-transparent pointer-events-none" />
-      
-      {/* Main Content - Text Container */}
-      <div className={`relative z-20 flex flex-col items-end md:items-start w-full transition-transform duration-[800ms] ease-out ${mounted ? 'translate-x-0' : '-translate-x-16'}`}>
-        
-        {/* Project Label - Framed in a skewed container */}
-        <div className="bg-[#0f0c0c] px-4 py-2 mb-6 border-4 border-[#da2d46] -skew-x-6 shadow-[6px_6px_0px_0px_#da2d46]">
-          <h2 className="font-space-mono text-[#f0dde0] font-bold tracking-[0.2em] text-xs md:text-sm uppercase skew-x-6">
-            The Cultural Resonance Project
-          </h2>
+      {/* ── ROW 2 — CHARACTER (fills the sky between title and button) ── */}
+      <div
+        className="relative z-10 flex items-end justify-center w-full flex-1 pointer-events-none"
+        style={{
+          // Minimum so it never collapses to nothing on tiny phones
+          minHeight: 160,
+          opacity: mounted ? 1 : 0,
+          transition: 'opacity 0.6s 0.2s',
+        }}
+      >
+        {/* Speed lines — only render if there's enough horizontal room */}
+        <div className="absolute inset-0 hidden sm:block pointer-events-none">
+          {[18, 36, 52, 68, 84].map((top, i) => (
+            <div key={i} style={{
+              position: 'absolute',
+              top,
+              // Positioned relative to horizontal centre
+              left: `calc(50% - clamp(100px, 13vw, 180px) - ${24 + i * 9}px - 6px)`,
+              height: 2,
+              width: 24 + i * 9,
+              background: 'rgba(255,255,255,0.55)',
+              animation: `speedLine ${0.38 + i * 0.07}s linear infinite`,
+              borderRadius: 1,
+            }} />
+          ))}
         </div>
-        
-        {/* 4. Chromatic Aberration Typography */}
-        <div className="relative">
-          <h1 
-            className="font-orbitron font-black text-5xl md:text-[7rem] text-right md:text-left leading-none mb-2 relative text-[#e0e5ed] uppercase tracking-tighter"
-            style={{
-              // Text shadow handles the heavy black outline and the Crimson/Pink glitch offsets
-              textShadow: '6px 6px 0px #0f0c0c, -5px 0px 0px #da2d46, 5px 0px 0px #f0dde0'
-            }}
-          >
-            MUSIKULTURA
-          </h1>
-        </div>
-        <div className="w-[80%] max-w-[250px] md:max-w-md h-3 bg-[#0f0c0c] my-6 md:my-8 border-b-4 border-[#da2d46] ml-auto md:ml-0 -skew-x-12" />
+
+        <img
+          src={FRAMES[frameIdx]}
+          alt="Running character"
+          style={{
+            /*
+             * Was clamp(140px, 25vh, 320px).
+             * Increased minimum to 200px and percentage to 32vh
+             * so the sprite feels substantial even on small phones.
+             * Cap stays at 360px on large screens.
+             */
+            height: 'clamp(200px, 32vh, 360px)',
+            width: 'auto',
+            imageRendering: 'pixelated',
+            // Lift character up from the bottom of its row
+            marginBottom: 'clamp(24px, 5vh, 60px)',
+            filter:
+              'drop-shadow(3px 0 0 #000) ' +
+              'drop-shadow(-3px 0 0 #000) ' +
+              'drop-shadow(0 3px 0 #000) ' +
+              'drop-shadow(0 -3px 0 #000) ' +
+              'drop-shadow(6px 6px 0 rgba(0,0,0,0.4))',
+          }}
+        />
       </div>
 
-      {/* 5. The "Action" Button */}
-      {/* Removes opacity transitions for hard translations. Active state presses the button into its shadow. */}
-      <div className={`absolute bottom-8 left-6 md:bottom-12 md:left-12 z-20 transition-transform duration-[800ms] delay-300 ease-out ${mounted ? 'translate-y-0' : 'translate-y-24'}`}>
-        <button 
+      {/* ── ROW 3 — BUTTON STRIP ── */}
+      <div
+        className="relative z-10 flex flex-col items-center justify-center shrink-0"
+        style={{
+          paddingBottom: 'max(env(safe-area-inset-bottom), 48px)',
+          paddingTop: 8,
+          gap: 10,
+          opacity: mounted ? 1 : 0,
+          transform: mounted ? 'translateY(0)' : 'translateY(16px)',
+          transition: 'opacity 0.6s 0.4s, transform 0.6s 0.4s',
+        }}
+      >
+        <button
           onClick={onStart}
-          className="group relative flex items-center gap-4 transition-transform active:translate-y-2 active:translate-x-2"
+          aria-label="Start game"
+          className="group cursor-pointer outline-none border-none bg-transparent p-0"
         >
-          
-          {/* Main Button Block */}
-          {/* Added hover translations and expanded hover shadow for the "lift" effect */}
-          <div className="relative h-16 shrink-0 bg-[#da2d46] border-[4px] border-[#0f0c0c] shadow-[8px_8px_0px_0px_#0f0c0c] transition-all duration-200 ease-out -skew-x-6 overflow-hidden group-hover:-translate-y-1 group-hover:-translate-x-1 group-hover:shadow-[12px_12px_0px_0px_#0f0c0c] group-active:translate-y-2 group-active:translate-x-2 group-active:shadow-[0px_0px_0px_0px_#0f0c0c]">
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '12px', /* Moved gap here to guarantee centering */
+              height: 'clamp(48px, 7vh, 60px)',
+              minWidth: '240px', /* Solid minimum width prevents squeezing on mobile */
+              padding: '0 24px', /* Flat padding */
+              background: '#f42a35',
+              boxShadow: 'inset 0 0 0 2px #ff6b73, 0 6px 0 #0d0d12',
+              position: 'relative',
+              overflow: 'hidden',
+              transition: 'transform 0.1s, box-shadow 0.1s',
+            }}
+            onMouseEnter={e => {
+              const el = e.currentTarget as HTMLElement;
+              el.style.transform = 'translateY(-2px)';
+              el.style.boxShadow = 'inset 0 0 0 2px #ff6b73, 0 8px 0 #0d0d12';
+            }}
+            onMouseLeave={e => {
+              const el = e.currentTarget as HTMLElement;
+              el.style.transform = 'translateY(0)';
+              el.style.boxShadow = 'inset 0 0 0 2px #ff6b73, 0 6px 0 #0d0d12';
+            }}
+            onMouseDown={e => {
+              const el = e.currentTarget as HTMLElement;
+              el.style.transform = 'translateY(5px)';
+              el.style.boxShadow = 'inset 0 0 0 2px #ff6b73, 0 1px 0 #0d0d12';
+            }}
+            onMouseUp={e => {
+              const el = e.currentTarget as HTMLElement;
+              el.style.transform = 'translateY(0)';
+              el.style.boxShadow = 'inset 0 0 0 2px #ff6b73, 0 6px 0 #0d0d12';
+            }}
+          >
+            {/* Shimmer */}
+            <div style={{
+              position: 'absolute', inset: 0, zIndex: 1,
+              background: 'linear-gradient(105deg, transparent 38%, rgba(255,255,255,0.2) 50%, transparent 62%)',
+              animation: 'shimmer 2.4s ease-in-out infinite',
+            }} />
+
+            {/* Flat Flex children - no nested wrappers */}
+            <div style={{
+              width: 0, height: 0,
+              borderStyle: 'solid',
+              borderWidth: '7px 0 7px 12px',
+              borderColor: 'transparent transparent transparent #0d0d12',
+              flexShrink: 0,
+              marginTop: '4px',
+              position: 'relative', zIndex: 2, 
+            }} />
             
-            {/* 1. The Circling LED Effect (Spinning Gradient) */}
-            {/* Sits completely in the background, scaled up to ensure it covers the corners while spinning */}
-            <div 
-              className="absolute inset-[-150%] animate-[spin_2s_linear_infinite] z-0"
-              style={{
-                background: 'conic-gradient(from 0deg, transparent 75%, #f0dde0 90%, #ffffff 100%)'
-              }}
-            />
-
-            {/* 2. Inner Mask */}
-            {/* This blocks out the center of the spinning gradient, leaving only a 3px glowing LED border */}
-            <div className="absolute inset-[3px] bg-[#da2d46] z-0" />
-
-            {/* 3. Button Content */}
-            {/* Needs relative and z-10 to sit above the background layers */}
-            <div className="relative z-10 flex items-center justify-center w-full h-full px-8 text-[#0f0c0c]">
-              <Play size={28} className="fill-current skew-x-6 font-black" />
-              <span className="font-space-mono font-black tracking-widest uppercase text-lg skew-x-6 ml-3">
-                START 
-              </span>
-            </div>
-          </div>
-
-          {/* Supplemental Info Tag - Formatted as an attached comic caption box */}
-          <div className="flex flex-col items-start text-left bg-[#2a2d43] border-4 border-[#0f0c0c] px-4 py-2 -skew-x-6 shadow-[6px_6px_0px_0px_#0f0c0c] hidden md:flex">
-            <span className="font-space-mono text-sm text-[#e0e5ed] font-bold uppercase tracking-widest skew-x-6">
-              System Ready
-            </span>
-            <span className="font-space-mono text-xs text-[#888ea1] uppercase tracking-widest mt-1 skew-x-6 font-bold">
-              Headphones Rec.
+            <span style={{
+              fontFamily: "'Press Start 2P', monospace",
+              fontSize: 'clamp(0.75rem, 3vw, 0.9rem)',
+              color: '#0d0d12',
+              textTransform: 'uppercase',
+              whiteSpace: 'nowrap',
+              WebkitFontSmoothing: 'none',
+              lineHeight: 1, 
+              marginTop: '4px',
+              position: 'relative', zIndex: 2,
+            }}>
+              Play Game
             </span>
           </div>
         </button>
       </div>
+
+      {/* ── KEYFRAMES ── */}
+      <style>{`
+        @keyframes scrollBgLoop {
+          0%   { transform: translateX(0); }
+          100% { transform: translateX(calc(-100% / 3)); }
+        }
+        @keyframes speedLine {
+          0%   { opacity: 0.65; transform: scaleX(1);   }
+          50%  { opacity: 0.08; transform: scaleX(0.3); }
+          100% { opacity: 0.65; transform: scaleX(1);   }
+        }
+        @keyframes shimmer {
+          0%   { transform: translateX(-100%); }
+          55%  { transform: translateX(220%);  }
+          100% { transform: translateX(220%);  }
+        }
+
+        /* Landscape phone — keep character visible without crowding */
+        @media (max-height: 500px) {
+          .character-img {
+            height: 120px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
