@@ -48,7 +48,7 @@ export function KorlongHuntScreen({ onBack, onDiscovered }: KorlongHuntScreenPro
 
   // ── Audio Management ───────────────────────────────────────────────────────
   useEffect(() => {
-    const audio = new Audio('/audio/korlong_music.mp3');
+    const audio = new Audio('/assets/audio/korlong_music.mp3');
     audio.loop = false; // Manually loop specific segments
     audioRef.current = audio;
     if (typeof window !== 'undefined') {

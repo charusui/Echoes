@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, Map, Flame, Award, Shield, Lock, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { useProgress } from '../context/ProgressProvider';
-
-// map
 import map from '../assets/png/visayas_map.png';
+import { ExpeditionScreen } from './expedition/ExpeditionScreen';
 
 interface MapScreenProps {
   onOpenScanner: () => void;
@@ -15,6 +14,20 @@ interface MapScreenProps {
   onOpenExpedition?: () => void;
 }
 
+export function MapScreen({ onOpenScanner, onOpenLocationServices, onOpenCollection, onOpenBadges, onOpenRanks, onOpenExpedition }: MapScreenProps) {
+  return (
+    <ExpeditionScreen
+      isRootMap={true}
+      onBack={onOpenExpedition || (() => {})}
+      onOpenScanner={onOpenScanner}
+      onOpenLocationServices={onOpenLocationServices}
+      onOpenCollection={onOpenCollection}
+      onOpenBadges={onOpenBadges}
+      onOpenRanks={onOpenRanks}
+    />
+  );
+}
+
 const REGION_PINS = [
   { id: 'western', name: 'Western Visayas', instrument: 'Tultugan', levelRequired: 1, top: '45%', left: '25%', emoji: '🪘', totalInstruments: 6 },
   { id: 'central', name: 'Central Visayas', instrument: 'Cebuano Gitara', levelRequired: 2, top: '65%', left: '55%', emoji: '🎸', totalInstruments: 5 },
@@ -22,7 +35,8 @@ const REGION_PINS = [
   { id: 'negros', name: 'Negros Region', instrument: 'Subing', levelRequired: 4, top: '60%', left: '42%', emoji: '🎵'}, 
 ];
 
-export function MapScreen({ onOpenScanner, onOpenLocationServices, onSelectInstrument, onOpenCollection, onOpenBadges, onOpenRanks, onOpenExpedition }: MapScreenProps) {
+// Legacy MapScreen code kept for reference if needed
+export function LegacyMapScreen({ onOpenScanner, onOpenLocationServices, onSelectInstrument, onOpenCollection, onOpenBadges, onOpenRanks, onOpenExpedition }: MapScreenProps) {
   const { progress } = useProgress();
   const [isExpeditionsExpanded, setIsExpeditionsExpanded] = useState(false);
 

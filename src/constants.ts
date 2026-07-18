@@ -58,17 +58,10 @@ export const KEYBOARD_MAPS: Record<InstrumentCategory, string[]> = {
 export const GEMINI_MODEL = 'gemini-3.1-flash-lite-preview';
 
 // ─── Master Instruments Collection ──────────────────────────────────────────────
+import type { MasterInstrument, FieldMissionInstrument } from './types';
+export type { MasterInstrument, FieldMissionInstrument };
 
-export interface MasterInstrument {
-  id: string;
-  name: string;
-  region: string;
-  hint: string;
-  extendedInfo?: string;
-  history?: string;
-}
-
-export const IMAGE_BASE = '/instruments/';
+export const IMAGE_BASE = '/assets/instruments/';
 
 export const MASTER_INSTRUMENTS: MasterInstrument[] = [
   // Western Visayas (2 Verified)
@@ -86,10 +79,6 @@ export const MASTER_INSTRUMENTS: MasterInstrument[] = [
 
 // ─── Field Mission Instruments (no verified location — community-unlockable) ───────────
 // Visible in Collection as ghost cards. Players submit sightings via community review.
-
-export interface FieldMissionInstrument extends MasterInstrument {
-  crypticHint: string;
-}
 
 export const FIELD_MISSION_INSTRUMENTS: FieldMissionInstrument[] = [
   {

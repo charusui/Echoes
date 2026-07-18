@@ -32,7 +32,7 @@ export function RanksScreen({ onBack, onOpenBadges }: RanksScreenProps) {
 
   const getBadgeImage = (badgeId?: number) => {
     const id = badgeId || 1;
-    return `/badges/${id}.png`;
+    return `/assets/badges/${id}.png`;
   };
 
   const getRankBadgeColor = (rank: number) => {

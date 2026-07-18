@@ -66,7 +66,7 @@ export function GameBoard({ profile, onQuit, onFinish, onKorlongHunt }: GameBoar
       else if (difficulty === 'musician') trackName = 'Moderate.mp3';
       else trackName = version === 'v2' ? 'Fast v2.mp3' : 'Fast.mp3';
     }
-    return `/audio/songs/${catFolder}/${trackName}`;
+    return `/assets/audio/songs/${catFolder}/${trackName}`;
   };
 
   const handleSelectDifficulty = (diff: Difficulty, version: 'v1' | 'v2' = 'v1') => {

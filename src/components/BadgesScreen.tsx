@@ -148,7 +148,7 @@ export function BadgesScreen({ onBack }: BadgesScreenProps) {
                     <div className="absolute inset-0 bg-radial from-[#da2d46]/20 to-transparent rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
                   )}
                   <img
-                    src={`/badges/${badge.id}.png`}
+                    src={`/assets/badges/${badge.id}.png`}
                     alt={badge.name}
                     className={`w-full h-full object-contain transition-transform duration-300 group-hover:scale-110 ${
                       !unlocked ? 'grayscale contrast-125 brightness-50' : ''
@@ -184,7 +184,7 @@ export function BadgesScreen({ onBack }: BadgesScreenProps) {
             <>
               {/* Background watermark */}
               <div className="absolute -right-10 -bottom-10 opacity-10 pointer-events-none skew-x-2">
-                <img src={`/badges/${selectedBadge.id}.png`} alt="watermark" className="w-64 h-64 object-contain" />
+                <img src={`/assets/badges/${selectedBadge.id}.png`} alt="watermark" className="w-64 h-64 object-contain" />
               </div>
 
               <div className="skew-x-2 relative z-10 flex flex-col items-center text-center">
@@ -196,7 +196,7 @@ export function BadgesScreen({ onBack }: BadgesScreenProps) {
                 <div className="w-36 h-36 relative flex items-center justify-center my-2">
                   <div className="absolute inset-0 bg-[#da2d46]/20 rounded-full blur-xl animate-pulse" />
                   <img
-                    src={`/badges/${selectedBadge.id}.png`}
+                    src={`/assets/badges/${selectedBadge.id}.png`}
                     alt={selectedBadge.name}
                     className={`w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.8)] ${
                       !isUnlocked(selectedBadge) ? 'grayscale contrast-125 brightness-50' : ''

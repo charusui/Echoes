@@ -20,9 +20,23 @@ import { CombatResultModal } from './CombatResultModal';
 
 interface ExpeditionScreenProps {
   onBack: () => void;
+  onOpenScanner?: () => void;
+  onOpenLocationServices?: () => void;
+  onOpenCollection?: () => void;
+  onOpenBadges?: () => void;
+  onOpenRanks?: () => void;
+  isRootMap?: boolean;
 }
 
-export function ExpeditionScreen({ onBack }: ExpeditionScreenProps) {
+export function ExpeditionScreen({
+  onBack,
+  onOpenScanner,
+  onOpenLocationServices,
+  onOpenCollection,
+  onOpenBadges,
+  onOpenRanks,
+  isRootMap,
+}: ExpeditionScreenProps) {
   // State for party, inventory, nodes, and quests
   const [party, setParty] = useState<Record<string, HeroProfile>>({ ...DEFAULT_HEROES });
   const [dex, setDex] = useState<Record<string, HarmonydexEntry>>({ ...EXPEDITION_INSTRUMENTS });
@@ -135,14 +149,16 @@ export function ExpeditionScreen({ onBack }: ExpeditionScreenProps) {
       <header className="relative z-20 bg-[#1e2238] border-b-[4px] border-[#0f0c0c] px-3 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-[0px_4px_0px_0px_#0f0c0c]">
         {/* Left: Brand & Active Quest Pill */}
         <div className="flex items-center gap-3 flex-wrap">
-          <button
-            onClick={onBack}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#e0e5ed] text-[#0f0c0c] border-[3px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] hover:bg-[#da2d46] hover:text-white transition-all font-orbitron font-black text-xs uppercase -skew-x-6 active:translate-y-0.5 active:shadow-none"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">LEAVE EXPEDITION</span>
-            <span className="sm:hidden">EXIT</span>
-          </button>
+          {!isRootMap && (
+            <button
+              onClick={onBack}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#e0e5ed] text-[#0f0c0c] border-[3px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] hover:bg-[#da2d46] hover:text-white transition-all font-orbitron font-black text-xs uppercase -skew-x-6 active:translate-y-0.5 active:shadow-none"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">LEAVE EXPEDITION</span>
+              <span className="sm:hidden">EXIT</span>
+            </button>
+          )}
 
           <div className="flex items-center gap-2">
             <span className="text-xl sm:text-2xl font-orbitron font-black text-[#facc15] tracking-wider drop-shadow-[2px_2px_0px_#0f0c0c]">
@@ -226,6 +242,11 @@ export function ExpeditionScreen({ onBack }: ExpeditionScreenProps) {
             onStartBattle={handleStartBattle}
             onOpenQuests={() => setActiveModal('quests')}
             quests={quests}
+            onOpenScanner={onOpenScanner}
+            onOpenLocationServices={onOpenLocationServices}
+            onOpenCollection={onOpenCollection}
+            onOpenBadges={onOpenBadges}
+            onOpenRanks={onOpenRanks}
           />
         ) : (
           <ExpeditionCombat 

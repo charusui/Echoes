@@ -197,3 +197,67 @@ export interface LeaderboardEntry {
   region: string;
   avatarBg: string;
 }
+
+// ─── Master & Field Instruments ──────────────────────────────────────────────
+
+export interface MasterInstrument {
+  id: string;
+  name: string;
+  region: string;
+  hint: string;
+  extendedInfo?: string;
+  history?: string;
+}
+
+export interface FieldMissionInstrument extends MasterInstrument {
+  crypticHint: string;
+}
+
+// ─── Student & Chat System ───────────────────────────────────────────────────
+
+export interface StudentProfile {
+  id: string;
+  name: string;
+  avatar: string;
+  trait: string;
+  focusCategory: 'percussion' | 'string' | 'wind';
+  favoriteInstrument: string;
+  openingLine: (unlockedInstruments: string[]) => string;
+  personalityPrompt: string;
+}
+
+export interface ChatMessage {
+  role: 'player' | 'student';
+  content: string;
+}
+
+// ─── Verification & Korlong Hunt ─────────────────────────────────────────────
+
+export interface GpsVerificationResult {
+  passed: boolean;
+  venue: string | null;
+  distanceMeters: number;
+}
+
+export interface KorlongSite {
+  name: string;
+  significance: string;
+  lat: number;
+  lng: number;
+  spawnRadiusMeters: number;
+  loreFragment: string;
+}
+
+export interface KorlongSpawn {
+  lat: number;
+  lng: number;
+  nearSite: KorlongSite | null;
+  expiresAt: number;
+}
+
+export interface CommunityReviewPayload {
+  instrumentHint?: string;
+  imageBase64Thumb?: string;
+  playerNote?: string;
+  timestamp: string;
+}

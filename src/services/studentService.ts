@@ -3,22 +3,14 @@ import { GEMINI_MODEL } from '../constants';
 
 // ─── Student Profiles ─────────────────────────────────────────────────────────
 
-export interface StudentProfile {
-  id: string;
-  name: string;
-  avatar: string;                 // emoji
-  trait: string;                  // short badge label
-  focusCategory: 'percussion' | 'string' | 'wind';
-  favoriteInstrument: string;
-  openingLine: (unlockedInstruments: string[]) => string;
-  personalityPrompt: string;
-}
+import type { StudentProfile, ChatMessage } from '../types';
+export type { StudentProfile, ChatMessage };
 
 export const STUDENT_PROFILES: StudentProfile[] = [
   {
     id: 'maya',
     name: 'Maya',
-    avatar: '/avatars/maya_v2.png',
+    avatar: '/assets/avatars/maya_v2.png',
     trait: 'RHYTHM NERD',
     focusCategory: 'percussion',
     favoriteInstrument: 'Tultugan',
@@ -47,7 +39,7 @@ Your personality traits:
   {
     id: 'diego',
     name: 'Diego',
-    avatar: '/avatars/diego_v2.png',
+    avatar: '/assets/avatars/diego_v2.png',
     trait: 'STRING THEORIST',
     focusCategory: 'string',
     favoriteInstrument: 'Cebuano Gitara',
@@ -74,7 +66,7 @@ Your personality traits:
   {
     id: 'aya',
     name: 'Aya',
-    avatar: '/avatars/aya_v2.png',
+    avatar: '/assets/avatars/aya_v2.png',
     trait: 'WIND CHASER',
     focusCategory: 'wind',
     favoriteInstrument: 'Tulali',
@@ -102,10 +94,6 @@ Your personality traits:
 
 // ─── Chat System ──────────────────────────────────────────────────────────────
 
-export interface ChatMessage {
-  role: 'player' | 'student';
-  content: string;
-}
 
 export async function sendStudentMessage(
   client: GoogleGenAI,

@@ -1,4 +1,5 @@
-import type { VerificationResult } from '../types';
+import type { VerificationResult, GpsVerificationResult, KorlongSite, KorlongSpawn, CommunityReviewPayload } from '../types';
+export type { GpsVerificationResult, KorlongSite, KorlongSpawn, CommunityReviewPayload };
 
 // ─── Haversine Distance ───────────────────────────────────────────────────────
 
@@ -55,11 +56,6 @@ export const VERIFIED_INSTRUMENT_LOCATIONS: Record<string, VerifiedVenue[]> = {
 
 // ─── GPS Verification ─────────────────────────────────────────────────────────
 
-export interface GpsVerificationResult {
-  passed: boolean;
-  venue: string | null;
-  distanceMeters: number;
-}
 
 export function checkGpsVerification(
   coords: GeolocationCoordinates,
@@ -85,14 +81,6 @@ export function checkGpsVerification(
 
 // ─── Korlong Weighted Spawn ───────────────────────────────────────────────────
 
-export interface KorlongSite {
-  name: string;
-  significance: string;
-  lat: number;
-  lng: number;
-  spawnRadiusMeters: number;
-  loreFragment: string;
-}
 
 export const KORLONG_HUNT_SITES: KorlongSite[] = [
   {
@@ -130,12 +118,6 @@ export const KORLONG_HUNT_SITES: KorlongSite[] = [
 const KORLONG_SPAWN_KEY = 'echoes_korlong_spawn';
 const KORLONG_SPAWN_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
 
-export interface KorlongSpawn {
-  lat: number;
-  lng: number;
-  nearSite: KorlongSite | null;
-  expiresAt: number;
-}
 
 /** Load an active (non-expired) spawn from localStorage, or null */
 export function loadKorlongSpawn(): KorlongSpawn | null {
@@ -229,12 +211,6 @@ export async function checkWebXRSupport(): Promise<boolean> {
 
 const REVIEW_QUEUE_KEY = 'echoes_community_reviews';
 
-export interface CommunityReviewPayload {
-  instrumentHint?: string;
-  imageBase64Thumb?: string; // truncated for storage
-  playerNote?: string;
-  timestamp: string;
-}
 
 export function submitForCommunityReview(payload: CommunityReviewPayload): string {
   const ticketId = `ECH-${Date.now().toString(36).toUpperCase()}`;

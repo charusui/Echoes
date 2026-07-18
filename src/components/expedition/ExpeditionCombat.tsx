@@ -87,7 +87,7 @@ export function ExpeditionCombat({
 
   // Play looping battle background music during combat
   useEffect(() => {
-    const bgm = new Audio('/expedition/battle_bg_music.mp3');
+    const bgm = new Audio('/assets/expedition/battle_bg_music.mp3');
     bgm.loop = true;
     bgm.volume = 0.45;
     bgm.play().catch(() => {
@@ -345,14 +345,14 @@ export function ExpeditionCombat({
     <div 
       className="flex-1 flex flex-col justify-between p-4 lg:p-6 relative overflow-hidden bg-[#151828] bg-cover bg-center bg-no-repeat"
       style={{
-        backgroundImage: `linear-gradient(rgba(15, 12, 12, 0.35), rgba(15, 12, 12, 0.5)), url('/expedition/battle_bg.png')`,
+        backgroundImage: `linear-gradient(rgba(15, 12, 12, 0.35), rgba(15, 12, 12, 0.5)), url('/assets/expedition/battle_bg.png')`,
       }}
     >
       {/* 2D Flat Ground Floor stretching edge-to-edge from absolute left/right to absolute bottom */}
       <div 
         className="absolute inset-x-0 bottom-0 top-[48%] sm:top-[54%] bg-repeat-x bg-bottom pointer-events-none z-0 opacity-95 drop-shadow-[0_-8px_16px_rgba(0,0,0,0.95)]"
         style={{
-          backgroundImage: `url('/expedition/battle_ground.png')`,
+          backgroundImage: `url('/assets/expedition/battle_ground.png')`,
           backgroundSize: 'auto 100%',
         }}
       />
@@ -494,7 +494,7 @@ export function ExpeditionCombat({
             enemy.staggered ? 'animate-bounce' : ''
           }`}>
             <img 
-              src={`/expedition/enemy_frame_${enemyFrame}.png`}
+              src={`/assets/expedition/enemy_frame_${enemyFrame}.png`}
               alt={enemy.name}
               className="w-56 sm:w-72 h-56 sm:h-72 object-contain drop-shadow-[0px_12px_24px_rgba(0,0,0,0.8)] scale-x-[-1]"
               onError={(e) => {
