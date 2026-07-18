@@ -22,6 +22,7 @@ import { KorlongHuntScreen } from './components/KorlongHuntScreen';
 import { TeachableStudentScreen } from './components/TeachableStudentScreen';
 import { BadgesScreen } from './components/BadgesScreen';
 import { RanksScreen } from './components/RanksScreen';
+import { ExpeditionScreen } from './components/expedition/ExpeditionScreen';
 import { DevMenu } from './components/DevMenu';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { initializeInstrumentPipeline } from './services/geminiPipeline';
@@ -294,7 +295,12 @@ function InnerApp() {
           onOpenCollection={() => setView('collection')}
           onOpenBadges={() => setView('badges')}
           onOpenRanks={() => setView('ranks')}
+          onOpenExpedition={() => setView('expedition')}
         />
+      )}
+
+      {view === 'expedition' && (
+        <ExpeditionScreen onBack={() => setView('map')} />
       )}
 
       {view === 'badges' && (

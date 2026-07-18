@@ -12,6 +12,7 @@ interface MapScreenProps {
   onOpenCollection: () => void;
   onOpenBadges?: () => void;
   onOpenRanks?: () => void;
+  onOpenExpedition?: () => void;
 }
 
 const REGION_PINS = [
@@ -21,7 +22,7 @@ const REGION_PINS = [
   { id: 'negros', name: 'Negros Region', instrument: 'Subing', levelRequired: 4, top: '60%', left: '42%', emoji: '🎵'}, 
 ];
 
-export function MapScreen({ onOpenScanner, onOpenLocationServices, onSelectInstrument, onOpenCollection, onOpenBadges, onOpenRanks }: MapScreenProps) {
+export function MapScreen({ onOpenScanner, onOpenLocationServices, onSelectInstrument, onOpenCollection, onOpenBadges, onOpenRanks, onOpenExpedition }: MapScreenProps) {
   const { progress } = useProgress();
   const [isExpeditionsExpanded, setIsExpeditionsExpanded] = useState(false);
 
@@ -322,6 +323,15 @@ export function MapScreen({ onOpenScanner, onOpenLocationServices, onSelectInstr
             <Flame size={14} className="skew-x-6 text-[#d97706] group-hover:text-white sm:w-5 sm:h-5 animate-pulse" />
             <span className="font-space-mono uppercase font-black text-[7px] sm:text-[9px] skew-x-6 text-[#0f0c0c] group-hover:text-white">Ranks</span>
           </button>
+
+          <button
+            onClick={onOpenExpedition}
+            className="flex-1 max-w-[60px] sm:max-w-[80px] py-1 sm:py-2 bg-[#facc15] border-[2px] sm:border-[4px] border-[#0f0c0c] flex flex-col items-center justify-center gap-0.5 sm:gap-1 shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6 active:translate-y-1 active:translate-x-1 active:shadow-none hover:bg-[#da2d46] hover:text-white transition-all group animate-pulse"
+            title="Harmonydex Expedition 33 Mode"
+          >
+            <Sparkles size={14} className="skew-x-6 text-[#0f0c0c] group-hover:text-white sm:w-5 sm:h-5" />
+            <span className="font-space-mono uppercase font-black text-[7px] sm:text-[9px] skew-x-6 text-[#0f0c0c] group-hover:text-white">Exped</span>
+          </button>
         </div>
 
         {/* Expeditions Accordion */}
@@ -341,6 +351,13 @@ export function MapScreen({ onOpenScanner, onOpenLocationServices, onSelectInstr
 
           {isExpeditionsExpanded && (
             <div className="p-2 sm:p-4 border-t-[2px] sm:border-t-[4px] border-[#0f0c0c] bg-[#e0e5ed] skew-x-2">
+              <button
+                onClick={onOpenExpedition}
+                className="w-full mb-3 py-2 sm:py-2.5 bg-[#da2d46] text-white border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-[9px] sm:text-xs uppercase -skew-x-6 hover:bg-[#ff3b56] transition-all flex items-center justify-center gap-1.5 active:translate-y-0.5 active:shadow-none"
+              >
+                <Sparkles size={14} className="fill-current animate-spin" />
+                <span>ENTER HARMONYDEX EXPEDITION 33 ➔</span>
+              </button>
               <div className="font-space-mono text-[7px] sm:text-[10px] font-bold text-[#e0e5ed] bg-[#0f0c0c] p-1.5 sm:p-3 -skew-x-2 mb-2 sm:mb-3 shadow-[1px_1px_0px_0px_#da2d46] sm:shadow-[3px_3px_0px_0px_#da2d46]">
                 <span className="skew-x-2 block">
                   Scan instruments or play rhythm games to earn XP. Level up to unlock new regions!

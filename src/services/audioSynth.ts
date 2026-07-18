@@ -73,6 +73,8 @@ export class AudioEngine {
     }
   }
 
+  private isMuted = false;
+
   resume(): Promise<void> {
     this.resumeSync();
     return Promise.resolve();
@@ -82,6 +84,50 @@ export class AudioEngine {
 
   setVolume(v: number): void {
     if (this.masterGain) this.masterGain.gain.value = Math.max(0, Math.min(1, v));
+  }
+
+  toggleMute(): boolean {
+    this.isMuted = !this.isMuted;
+    if (this.masterGain) {
+      this.masterGain.gain.value = this.isMuted ? 0 : 0.85;
+    }
+    return this.isMuted;
+  }
+
+  playHitSFX(judgement: string): void {
+    if (!this.ctx || !this.masterGain || this.isMuted) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+
+    if (judgement === 'sick' || judgement === 'perfect') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(880, now);
+      osc.frequency.exponentialRampToValueAtTime(1760, now + 0.12);
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      osc.start(now);
+      osc.stop(now + 0.12);
+    } else if (judgement === 'good') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, now);
+      osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.1);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+      osc.start(now);
+      osc.stop(now + 0.1);
+    } else {
+      // miss / bad
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(150, now);
+      osc.frequency.linearRampToValueAtTime(80, now + 0.15);
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      osc.start(now);
+      osc.stop(now + 0.15);
+    }
   }
 
   // ── Plucked String (Karplus-Strong) ────────────────────────────────────────
