@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ShieldAlert } from 'lucide-react';
+import { ShieldAlert, Crosshair } from 'lucide-react';
 import { audioEngine } from '../../services/audioSynth';
 
 interface ParryQteOverlayProps {
@@ -7,121 +7,253 @@ interface ParryQteOverlayProps {
   onParry: (parried: boolean) => void;
 }
 
+interface OsuCircle {
+  id: number;
+  num: number;
+  x: number; // percentage
+  y: number; // percentage
+  spawnTime: number; // ms timestamp from start
+  targetTime: number; // ms timestamp for perfect hit
+  status: 'pending' | 'perfect' | 'good' | 'miss';
+}
+
+const CIRCLE_COUNT = 5;
+const APPROACH_DURATION = 1400; // Time the ring takes to close in (ms)
+const STAGGER = 350; // Delay between each circle spawning (ms)
+const PRE_DELAY = 500; // Give the player half a second before the first one appears
+
 export function ParryQteOverlay({
   enemyName,
   onParry,
 }: ParryQteOverlayProps) {
-  const [progress, setProgress] = useState(100); // 100 -> 0
-  const [resultText, setResultText] = useState<string | null>(null);
+  const [circles, setCircles] = useState<OsuCircle[]>([]);
+  const [hits, setHits] = useState({ perfect: 0, good: 0, miss: 0 });
+  const [screenShake, setScreenShake] = useState(false);
+  
+  const startTimeRef = useRef<number>(0);
   const finishedRef = useRef(false);
   const animRef = useRef<number | null>(null);
 
-  const DURATION = 1200; // 1.2s fast precision timing
-
-  // Animation loop
+  // ─── BEATMAP GENERATION ───
   useEffect(() => {
-    const startTime = performance.now();
+    startTimeRef.current = performance.now();
+    
+    const generated: OsuCircle[] = Array.from({ length: CIRCLE_COUNT }, (_, i) => {
+      // Keep circles within responsive safe bounds (20% to 80% width, 25% to 70% height)
+      const x = 20 + Math.random() * 60;
+      const y = 25 + Math.random() * 45; 
+      
+      const targetTime = PRE_DELAY + APPROACH_DURATION + (i * STAGGER);
+      const spawnTime = targetTime - APPROACH_DURATION;
 
-    const loop = (time: number) => {
-      const elapsed = time - startTime;
-      const pct = Math.max(0, 100 - (elapsed / DURATION) * 100);
-      setProgress(pct);
+      return {
+        id: i,
+        num: i + 1,
+        x,
+        y,
+        spawnTime,
+        targetTime,
+        status: 'pending',
+      };
+    });
 
-      if (pct <= 0) {
-        if (!finishedRef.current) {
+    setCircles(generated);
+  }, []);
+
+  // ─── GAME ENGINE LOOP ───
+  useEffect(() => {
+    const loop = () => {
+      if (finishedRef.current) return;
+      const now = performance.now() - startTimeRef.current;
+
+      setCircles(prev => {
+        let changed = false;
+        
+        const next: OsuCircle[] = prev.map(c => {
+          if (c.status === 'pending' && now > c.targetTime + 300) {
+            changed = true;
+            setHits(h => ({ ...h, miss: h.miss + 1 }));
+            setScreenShake(true);
+            setTimeout(() => setScreenShake(false), 150);
+            audioEngine.playHitSFX('miss');
+            return { ...c, status: 'miss' as const };
+          }
+          return c;
+        });
+
+        if (next.every(c => c.status !== 'pending')) {
           finishedRef.current = true;
-          setResultText('MISSED!');
-          audioEngine.playHitSFX('miss');
-          setTimeout(() => onParry(false), 400);
+          const totalScore = hits.perfect * 2 + hits.good * 1;
+          const isSuccess = totalScore >= 5;
+          
+          setTimeout(() => {
+            onParry(isSuccess);
+          }, 800); 
         }
-      } else {
-        animRef.current = requestAnimationFrame(loop);
-      }
+
+        return changed ? next : prev;
+      });
+
+      animRef.current = requestAnimationFrame(loop);
     };
 
     animRef.current = requestAnimationFrame(loop);
     return () => {
       if (animRef.current) cancelAnimationFrame(animRef.current);
     };
-  }, [onParry]);
+  }, [hits, onParry]);
 
-  const handleTriggerParry = useCallback(() => {
+  // ─── HIT LOGIC ───
+  const triggerHit = useCallback((targetId?: number) => {
     if (finishedRef.current) return;
-    finishedRef.current = true;
-    if (animRef.current) cancelAnimationFrame(animRef.current);
+    const now = performance.now() - startTimeRef.current;
 
-    // Tight precision parry zone between 20% and 40% progress
-    if (progress >= 20 && progress <= 40) {
-      setResultText('PERFECT PARRY!');
-      audioEngine.playHitSFX('sick');
-      setTimeout(() => onParry(true), 350);
-    } else {
-      setResultText(progress > 40 ? 'TOO EARLY!' : 'TOO LATE!');
-      audioEngine.playHitSFX('miss');
-      setTimeout(() => onParry(false), 350);
-    }
-  }, [progress, onParry]);
+    setCircles(prev => {
+      const circleToHit = targetId !== undefined 
+        ? prev.find(c => c.id === targetId)
+        : prev.find(c => c.status === 'pending' && now >= c.spawnTime);
 
-  // Keyboard binding
+      if (!circleToHit || circleToHit.status !== 'pending') return prev;
+
+      const timeDiff = Math.abs(now - circleToHit.targetTime);
+      let newStatus: 'perfect' | 'good' | 'miss' = 'miss';
+
+      if (timeDiff <= 120) {
+        newStatus = 'perfect';
+        setHits(h => ({ ...h, perfect: h.perfect + 1 }));
+        audioEngine.playHitSFX('sick');
+      } else if (timeDiff <= 300) {
+        newStatus = 'good';
+        setHits(h => ({ ...h, good: h.good + 1 }));
+        audioEngine.playHitSFX('good');
+      } else {
+        newStatus = 'miss';
+        setHits(h => ({ ...h, miss: h.miss + 1 }));
+        setScreenShake(true);
+        setTimeout(() => setScreenShake(false), 150);
+        audioEngine.playHitSFX('miss');
+      }
+
+      return prev.map(c => c.id === circleToHit.id ? { ...c, status: newStatus } : c);
+    });
+  }, []);
+
+  // ─── KEYBOARD BINDS ───
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space' || e.key === ' ') {
+      if (['z', 'x', 'Z', 'X', ' ', 'Enter'].includes(e.key)) {
         e.preventDefault();
-        handleTriggerParry();
+        triggerHit(); 
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleTriggerParry]);
+  }, [triggerHit]);
 
-  const inTargetZone = progress >= 20 && progress <= 40;
+  const shakeTransform = screenShake 
+    ? `translate(${(Math.random() - 0.5) * 10}px, ${(Math.random() - 0.5) * 10}px)` 
+    : 'none';
 
   return (
     <div 
-      onClick={handleTriggerParry}
-      className="flex flex-col items-center justify-center cursor-pointer select-none py-8 animate-in fade-in duration-100 touch-none"
+      className="absolute inset-0 z-50 pointer-events-none touch-none select-none overflow-hidden animate-in fade-in duration-200"
+      style={{ transform: shakeTransform }}
     >
-      {/* Subtle floating alert tag */}
-      <div className="flex items-center gap-2 bg-[#0f0c0c]/80 text-[#facc15] px-3 py-1 border border-[#facc15]/50 rounded-full font-orbitron font-bold text-xs uppercase tracking-wider mb-4 shadow-lg backdrop-blur-sm">
-        <ShieldAlert className="w-3.5 h-3.5 text-[#da2d46] animate-pulse" />
-        <span>INCOMING: {enemyName.toUpperCase()}</span>
+      <style>{`
+        @keyframes osuApproach {
+          0% { transform: scale(3.5); opacity: 0; }
+          20% { opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes osuPopIn {
+          0% { transform: scale(0.5); opacity: 0; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes osuBurst {
+          0% { transform: scale(0.8); opacity: 1; }
+          30% { transform: scale(1.3); opacity: 1; }
+          100% { transform: scale(1.5); opacity: 0; }
+        }
+      `}</style>
+
+      {/* Top Banner Alert - Pinned responsive to top */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 bg-[#0f0c0c]/90 text-[#da2d46] px-3 sm:px-4 py-1.5 sm:py-2 border-[2px] sm:border-[3px] border-[#da2d46] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-base uppercase tracking-widest -skew-x-6 z-10 w-max max-w-[90%] pointer-events-none backdrop-blur-sm">
+        <ShieldAlert className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse shrink-0" />
+        <span className="skew-x-6 truncate">INCOMING COMBO: {enemyName}</span>
       </div>
 
-      {/* Sleek transparent timing ring canvas */}
-      <div className="relative w-36 h-36 flex items-center justify-center">
-        {/* Fixed target ring */}
-        <div className={`absolute w-20 h-20 rounded-full border-[3px] transition-colors duration-75 flex items-center justify-center pointer-events-none ${
-          inTargetZone ? 'border-[#4ade80] shadow-[0_0_16px_#4ade80]' : 'border-[#facc15] shadow-[0_0_8px_rgba(250,204,21,0.4)]'
-        }`}>
-          <span className={`font-orbitron font-black text-2xs tracking-wider ${
-            inTargetZone ? 'text-[#4ade80] animate-pulse' : 'text-[#facc15]'
-          }`}>
-            [SPACE]
-          </span>
-        </div>
+      {/* Play Area */}
+      <div className="absolute inset-0 w-full h-full pointer-events-none">
+        {circles.map((circle) => {
+          const isPending = circle.status === 'pending';
+          
+          return (
+            <div 
+              key={circle.id}
+              className="absolute pointer-events-auto"
+              style={{
+                left: `${circle.x}%`,
+                top: `${circle.y}%`,
+                transform: 'translate(-50%, -50%)',
+                zIndex: 100 - circle.id, 
+              }}
+            >
+              {/* Osu! Approach Ring */}
+              {isPending && (
+                <div 
+                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 sm:w-20 sm:h-20 rounded-full border-[3px] sm:border-[4px] border-[#facc15] shadow-[0_0_8px_#facc15] pointer-events-none"
+                  style={{
+                    animation: `osuApproach ${APPROACH_DURATION}ms linear forwards`,
+                    animationDelay: `${circle.spawnTime}ms`,
+                    opacity: 0, 
+                  }}
+                />
+              )}
 
-        {/* Closing ring */}
-        <div 
-          className={`absolute rounded-full border-[3px] pointer-events-none transition-colors duration-75 ${
-            inTargetZone ? 'border-[#4ade80]' : 'border-[#da2d46]'
-          }`}
-          style={{
-            width: `${Math.max(20, (progress / 100) * 144)}px`,
-            height: `${Math.max(20, (progress / 100) * 144)}px`,
-          }}
-        />
+              {/* The Hit Circle */}
+              {isPending && (
+                <div 
+                  onPointerDown={(e) => { e.preventDefault(); triggerHit(circle.id); }}
+                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-[#0f0c0c]/90 backdrop-blur-md border-[3px] sm:border-[4px] border-[#da2d46] shadow-[0_0_15px_rgba(218,45,70,0.8)] flex items-center justify-center cursor-pointer active:scale-95 transition-transform"
+                  style={{
+                    animation: `osuPopIn 200ms cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards`,
+                    animationDelay: `${circle.spawnTime}ms`,
+                    opacity: 0, 
+                  }}
+                >
+                  <div className="absolute inset-0 rounded-full bg-[#da2d46]/20 animate-pulse pointer-events-none" />
+                  <span className="font-orbitron font-black text-xl sm:text-2xl text-white pointer-events-none drop-shadow-[2px_2px_0px_#0f0c0c]">
+                    {circle.num}
+                  </span>
+                </div>
+              )}
 
-        {/* Minimal result popup */}
-        {resultText && (
-          <div className={`absolute z-10 px-3 py-1 rounded border-[2px] font-orbitron font-black text-sm tracking-wide uppercase animate-bounce drop-shadow-md ${
-            resultText.includes('PERFECT') 
-              ? 'bg-[#4ade80] text-[#0f0c0c] border-[#0f0c0c]' 
-              : 'bg-[#da2d46] text-white border-[#0f0c0c]'
-          }`}>
-            {resultText}
-          </div>
-        )}
+              {/* Hit Feedback Burst */}
+              {!isPending && (
+                <div 
+                  className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center font-orbitron font-black text-xl sm:text-3xl tracking-widest uppercase pointer-events-none drop-shadow-[0_0_10px_currentColor] ${
+                    circle.status === 'perfect' ? 'text-[#4ade80]' :
+                    circle.status === 'good' ? 'text-[#facc15]' :
+                    'text-[#da2d46]'
+                  }`}
+                  style={{
+                    animation: 'osuBurst 500ms ease-out forwards',
+                  }}
+                >
+                  {circle.status}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
+
+      {/* Bottom Hint */}
+      <div className="absolute bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 flex items-center justify-center gap-2 sm:gap-3 font-orbitron font-black text-slate-200 text-[9px] sm:text-sm tracking-wider bg-[#0f0c0c]/90 px-3 sm:px-4 py-1.5 sm:py-2 border border-white/20 rounded-full w-max max-w-[90%] pointer-events-none backdrop-blur-sm shadow-lg">
+        <Crosshair className="w-3 h-3 sm:w-4 sm:h-4 text-[#38bdf8] shrink-0" />
+        <span className="truncate">TAP CIRCLES OR MASH [Z] / [X]</span>
+      </div>
+
     </div>
   );
 }
