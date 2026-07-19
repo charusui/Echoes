@@ -193,7 +193,7 @@ export function ExpeditionScreen({
           </button>
 
           <button
-            onClick={() => setActiveModal('harmonydex')}
+            onClick={() => onOpenCollection ? onOpenCollection() : setActiveModal('harmonydex')}
             className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-[#38bdf8] text-[#0f0c0c] border-[3px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] font-orbitron font-bold text-xs uppercase -skew-x-6 hover:bg-[#5cd0ff] transition-all active:translate-y-0.5 active:shadow-none"
             title="Instrument Encyclopedia"
           >

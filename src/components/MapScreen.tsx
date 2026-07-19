@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, Map, Flame, Award, Shield, Lock, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { Camera, Map, Flame, Shield, Lock, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { useProgress } from '../context/ProgressProvider';
 import map from '../assets/png/visayas_map.png';
 import { ExpeditionScreen } from './expedition/ExpeditionScreen';
@@ -36,7 +36,7 @@ const REGION_PINS = [
 ];
 
 // Legacy MapScreen code kept for reference if needed
-export function LegacyMapScreen({ onOpenScanner, onOpenLocationServices, onSelectInstrument, onOpenCollection, onOpenBadges, onOpenRanks, onOpenExpedition }: MapScreenProps) {
+export function LegacyMapScreen({ onOpenScanner, onOpenLocationServices, onSelectInstrument, onOpenCollection: _onOpenCollection, onOpenBadges, onOpenRanks, onOpenExpedition }: MapScreenProps) {
   const { progress } = useProgress();
   const [isExpeditionsExpanded, setIsExpeditionsExpanded] = useState(false);
 
@@ -312,14 +312,6 @@ export function LegacyMapScreen({ onOpenScanner, onOpenLocationServices, onSelec
           >
             <Map size={14} className="skew-x-6 text-[#0f0c0c] group-hover:text-white sm:w-5 sm:h-5" />
             <span className="font-space-mono uppercase font-black text-[7px] sm:text-[9px] skew-x-6 text-[#0f0c0c] group-hover:text-white">Radar</span>
-          </button>
-
-          <button
-            onClick={onOpenCollection}
-            className="flex-1 max-w-[60px] sm:max-w-[80px] py-1 sm:py-2 bg-[#e0e5ed] border-[2px] sm:border-[4px] border-[#0f0c0c] flex flex-col items-center justify-center gap-0.5 sm:gap-1 shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6 active:translate-y-1 active:translate-x-1 active:shadow-none hover:bg-[#da2d46] hover:text-white transition-all group"
-          >
-            <Award size={14} className="skew-x-6 text-[#0f0c0c] group-hover:text-white sm:w-5 sm:h-5" />
-            <span className="font-space-mono uppercase font-black text-[7px] sm:text-[9px] skew-x-6 text-[#0f0c0c] group-hover:text-white">Archive</span>
           </button>
 
           <button

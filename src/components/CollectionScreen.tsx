@@ -1,7 +1,43 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, BookOpen, Music, Tag, FileText, CheckCircle, HelpCircle, Flag, Star } from 'lucide-react';
+import { ChevronLeft, BookOpen, Music, Tag, FileText, CheckCircle, HelpCircle, Flag, Star, Volume2 } from 'lucide-react';
 import { useProgress } from '../context/ProgressProvider';
 import { IMAGE_BASE, MASTER_INSTRUMENTS, FIELD_MISSION_INSTRUMENTS, KORLONG_INSTRUMENT } from '../constants';
+import { audioEngine } from '../services/audioSynth';
+
+const HARMONYDEX_STATS: Record<string, { type: string; dmg: number; skillName: string; skillCost: number; skillDesc: string; audioPreset: string }> = {
+  // Western Visayas
+  'tultugan':       { type: 'percussion', dmg: 45, skillName: 'Bamboo Resonance', skillCost: 2, skillDesc: 'Deals heavy Percussion damage and echoes rhythmic beats across the party.', audioPreset: 'sub-percussion' },
+  'tulali':         { type: 'woodwind',   dmg: 35, skillName: 'Courtship Breeze', skillCost: 2, skillDesc: 'Soothing woodwind melody that restores 100 HP and cleanses debuffs.', audioPreset: 'sine-breath' },
+  'litgit':         { type: 'string',     dmg: 38, skillName: 'Friction Scratch', skillCost: 2, skillDesc: 'Piercing two-stringed attack dealing continuous String damage.', audioPreset: 'saw-string' },
+  'buktot':         { type: 'string',     dmg: 36, skillName: 'Husk Resonator',   skillCost: 2, skillDesc: 'Hollow coconut-bodied lute strike dealing warm String damage.', audioPreset: 'pluck-distortion' },
+  'pasiyak':        { type: 'woodwind',   dmg: 32, skillName: 'Warbling Bird Chirp', skillCost: 1, skillDesc: 'Quick water-whistle chirp that distracts enemies and regenerates 1 AP.', audioPreset: 'sine-breath' },
+  'tugo':           { type: 'percussion', dmg: 42, skillName: 'Hollow Wooden Beat', skillCost: 2, skillDesc: 'Deep hand-struck beats dealing solid Percussion damage.', audioPreset: 'sub-percussion' },
+
+  // Central Visayas
+  'cebuano_gitara': { type: 'string',     dmg: 42, skillName: 'Mactan Acoustic Solo', skillCost: 2, skillDesc: 'High-clarity 6-string chord strike dealing heavy String damage.', audioPreset: 'pluck-distortion' },
+  'bandurria':      { type: 'string',     dmg: 44, skillName: 'Rondalla Tremolo', skillCost: 2, skillDesc: 'Rapid 14-string picking rush that pierces physical barriers.', audioPreset: 'pluck-distortion' },
+  'laud':           { type: 'string',     dmg: 40, skillName: 'Counter-Melody Strike', skillCost: 2, skillDesc: 'Deep teardrop chord resonance dealing supportive String damage.', audioPreset: 'saw-string' },
+  'octavina':       { type: 'string',     dmg: 38, skillName: 'Tenor Harmonic Wave', skillCost: 2, skillDesc: 'Mid-range acoustic wave boosting party accuracy by 25%.', audioPreset: 'pluck-distortion' },
+  'bajo_de_unas':   { type: 'string',     dmg: 50, skillName: 'Sub-Acoustic Slap', skillCost: 3, skillDesc: 'Massive four-string plectrum strike dealing tremendous heavy damage.', audioPreset: 'saw-string' },
+
+  // Eastern Visayas
+  'lantoy':         { type: 'woodwind',   dmg: 34, skillName: 'Ethereal Breath', skillCost: 2, skillDesc: 'Gentle nose-flute tone that soothes enemy rage and lowers attack.', audioPreset: 'sine-breath' },
+  'subing':         { type: 'percussion', dmg: 36, skillName: 'Twangy Vibration', skillCost: 1, skillDesc: 'Vibrating bamboo jaw harp hum dealing piercing acoustic resonance.', audioPreset: 'sub-percussion' },
+  'korlong':        { type: 'string',     dmg: 55, skillName: 'Epic Chanteuse', skillCost: 3, skillDesc: 'Legendary two-stringed chant resonance dealing devastating true damage.', audioPreset: 'saw-string' },
+};
+
+const getHarmonydexStats = (inst: { id: string; name: string }) => {
+  const stats = HARMONYDEX_STATS[inst.id.toLowerCase()] || HARMONYDEX_STATS[inst.name.toLowerCase()];
+  if (stats) return stats;
+  return {
+    type: 'string',
+    dmg: 40,
+    skillName: 'Harmonic Resonance',
+    skillCost: 2,
+    skillDesc: 'Resonant acoustic attack that deals solid damage and harmonizes frequencies.',
+    audioPreset: 'pluck-distortion'
+  };
+};
 
 // Updated verified scanning locations matching the new confirmed dataset
 const SCANNING_LOCATIONS: Record<string, string[]> = {
@@ -101,7 +137,7 @@ export function CollectionScreen({ onBack, onSelectInstrument, onSelectCustomPro
           className="font-orbitron text-xl md:text-2xl font-black tracking-widest text-[#e0e5ed] uppercase"
           style={{ textShadow: '3px 3px 0px #0f0c0c, -2px 0px 0px #f0dde0' }}
         >
-          ARCHIVE
+          HARMONYDEX
         </h1>
 
         {/* Counter Badge */}
@@ -384,6 +420,7 @@ export function CollectionScreen({ onBack, onSelectInstrument, onSelectCustomPro
               {activeDetail.type === 'master' && (() => {
                 const inst = activeDetail.data;
                 const isUnlocked = unlockedList.includes(inst.id.toLowerCase()) || unlockedList.includes(inst.name.toLowerCase());
+                const stats = getHarmonydexStats(inst);
 
                 return (
                   <>
@@ -409,12 +446,23 @@ export function CollectionScreen({ onBack, onSelectInstrument, onSelectCustomPro
                     </div>
 
                     <div className="flex-1 flex flex-col min-h-0">
-                      <div className="bg-[#0f0c0c] border-[4px] border-[#da2d46] p-3 -skew-x-6 shadow-[4px_4px_0px_0px_#da2d46] mb-6 inline-block w-fit">
+                      <div className="bg-[#0f0c0c] border-[4px] border-[#da2d46] p-3 -skew-x-6 shadow-[4px_4px_0px_0px_#da2d46] mb-4 inline-block w-fit">
                         <h2 className={`font-orbitron font-black text-2xl tracking-wide skew-x-6 uppercase ${isUnlocked ? 'text-[#e0e5ed]' : 'text-[#888ea1]'}`}>
                           {isUnlocked ? inst.name : 'UNKNOWN'}
                         </h2>
                       </div>
                       
+                      {/* Harmonydex Type & Damage Badge */}
+                      <div className="mb-4">
+                        <span className="px-3 py-1 bg-[#da2d46] text-white font-orbitron font-bold text-xs sm:text-sm uppercase border-[2px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] inline-block -skew-x-6">
+                          <span className="skew-x-6 block">TYPE: {stats.type.toUpperCase()} | DMG: {stats.dmg}</span>
+                        </span>
+                      </div>
+
+                      <span className="font-orbitron font-bold text-xs text-[#0f0c0c] uppercase tracking-wider block mb-2">
+                        📜 ARCHIVAL & HARMONIC LORE
+                      </span>
+
                       {/* Rigid Caption Box for Text */}
                       <div className="flex-1 bg-[#f0dde0] border-[4px] border-[#0f0c0c] p-4 mb-6 shadow-[6px_6px_0px_0px_#0f0c0c]">
                         {isUnlocked ? (
@@ -449,6 +497,26 @@ export function CollectionScreen({ onBack, onSelectInstrument, onSelectCustomPro
                           </div>
                         )}
                       </div>
+
+                      {/* Equipped Skill Section */}
+                      <div className="mb-6">
+                        <span className="font-orbitron font-bold text-xs text-[#0f0c0c] uppercase tracking-wider block mb-2">
+                          ⚡ ULTIMATE ABILITY ({stats.skillName.toUpperCase()})
+                        </span>
+                        <div className="bg-[#151828] p-4 border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] flex flex-col gap-1.5 -skew-x-1">
+                          <span className="text-xs sm:text-sm text-white font-bold leading-relaxed">{stats.skillDesc}</span>
+                          <span className="text-xs text-[#facc15] font-orbitron font-black uppercase mt-1">ACTION COST: {stats.skillCost} AP</span>
+                        </div>
+                      </div>
+
+                      {/* Preview Acoustic Resonance Button */}
+                      <button
+                        onClick={() => audioEngine.playHitSFX('sick')}
+                        className="w-full py-3.5 mb-4 bg-[#4ade80] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#6bee9c] transition-all flex items-center justify-center gap-2 active:translate-y-0.5 active:shadow-none"
+                      >
+                        <Volume2 className="w-5 h-5 skew-x-6" />
+                        <span className="skew-x-6">PREVIEW ACOUSTIC RESONANCE</span>
+                      </button>
 
                       {isUnlocked && (
                         <button 

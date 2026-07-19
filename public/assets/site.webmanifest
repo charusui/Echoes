@@ -2,19 +2,20 @@
   "name": "Musikultura",
   "short_name": "Musikultura",
   "description": "Scan a traditional Philippine instrument and play it in a rhythm game powered by Gemini AI.",
+  "scope": "/",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1E1614",
   "theme_color": "#1E1614",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/assets/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/assets/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"

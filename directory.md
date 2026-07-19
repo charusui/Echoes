@@ -78,10 +78,13 @@ This folder contains all the interactive screens and UI elements:
 ---
 
 ## 📂 public Directory
-Contains all static imagery and processing workers:
-* [visayas_map.png](file:///c:/Users/duvey/Downloads/filinstruments/public/visayas_map.png) - **The visual background image** of the Visayas regions.
-* [favicon.svg](file:///c:/Users/duvey/Downloads/filinstruments/public/favicon.svg) / [icon-192.png](file:///c:/Users/duvey/Downloads/filinstruments/public/icon-192.png) / [icon-512.png](file:///c:/Users/duvey/Downloads/filinstruments/public/icon-512.png) - System icons.
-* [karplus-strong-processor.js](file:///c:/Users/duvey/Downloads/filinstruments/public/karplus-strong-processor.js) - Low-level AudioWorkletProcessor script for procedural plucked-string synth.
-* [scheduler-worker.js](file:///c:/Users/duvey/Downloads/filinstruments/public/scheduler-worker.js) - Accurate timer web worker for the game engine.
-* [site.webmanifest](file:///c:/Users/duvey/Downloads/filinstruments/public/site.webmanifest) - PWA setup file.
-* `public/instruments/` - Folder containing the individual PNG assets for each unlocked and locked instrument (e.g. `cebuano_gitara.png`, `locked_cebuano_gitara.png`, etc.).
+All static imagery, PWA manifests, and processing workers are housed neatly under `public/assets/`:
+* [icon-192.png](file:///c:/Users/duvey/Downloads/filinstruments/public/assets/icon-192.png) / [icon-512.png](file:///c:/Users/duvey/Downloads/filinstruments/public/assets/icon-512.png) - System icons.
+* [karplus-strong-processor.js](file:///c:/Users/duvey/Downloads/filinstruments/public/assets/karplus-strong-processor.js) - Low-level AudioWorkletProcessor script for procedural plucked-string synth.
+* [scheduler-worker.js](file:///c:/Users/duvey/Downloads/filinstruments/public/assets/scheduler-worker.js) - Accurate timer web worker for the game engine.
+* [site.webmanifest](file:///c:/Users/duvey/Downloads/filinstruments/public/assets/site.webmanifest) - PWA setup file.
+* `public/assets/instruments/` - Individual PNG assets for each unlocked and locked instrument.
+* `public/assets/avatars/` - Student avatars and stickers.
+* `public/assets/badges/` - Game achievement badge PNGs.
+* `public/assets/expedition/` - Overworld and combat backgrounds and spritesheets.
+* `public/assets/audio/` - Background music and song audio files.

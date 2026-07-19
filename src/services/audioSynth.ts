@@ -38,7 +38,7 @@ export class AudioEngine {
     // Load AudioWorklet for Karplus-Strong
     if (this.ctx && !this.workletReady) {
       try {
-        await this.ctx.audioWorklet.addModule('/karplus-strong-processor.js');
+        await this.ctx.audioWorklet.addModule('/assets/karplus-strong-processor.js');
         this.ksNode = new AudioWorkletNode(this.ctx, 'karplus-strong-processor');
         this.ksNode.connect(this.masterGain!);
         this.workletReady = true;

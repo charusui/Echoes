@@ -26,7 +26,6 @@ export function ExpeditionOverworld({
   quests,
   onOpenScanner,
   onOpenLocationServices,
-  onOpenCollection,
   onOpenBadges,
   onOpenRanks,
 }: ExpeditionOverworldProps) {
@@ -160,13 +159,6 @@ export function ExpeditionOverworld({
               >
                 <Map size={13} className="skew-x-6 text-[#0f0c0c] group-hover:text-white" />
                 <span className="font-space-mono uppercase font-black text-[7px] sm:text-[8px] skew-x-6 text-[#0f0c0c] group-hover:text-white">Radar</span>
-              </button>
-              <button
-                onClick={onOpenCollection}
-                className="flex-1 py-1 sm:py-1.5 bg-[#e0e5ed] border-[2px] border-[#0f0c0c] flex flex-col items-center justify-center gap-0.5 shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 hover:bg-[#da2d46] hover:text-white transition-all group"
-              >
-                <Award size={13} className="skew-x-6 text-[#0f0c0c] group-hover:text-white" />
-                <span className="font-space-mono uppercase font-black text-[7px] sm:text-[8px] skew-x-6 text-[#0f0c0c] group-hover:text-white">Archive</span>
               </button>
               <button
                 onClick={onOpenBadges}
