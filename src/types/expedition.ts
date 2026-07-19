@@ -84,6 +84,7 @@ export interface MapNode {
   x: number;
   y: number;
   unlocked: boolean;
+  completed?: boolean;
   desc: string;
   enemyId?: string;
   rewards: string;
@@ -198,7 +199,7 @@ export const EXPEDITION_INSTRUMENTS: Record<string, HarmonydexEntry> = {
     captured: false,
     audioPreset: 'supersaw-pluck',
     rhythmSpeed: 1.4,
-    lore: 'The apex anomaly of the Silent Peak. Feeds on uncalibrated musical frequencies to tear space-time.',
+    lore: 'The apex anomaly of The Wild Peak Summit. Feeds on uncalibrated musical frequencies to tear space-time.',
     skillName: 'Total Void Resonance',
     skillCost: 3,
     skillDesc: 'Cataclysmic sonic wave across all channels.',
@@ -276,13 +277,13 @@ export const EXPEDITION_NODES: Record<string, MapNode> = {
   },
   echo_woods: {
     id: 'echo_woods',
-    name: 'Echo Woods Anomaly',
+    name: 'Echo Village',
     type: 'battle',
     icon: '🎻',
     x: 480,
     y: 330,
     unlocked: true,
-    desc: 'A dense forest vibrating with erratic string frequencies. A Corrupted Violin stalks these woods.',
+    desc: 'A forest village vibrating with erratic string frequencies. A Corrupted Violin stalks this area.',
     enemyId: 'corrupted_violin',
     rewards: '150 XP & String Attunement Chance',
   },
@@ -300,7 +301,7 @@ export const EXPEDITION_NODES: Record<string, MapNode> = {
   },
   silent_peak: {
     id: 'silent_peak',
-    name: 'The Silent Peak Summit',
+    name: 'The Wild Peak Summit',
     type: 'boss',
     icon: '🌋',
     x: 820,
@@ -323,7 +324,7 @@ export const EXPEDITION_QUESTS: Record<string, ExpeditionQuest> = {
   q2: {
     id: 'q2',
     title: '2. Echoes of the Anomaly',
-    desc: 'Travel to Echo Woods and capture the Corrupted Violin using Harmonic Attunement when its HP is below 35%.',
+    desc: 'Travel to Echo Village and capture the Corrupted Violin using Harmonic Attunement when its HP is below 35%.',
     status: 'active',
     target: 'echo_woods',
   },
@@ -336,8 +337,8 @@ export const EXPEDITION_QUESTS: Record<string, ExpeditionQuest> = {
   },
   q4: {
     id: 'q4',
-    title: '4. Siege of the Silent Peak',
-    desc: 'Ascend to the summit and defeat the Lord of Cacophony to permanently restore harmony to the world.',
+    title: '4. Siege of The Wild Peak Summit',
+    desc: 'Ascend to The Wild Peak Summit and defeat the Lord of Cacophony to permanently restore harmony to the world.',
     status: 'locked',
     target: 'silent_peak',
   },

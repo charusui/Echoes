@@ -31,8 +31,64 @@ export function ExpeditionOverworld({
 }: ExpeditionOverworldProps) {
   const [showDialogue, setShowDialogue] = useState(false);
   const [dialogueStep, setDialogueStep] = useState(0);
+  const [avatarPos, setAvatarPos] = useState<{ x: number; y: number } | null>(null);
+  const [isTraveling, setIsTraveling] = useState(false);
 
   const currentNode = nodes[currentNodeId] || nodes['cadence_town']!;
+  const LINEAR_NODES = ['cadence_town', 'echo_woods', 'harmonic_shrine', 'silent_peak'];
+
+  // ─── HELPER: ADJUST WATER NODES ONTO LAND ───
+  const getDisplayCoords = (nodeId: string, originalX: number, originalY: number) => {
+    if (nodeId === 'cadence_town') return { x: 300, y: 380 }; // Moved onto Panay Island
+    if (nodeId === 'harmonic_shrine') return { x: 750, y: 430 }; // Moved onto Bohol Island
+    return { x: originalX, y: originalY };
+  };
+
+  const handleNodeClick = (targetId: string) => {
+    if (isTraveling || targetId === currentNodeId) return;
+
+    const fromIndex = LINEAR_NODES.indexOf(currentNodeId);
+    const toIndex = LINEAR_NODES.indexOf(targetId);
+
+    if (fromIndex !== -1 && toIndex !== -1 && Math.abs(toIndex - fromIndex) > 1) {
+      setIsTraveling(true);
+      const stepDirection = toIndex > fromIndex ? 1 : -1;
+      let stepIndex = fromIndex + stepDirection;
+
+      // Start movement toward the first intermediate node immediately
+      const firstStepNodeId = LINEAR_NODES[stepIndex];
+      const firstStepNode = firstStepNodeId ? nodes[firstStepNodeId] : null;
+      if (firstStepNode) {
+        const { x: renderX, y: renderY } = getDisplayCoords(firstStepNode.id, firstStepNode.x, firstStepNode.y);
+        setAvatarPos({ x: renderX, y: renderY });
+      }
+
+      const stepInterval = setInterval(() => {
+        if (stepIndex === toIndex) {
+          clearInterval(stepInterval);
+          setIsTraveling(false);
+          onSelectNode(targetId);
+          setAvatarPos(null);
+        } else {
+          stepIndex += stepDirection;
+          const stepNodeId = LINEAR_NODES[stepIndex];
+          const stepNode = stepNodeId ? nodes[stepNodeId] : null;
+          if (stepNode) {
+            const { x: renderX, y: renderY } = getDisplayCoords(stepNode.id, stepNode.x, stepNode.y);
+            setAvatarPos({ x: renderX, y: renderY });
+          }
+          if (stepIndex === toIndex) {
+            clearInterval(stepInterval);
+            setIsTraveling(false);
+            onSelectNode(targetId);
+            setAvatarPos(null);
+          }
+        }
+      }, 450);
+    } else {
+      onSelectNode(targetId);
+    }
+  };
 
   const dialogues: Array<{ speaker: string; avatar: string; text: string; choice?: string }> = useMemo(() => [
     {
@@ -45,12 +101,12 @@ export function ExpeditionOverworld({
       speaker: 'Elder Cadence',
       avatar: '👴',
       text: 'To restore equilibrium, you must engage the anomalies in turn-based acoustic combat and seal their resonance.',
-      choice: 'Understood! We will head to Echo Woods.',
+      choice: 'Understood! We will head to Echo Village.',
     },
     {
       speaker: 'Elder Cadence',
       avatar: '👴',
-      text: 'Beware Lord Cacophony at the peak! His brass shockwaves can shatter an unprepared party in seconds.',
+      text: 'Beware Lord Cacophony at The Wild Peak Summit! His brass shockwaves can shatter an unprepared party in seconds.',
       choice: 'To battle!',
     },
   ], []);
@@ -144,21 +200,11 @@ export function ExpeditionOverworld({
     setPanOffset(prev => getBoundedPan(prev.x, prev.y, newScale));
   };
 
-  // ─── HELPER: ADJUST WATER NODES ONTO LAND ───
-  const getDisplayCoords = (nodeId: string, originalX: number, originalY: number) => {
-    if (nodeId === 'cadence_town') return { x: 300, y: 380 }; // Moved onto Panay Island
-    if (nodeId === 'harmonic_shrine') return { x: 750, y: 430 }; // Moved onto Bohol Island
-    return { x: originalX, y: originalY };
-  };
-
   // ─── DYNAMIC SCALING CALCULATIONS ───
   const dynamicPinScale = 1 / Math.pow(mapScale, 1.3);
   
   const path1Width = 10 * dynamicPinScale;
   const path1Dash = `16,10`.split(',').map(n => parseInt(n) * dynamicPinScale).join(',');
-  
-  const path2Width = 8 * dynamicPinScale;
-  const path2Dash = `12,8`.split(',').map(n => parseInt(n) * dynamicPinScale).join(',');
 
   return (
     <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
@@ -237,21 +283,13 @@ export function ExpeditionOverworld({
                 </linearGradient>
               </defs>
 
-              {/* Dynamic Connecting Paths - Fixed coordinates! */}
+              {/* Connecting Path: 1 linear sequence (Town of Cadence -> Echo Village -> Harmonic Shrine -> The Wild Peak Summit) */}
               <path 
-                d="M 300,380 C 370,380 390,330 480,330 C 600,330 680,200 820,180" 
+                d="M 300,380 C 370,380 390,330 480,330 C 580,330 640,430 750,430 C 820,430 840,280 820,180" 
                 fill="none" 
                 stroke="url(#map-path-grad)" 
                 strokeWidth={path1Width} 
                 strokeDasharray={path1Dash} 
-                strokeLinecap="round"
-              />
-              <path 
-                d="M 480,330 C 530,430 640,450 750,430" 
-                fill="none" 
-                stroke="#facc15" 
-                strokeWidth={path2Width} 
-                strokeDasharray={path2Dash} 
                 strokeLinecap="round"
               />
 
@@ -265,12 +303,17 @@ export function ExpeditionOverworld({
                 const { x: renderX, y: renderY } = getDisplayCoords(node.id, node.x, node.y);
                 const ringColor = isBoss ? '#da2d46' : isShrine ? '#facc15' : '#38bdf8';
 
+                const isLongName = node.name.length > 16;
+                const labelFontSize = isLongName ? 10.5 : 12;
+                const labelWidth = Math.max(160, node.name.length * (isLongName ? 8.5 : 10) + 32);
+                const labelX = -labelWidth / 2;
+
                 return (
                   <g 
                     key={node.id} 
                     transform={`translate(${renderX}, ${renderY}) scale(${dynamicPinScale})`}
                     className="cursor-pointer group pointer-events-auto"
-                    onClick={() => onSelectNode(node.id)}
+                    onClick={() => handleNodeClick(node.id)}
                   >
                     <g className="transition-transform duration-200 group-hover:scale-110">
                       {isSelected && (
@@ -298,11 +341,11 @@ export function ExpeditionOverworld({
                         {node.icon}
                       </text>
 
-                      <rect x="-80" y="42" width="160" height="28" fill="#0f0c0c" stroke={ringColor} strokeWidth="2" rx="0" />
+                      <rect x={labelX} y="42" width={labelWidth} height="28" fill="#0f0c0c" stroke={ringColor} strokeWidth="2" rx="0" />
                       <text 
                         y="60" 
                         textAnchor="middle" 
-                        fontSize="12" 
+                        fontSize={labelFontSize} 
                         fontFamily="Orbitron, sans-serif" 
                         fontWeight="900" 
                         fill="#ffffff"
@@ -316,24 +359,30 @@ export function ExpeditionOverworld({
               })}
 
               {/* Party Token Avatar on Current Node */}
-              <g 
-                transform={`translate(${getDisplayCoords(currentNode.id, currentNode.x, currentNode.y).x}, ${getDisplayCoords(currentNode.id, currentNode.x, currentNode.y).y - (55 * dynamicPinScale)}) scale(${dynamicPinScale})`}
-                className="transition-all duration-500 ease-out pointer-events-none"
-              >
-                <polygon points="0,-36 28,-10 0,16 -28,-10" fill="#facc15" stroke="#0f0c0c" strokeWidth="4" />
-                <text y="-4" textAnchor="middle" fontSize="20">🧑‍🎤</text>
-                <text 
-                  y="-46" 
-                  textAnchor="middle" 
-                  fontSize="11" 
-                  fontFamily="Orbitron, sans-serif" 
-                  fontWeight="900" 
-                  fill="#facc15"
-                  className="drop-shadow-[1px_1px_0px_#0f0c0c]"
-                >
-                  PARTY HERE
-                </text>
-              </g>
+              {(() => {
+                const currentRenderCoords = getDisplayCoords(currentNode.id, currentNode.x, currentNode.y);
+                const displayPos = avatarPos || { x: currentRenderCoords.x, y: currentRenderCoords.y };
+                return (
+                  <g 
+                    transform={`translate(${displayPos.x}, ${displayPos.y - (55 * dynamicPinScale)}) scale(${dynamicPinScale})`}
+                    className="transition-all duration-450 ease-in-out pointer-events-none"
+                  >
+                    <polygon points="0,-36 28,-10 0,16 -28,-10" fill="#facc15" stroke="#0f0c0c" strokeWidth="4" />
+                    <text y="-4" textAnchor="middle" fontSize="20">🧑‍🎤</text>
+                    <text 
+                      y="-46" 
+                      textAnchor="middle" 
+                      fontSize="11" 
+                      fontFamily="Orbitron, sans-serif" 
+                      fontWeight="900" 
+                      fill="#facc15"
+                      className="drop-shadow-[1px_1px_0px_#0f0c0c]"
+                    >
+                      {isTraveling ? 'TRAVELING...' : 'PARTY HERE'}
+                    </text>
+                  </g>
+                );
+              })()}
             </svg>
           </div>
 
@@ -408,96 +457,95 @@ export function ExpeditionOverworld({
               </span>
             </button>
           </div>
-
         </div>
       </div>
 
       {/* Right/Sidebar: Location Details & Type Weakness Chart */}
-      <aside className="w-full lg:w-96 flex flex-col gap-4 bg-[#151828] p-4 border-t-[4px] md:border-t-0 border-[#0f0c0c] md:overflow-y-auto">
+      <aside className="w-full lg:w-80 xl:w-96 flex flex-col justify-between gap-2.5 bg-[#151828] p-3 border-t-[4px] md:border-t-0 border-[#0f0c0c] overflow-hidden select-none">
         
         {/* Location Info Card */}
-        <div className="bg-[#1e2238] border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] p-5 flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <span className="px-3 py-1 bg-[#38bdf8] text-[#0f0c0c] border-[3px] border-[#0f0c0c] font-orbitron font-black text-xs uppercase -skew-x-6">
-              {currentNode.type.toUpperCase()} NODE
-            </span>
-            <span className="text-2xl">{currentNode.icon}</span>
-          </div>
-
+        <div className="bg-[#1e2238] border-[3px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] p-3.5 flex flex-col gap-2 flex-1 justify-between min-h-0 overflow-hidden">
           <div>
-            <h3 className="font-orbitron font-black text-xl text-white tracking-wider">
+            <div className="flex items-center justify-between mb-1">
+              <span className="px-2 py-0.5 bg-[#38bdf8] text-[#0f0c0c] border-[2px] border-[#0f0c0c] font-orbitron font-black text-2xs uppercase -skew-x-6">
+                {currentNode.type.toUpperCase()} NODE
+              </span>
+              <span className="text-xl leading-none">{currentNode.icon}</span>
+            </div>
+
+            <h3 className="font-orbitron font-black text-base xl:text-lg text-white tracking-wider leading-tight truncate">
               {currentNode.name}
             </h3>
-            <p className="text-sm text-slate-300 mt-1 leading-relaxed">
+            <p className="text-2xs xl:text-xs text-slate-300 mt-1 leading-snug line-clamp-2">
               {currentNode.desc}
             </p>
           </div>
 
-          <div className="bg-[#0f0c0c] p-3 border-[3px] border-[#0f0c0c] flex flex-col gap-1">
-            <span className="text-2xs font-orbitron font-bold uppercase text-[#facc15] tracking-wider">
+          <div className="bg-[#0f0c0c] p-2 border-[2px] border-[#0f0c0c] flex flex-col gap-0.5 shrink-0">
+            <span className="text-3xs xl:text-2xs font-orbitron font-bold uppercase text-[#facc15] tracking-wider">
               📍 REGIONAL REWARDS / OPPORTUNITY
             </span>
-            <span className="text-xs text-white font-bold">
+            <span className="text-2xs xl:text-xs text-white font-bold truncate">
               {currentNode.rewards}
             </span>
           </div>
 
-          <div className="pt-2 flex flex-col gap-2.5">
+          <div className="flex flex-col gap-2 pt-1 shrink-0">
             {currentNode.type === 'town' ? (
               <button
                 onClick={() => {
                   setDialogueStep(0);
                   setShowDialogue(true);
                 }}
-                className="w-full py-3 bg-[#facc15] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-sm uppercase -skew-x-6 hover:bg-[#ffdf3d] transition-all flex items-center justify-center gap-2 active:translate-y-0.5 active:shadow-none"
+                className="w-full py-2 xl:py-2.5 bg-[#facc15] text-[#0f0c0c] border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-xs xl:text-sm uppercase -skew-x-6 hover:bg-[#ffdf3d] transition-all flex items-center justify-center gap-2 active:translate-y-0.5 active:shadow-none"
               >
-                <MessageSquare className="w-4 h-4 fill-current" />
-                <span>TALK TO ELDER CADENCE</span>
+                <MessageSquare className="w-3.5 h-3.5 fill-current shrink-0" />
+                <span className="truncate">TALK TO ELDER CADENCE</span>
               </button>
             ) : (
               <button
                 onClick={() => currentNode.enemyId && onStartBattle(currentNode.enemyId)}
-                className="w-full py-3 bg-[#da2d46] text-white border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-sm uppercase -skew-x-6 hover:bg-[#ff3b56] transition-all flex items-center justify-center gap-2 active:translate-y-0.5 active:shadow-none"
+                className="w-full py-2 xl:py-2.5 bg-[#da2d46] text-white border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-xs xl:text-sm uppercase -skew-x-6 hover:bg-[#ff3b56] transition-all flex items-center justify-center gap-2 active:translate-y-0.5 active:shadow-none"
               >
-                <Play className="w-4 h-4 fill-current" />
-                <span>ENTER BATTLE ({currentNode.name.split(' ')[0]})</span>
+                <Play className="w-3.5 h-3.5 fill-current shrink-0" />
+                <span className="truncate">ENTER BATTLE ({currentNode.name.split(' ')[0]})</span>
               </button>
             )}
 
             <button
               onClick={onOpenQuests}
-              className="w-full py-2 bg-[#2a2d43] text-[#38bdf8] border-[3px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] font-orbitron font-bold text-xs uppercase -skew-x-6 hover:bg-[#323652] transition-all flex items-center justify-center gap-1.5 active:translate-y-0.5 active:shadow-none"
+              className="w-full py-1.5 xl:py-2 bg-[#2a2d43] text-[#38bdf8] border-[2px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] font-orbitron font-bold text-2xs xl:text-xs uppercase -skew-x-6 hover:bg-[#323652] transition-all flex items-center justify-center gap-1.5 active:translate-y-0.5 active:shadow-none"
             >
-              <Compass className="w-3.5 h-3.5" />
-              <span>CHECK ACTIVE QUEST JOURNAL</span>
+              <Compass className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">CHECK ACTIVE QUEST JOURNAL</span>
             </button>
           </div>
         </div>
 
         {/* Type Weakness Circle Chart Card */}
-        <div className="bg-[#1e2238] border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] p-4 flex flex-col gap-3">
-          <div className="flex items-center gap-2 border-b-[2px] border-[#0f0c0c] pb-2">
-            <ShieldAlert className="w-4 h-4 text-[#facc15]" />
-            <h4 className="font-orbitron font-black text-xs uppercase tracking-wider text-[#facc15]">
+        <div className="bg-[#1e2238] border-[3px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] p-3 flex flex-col gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 border-b border-[#0f0c0c] pb-1.5">
+            <ShieldAlert className="w-3.5 h-3.5 text-[#facc15]" />
+            <h4 className="font-orbitron font-black text-2xs uppercase tracking-wider text-[#facc15]">
               ⚡ TYPE WEAKNESS MATRIX
             </h4>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-1.5 text-2xs font-orbitron font-bold py-1">
-            <span className="px-2 py-1 bg-[#da2d46] text-white border border-[#0f0c0c] -skew-x-6">STRING</span>
+          <div className="flex flex-wrap items-center justify-center gap-1 text-3xs xl:text-2xs font-orbitron font-bold py-0.5">
+            <span className="px-1.5 py-0.5 bg-[#da2d46] text-white border border-[#0f0c0c] -skew-x-6">STRING</span>
             <span>➔</span>
-            <span className="px-2 py-1 bg-[#facc15] text-[#0f0c0c] border border-[#0f0c0c] -skew-x-6">PERC</span>
+            <span className="px-1.5 py-0.5 bg-[#facc15] text-[#0f0c0c] border border-[#0f0c0c] -skew-x-6">PERC</span>
             <span>➔</span>
-            <span className="px-2 py-1 bg-[#f97316] text-white border border-[#0f0c0c] -skew-x-6">BRASS</span>
+            <span className="px-1.5 py-0.5 bg-[#f97316] text-white border border-[#0f0c0c] -skew-x-6">BRASS</span>
             <span>➔</span>
-            <span className="px-2 py-1 bg-[#a855f7] text-white border border-[#0f0c0c] -skew-x-6">SYNTH</span>
+            <span className="px-1.5 py-0.5 bg-[#a855f7] text-white border border-[#0f0c0c] -skew-x-6">SYNTH</span>
             <span>➔</span>
-            <span className="px-2 py-1 bg-[#4ade80] text-[#0f0c0c] border border-[#0f0c0c] -skew-x-6">WOOD</span>
+            <span className="px-1.5 py-0.5 bg-[#4ade80] text-[#0f0c0c] border border-[#0f0c0c] -skew-x-6">WOOD</span>
             <span>➔</span>
-            <span className="px-2 py-1 bg-[#da2d46] text-white border border-[#0f0c0c] -skew-x-6">STRING</span>
+            <span className="px-1.5 py-0.5 bg-[#da2d46] text-white border border-[#0f0c0c] -skew-x-6">STRING</span>
           </div>
 
-          <p className="text-2xs text-slate-300 leading-normal bg-[#0f0c0c] p-2.5 border-[2px] border-[#0f0c0c]">
+          <p className="text-3xs xl:text-2xs text-slate-300 leading-tight bg-[#0f0c0c] p-2 border border-[#0f0c0c]">
             Super Effective attacks deal <strong className="text-[#4ade80]">2.0x Damage</strong> and double your Stagger bar buildup!
           </p>
         </div>

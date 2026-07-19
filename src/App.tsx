@@ -7,6 +7,7 @@ import { ProgressProvider, useProgress } from './context/ProgressProvider';
 
 import { TitleScreen } from './components/TitleScreen';
 import { OnboardingScreen } from './components/OnboardingScreen';
+import { ExpeditionScreen } from './components/MapScreen';
 import { LocationServicesScreen } from './components/LocationServicesScreen';
 import { Scanner } from './components/Scanner';
 import { PipelineConsole } from './components/PipelineConsole';
@@ -21,7 +22,7 @@ import { KorlongHuntScreen } from './components/KorlongHuntScreen';
 import { TeachableStudentScreen } from './components/TeachableStudentScreen';
 import { BadgesScreen } from './components/BadgesScreen';
 import { RanksScreen } from './components/RanksScreen';
-import { ExpeditionScreen } from './components/expedition/ExpeditionScreen';
+
 import { DevMenu } from './components/DevMenu';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { initializeInstrumentPipeline } from './services/geminiPipeline';
