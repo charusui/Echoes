@@ -164,7 +164,7 @@ export function ExpeditionScreen({
 
           <div className="flex items-center gap-2">
             <span className="text-xl sm:text-2xl font-orbitron font-black text-[#facc15] tracking-wider drop-shadow-[2px_2px_0px_#0f0c0c]">
-              🎼 HARMONYDEX
+              🎼 MUSIKULTURA
             </span>
           </div>
 
@@ -202,15 +202,6 @@ export function ExpeditionScreen({
           >
             <Settings className="w-3.5 h-3.5" />
             <span className="hidden md:inline">EQUIP</span>
-          </button>
-
-          <button
-            onClick={() => setActiveModal('quests')}
-            className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 bg-[#f43f5e] text-white border-[3px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] font-orbitron font-bold text-xs uppercase -skew-x-6 hover:bg-[#ff5a75] transition-all active:translate-y-0.5 active:shadow-none"
-            title="Quest Journal"
-          >
-            <ScrollText className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">QUESTS</span>
           </button>
 
           <button
