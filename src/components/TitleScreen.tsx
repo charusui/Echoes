@@ -38,9 +38,7 @@ interface TitleScreenProps {
 export function TitleScreen({ onStart }: TitleScreenProps) {
   const [mounted, setMounted] = useState(false);
   const [frameIdx, setFrameIdx] = useState(0);
-  const [blink, setBlink] = useState(true);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const blinkRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 100);
@@ -52,11 +50,6 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
       setFrameIdx(prev => (prev + 1) % FRAMES.length);
     }, FRAME_DURATION);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, []);
-
-  useEffect(() => {
-    blinkRef.current = setInterval(() => setBlink(b => !b), 800);
-    return () => { if (blinkRef.current) clearInterval(blinkRef.current); };
   }, []);
 
   return (
