@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { Play, MessageSquare, Compass, ShieldAlert, Award, Camera, Map, Flame, Shield } from 'lucide-react';
 import { type MapNode, type ExpeditionQuest } from '../../types/expedition';
 import visayasMap from '../../assets/png/visayas_map.png';
@@ -64,12 +64,109 @@ export function ExpeditionOverworld({
     }
   };
 
+  // ─── MAP PANNING, ZOOMING & RESIZE OBSERVER ───
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 1000, height: 650 });
+  const [mapScale, setMapScale] = useState(1.0);
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [touchStartDist, setTouchStartDist] = useState(0);
+
+  useEffect(() => {
+    const observer = new ResizeObserver((entries) => {
+      if (entries[0]) {
+        setDimensions({
+          width: entries[0].contentRect.width,
+          height: entries[0].contentRect.height,
+        });
+      }
+    });
+    if (mapContainerRef.current) observer.observe(mapContainerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const getBoundedPan = (x: number, y: number, scale: number) => {
+    const limitX = scale > 1 ? (dimensions.width * scale - dimensions.width) / 2 : 0;
+    const limitY = scale > 1 ? (dimensions.height * scale - dimensions.height) / 2 : 0;
+    return {
+      x: Math.max(-limitX, Math.min(limitX, x)),
+      y: Math.max(-limitY, Math.min(limitY, y)),
+    };
+  };
+
+  const handlePanStart = (clientX: number, clientY: number) => {
+    setIsPanning(true);
+    setPanStart({ x: clientX - panOffset.x, y: clientY - panOffset.y });
+  };
+
+  const handlePanMove = (clientX: number, clientY: number) => {
+    if (!isPanning) return;
+    setPanOffset(getBoundedPan(clientX - panStart.x, clientY - panStart.y, mapScale));
+  };
+
+  const handlePanEnd = () => setIsPanning(false);
+
+  const getTouchDist = (touches: React.TouchList) => {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) setTouchStartDist(getTouchDist(e.touches));
+    else if (e.touches.length === 1) handlePanStart(e.touches[0].clientX, e.touches[0].clientY);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && touchStartDist > 0) {
+      const dist = getTouchDist(e.touches);
+      const delta = (dist - touchStartDist) * 0.01;
+      const newScale = Math.max(1.0, Math.min(4.0, mapScale + delta));
+      setMapScale(newScale);
+      setTouchStartDist(dist);
+      setPanOffset(prev => getBoundedPan(prev.x, prev.y, newScale));
+    } else if (e.touches.length === 1) {
+      handlePanMove(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (e.touches.length < 2) setTouchStartDist(0);
+    handlePanEnd();
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    const zoomSensitivity = 0.0015;
+    const scaleAmount = -e.deltaY * zoomSensitivity;
+    const newScale = Math.max(1.0, Math.min(4.0, mapScale * (1 + scaleAmount)));
+    setMapScale(newScale);
+    setPanOffset(prev => getBoundedPan(prev.x, prev.y, newScale));
+  };
+
+  // ─── HELPER: ADJUST WATER NODES ONTO LAND ───
+  const getDisplayCoords = (nodeId: string, originalX: number, originalY: number) => {
+    if (nodeId === 'cadence_town') return { x: 300, y: 380 }; // Moved onto Panay Island
+    if (nodeId === 'harmonic_shrine') return { x: 750, y: 430 }; // Moved onto Bohol Island
+    return { x: originalX, y: originalY };
+  };
+
+  // ─── DYNAMIC SCALING CALCULATIONS ───
+  const dynamicPinScale = 1 / Math.pow(mapScale, 1.3);
+  
+  const path1Width = 10 * dynamicPinScale;
+  const path1Dash = `16,10`.split(',').map(n => parseInt(n) * dynamicPinScale).join(',');
+  
+  const path2Width = 8 * dynamicPinScale;
+  const path2Dash = `12,8`.split(',').map(n => parseInt(n) * dynamicPinScale).join(',');
+
   return (
     <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
       {/* Left Area: Map Viewpoint */}
-      <div className="flex-1 flex flex-col bg-[#151828] border-b md:border-b-0 md:border-r-[4px] border-[#0f0c0c] overflow-hidden">
+      <div className="flex-1 flex flex-col bg-[#151828] border-b md:border-b-0 md:border-r-[4px] border-[#0f0c0c] overflow-hidden relative">
+        
         {/* Top Region Banner */}
-        <div className="bg-[#1e2238] px-4 py-2.5 border-b-[4px] border-[#0f0c0c] flex items-center justify-between flex-wrap gap-2">
+        <div className="bg-[#1e2238] px-4 py-2.5 border-b-[4px] border-[#0f0c0c] flex items-center justify-between flex-wrap gap-2 z-40 relative">
           <div>
             <h2 className="font-orbitron font-black text-base sm:text-lg text-white uppercase tracking-wider">
               🗺️ MAP OF THE SILENT VALLEY
@@ -92,31 +189,156 @@ export function ExpeditionOverworld({
           </div>
         </div>
 
-        {/* Merged Overworld Map Viewpoint */}
-        <div className="flex-1 w-full h-full relative flex items-center justify-center bg-[#2a2d43] overflow-auto p-2">
-          {/* Background Map Image from 1st Screen */}
-          <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-            <img
-              src={visayasMap}
-              alt="Visayas Map Background"
-              className="w-full h-full object-cover"
-              style={{
-                opacity: 0.85,
-                mixBlendMode: 'hard-light',
-                filter: 'saturate(1.5) contrast(1.2) sepia(0.3) hue-rotate(-10deg)',
-              }}
-            />
-            <div 
-              className="absolute inset-0 opacity-25"
-              style={{ backgroundImage: 'radial-gradient(#da2d46 2px, transparent 2px)', backgroundSize: '20px 20px' }}
-            />
-            <div className="absolute top-0 right-0 w-96 h-96 bg-[#da2d46]/15 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#38bdf8]/15 rounded-full blur-3xl pointer-events-none" />
+        {/* Merged Overworld Map Viewpoint with Pan/Zoom */}
+        <div ref={mapContainerRef} className="flex-1 w-full h-full relative bg-[#2a2d43] overflow-hidden">
+          
+          <div
+            className={`absolute inset-0 select-none touch-none cursor-grab active:cursor-grabbing ${isPanning ? '' : 'transition-transform duration-300 ease-out'}`}
+            style={{ transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${mapScale})`, transformOrigin: 'center center' }}
+            onMouseDown={e => handlePanStart(e.clientX, e.clientY)}
+            onMouseMove={e => handlePanMove(e.clientX, e.clientY)}
+            onMouseUp={handlePanEnd}
+            onMouseLeave={handlePanEnd}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onWheel={handleWheel}
+          >
+            {/* Background Map Image */}
+            <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+              <img
+                src={visayasMap}
+                alt="Visayas Map Background"
+                className="w-full h-full object-cover"
+                style={{
+                  opacity: 0.85,
+                  mixBlendMode: 'hard-light',
+                  filter: 'saturate(1.5) contrast(1.2) sepia(0.3) hue-rotate(-10deg)',
+                }}
+              />
+              <div 
+                className="absolute inset-0 opacity-25"
+                style={{ backgroundImage: 'radial-gradient(#da2d46 2px, transparent 2px)', backgroundSize: '20px 20px' }}
+              />
+              <div className="absolute top-0 right-0 w-96 h-96 bg-[#da2d46]/15 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#38bdf8]/15 rounded-full blur-3xl pointer-events-none" />
+            </div>
+
+            {/* SVG Map Data */}
+            <svg 
+              className="w-full h-full absolute inset-0 drop-shadow-[0px_4px_10px_rgba(0,0,0,0.5)] z-10 pointer-events-none" 
+              viewBox="0 0 1000 650"
+              preserveAspectRatio="xMidYMid slice"
+            >
+              <defs>
+                <linearGradient id="map-path-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.8" />
+                  <stop offset="100%" stopColor="#da2d46" stopOpacity="0.8" />
+                </linearGradient>
+              </defs>
+
+              {/* Dynamic Connecting Paths - Fixed coordinates! */}
+              <path 
+                d="M 300,380 C 370,380 390,330 480,330 C 600,330 680,200 820,180" 
+                fill="none" 
+                stroke="url(#map-path-grad)" 
+                strokeWidth={path1Width} 
+                strokeDasharray={path1Dash} 
+                strokeLinecap="round"
+              />
+              <path 
+                d="M 480,330 C 530,430 640,450 750,430" 
+                fill="none" 
+                stroke="#facc15" 
+                strokeWidth={path2Width} 
+                strokeDasharray={path2Dash} 
+                strokeLinecap="round"
+              />
+
+              {/* Nodes */}
+              {Object.values(nodes).map(node => {
+                const isSelected = node.id === currentNodeId;
+                const isBoss = node.type === 'boss';
+                const isShrine = node.type === 'shrine';
+                
+                // Route coordinates through the land-patch helper
+                const { x: renderX, y: renderY } = getDisplayCoords(node.id, node.x, node.y);
+                const ringColor = isBoss ? '#da2d46' : isShrine ? '#facc15' : '#38bdf8';
+
+                return (
+                  <g 
+                    key={node.id} 
+                    transform={`translate(${renderX}, ${renderY}) scale(${dynamicPinScale})`}
+                    className="cursor-pointer group pointer-events-auto"
+                    onClick={() => onSelectNode(node.id)}
+                  >
+                    <g className="transition-transform duration-200 group-hover:scale-110">
+                      {isSelected && (
+                        <circle 
+                          r="46" 
+                          fill="none" 
+                          stroke={ringColor} 
+                          strokeWidth="3" 
+                          strokeDasharray="6 6"
+                          className="animate-spin"
+                          style={{ animationDuration: '8s' }}
+                        />
+                      )}
+
+                      <circle r="34" fill="#1e2238" stroke="#0f0c0c" strokeWidth="6" />
+                      <circle 
+                        r="30" 
+                        fill={isSelected ? ringColor : '#2a2d43'} 
+                        stroke="#0f0c0c" 
+                        strokeWidth="3" 
+                        className="group-hover:fill-white transition-colors"
+                      />
+
+                      <text y="8" textAnchor="middle" fontSize="22" className="select-none pointer-events-none">
+                        {node.icon}
+                      </text>
+
+                      <rect x="-80" y="42" width="160" height="28" fill="#0f0c0c" stroke={ringColor} strokeWidth="2" rx="0" />
+                      <text 
+                        y="60" 
+                        textAnchor="middle" 
+                        fontSize="12" 
+                        fontFamily="Orbitron, sans-serif" 
+                        fontWeight="900" 
+                        fill="#ffffff"
+                        className="select-none pointer-events-none tracking-wider"
+                      >
+                        {node.name.toUpperCase()}
+                      </text>
+                    </g>
+                  </g>
+                );
+              })}
+
+              {/* Party Token Avatar on Current Node */}
+              <g 
+                transform={`translate(${getDisplayCoords(currentNode.id, currentNode.x, currentNode.y).x}, ${getDisplayCoords(currentNode.id, currentNode.x, currentNode.y).y - (55 * dynamicPinScale)}) scale(${dynamicPinScale})`}
+                className="transition-all duration-500 ease-out pointer-events-none"
+              >
+                <polygon points="0,-36 28,-10 0,16 -28,-10" fill="#facc15" stroke="#0f0c0c" strokeWidth="4" />
+                <text y="-4" textAnchor="middle" fontSize="20">🧑‍🎤</text>
+                <text 
+                  y="-46" 
+                  textAnchor="middle" 
+                  fontSize="11" 
+                  fontFamily="Orbitron, sans-serif" 
+                  fontWeight="900" 
+                  fill="#facc15"
+                  className="drop-shadow-[1px_1px_0px_#0f0c0c]"
+                >
+                  PARTY HERE
+                </text>
+              </g>
+            </svg>
           </div>
 
-          {/* Top-Right HUD & Navigation Buttons from 1st Screen */}
+          {/* ─── FIXED HUD ELEMENTS OVER MAP ─── */}
           <div className="absolute top-3 right-3 z-30 p-2 flex flex-col items-end gap-2 pointer-events-none w-full max-w-[210px] sm:max-w-[260px]">
-            {/* Main HUD Panel */}
             <div className="bg-[#e0e5ed] border-[3px] border-[#0f0c0c] p-2 shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-2 pointer-events-auto w-full">
               <div className="flex items-start justify-between gap-2 skew-x-2">
                 <div className="text-left flex-1">
@@ -139,7 +361,6 @@ export function ExpeditionOverworld({
                   </div>
                 </div>
               </div>
-              {/* XP Bar */}
               <div className="mt-2 skew-x-2">
                 <div className="flex justify-between mb-0.5 font-space-mono text-[7px] sm:text-[8px] font-black text-[#0f0c0c] uppercase">
                   <span>LVL 1</span>
@@ -151,7 +372,6 @@ export function ExpeditionOverworld({
               </div>
             </div>
 
-            {/* Navigation Buttons Row */}
             <div className="flex gap-1.5 pointer-events-auto w-full justify-end">
               <button
                 onClick={onOpenLocationServices}
@@ -177,7 +397,6 @@ export function ExpeditionOverworld({
             </div>
           </div>
 
-          {/* Bottom Center SCAN INSTRUMENT Button from 1st Screen */}
           <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-40 w-full max-w-xs sm:max-w-sm px-4 pointer-events-none">
             <button
               onClick={onOpenScanner}
@@ -190,153 +409,12 @@ export function ExpeditionOverworld({
             </button>
           </div>
 
-          <svg 
-            className="w-full max-w-[1000px] h-auto aspect-[1000/650] drop-shadow-[0px_4px_10px_rgba(0,0,0,0.5)] relative z-10" 
-            viewBox="0 0 1000 650"
-          >
-            {/* Background Decorative Grid & Glow */}
-            <defs>
-              <linearGradient id="map-path-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.8" />
-                <stop offset="100%" stopColor="#da2d46" stopOpacity="0.8" />
-              </linearGradient>
-            </defs>
-
-            {/* Connecting Paths */}
-            <path 
-              d="M 180,480 C 300,480 340,330 480,330 C 600,330 680,200 820,180" 
-              fill="none" 
-              stroke="url(#map-path-grad)" 
-              strokeWidth="10" 
-              strokeDasharray="16 10" 
-              strokeLinecap="round"
-            />
-            <path 
-              d="M 480,330 C 520,480 680,520 800,500" 
-              fill="none" 
-              stroke="#facc15" 
-              strokeWidth="8" 
-              strokeDasharray="12 8" 
-              strokeLinecap="round"
-            />
-
-            {/* Nodes */}
-            {Object.values(nodes).map(node => {
-              const isSelected = node.id === currentNodeId;
-              const isBoss = node.type === 'boss';
-              const isShrine = node.type === 'shrine';
-              
-              const ringColor = isBoss ? '#da2d46' : isShrine ? '#facc15' : '#38bdf8';
-
-              return (
-                <g 
-                  key={node.id} 
-                  transform={`translate(${node.x}, ${node.y})`}
-                  className="cursor-pointer group"
-                  onClick={() => onSelectNode(node.id)}
-                >
-                  <g className="transition-transform duration-200 group-hover:scale-110">
-                    {/* Outer Pulsing Aura if selected */}
-                    {isSelected && (
-                      <circle 
-                        r="46" 
-                        fill="none" 
-                        stroke={ringColor} 
-                        strokeWidth="3" 
-                        strokeDasharray="6 6"
-                        className="animate-spin"
-                        style={{ animationDuration: '8s' }}
-                      />
-                    )}
-
-                    {/* Node Outer Ring */}
-                    <circle 
-                      r="34" 
-                      fill="#1e2238" 
-                      stroke="#0f0c0c" 
-                      strokeWidth="6" 
-                    />
-                    <circle 
-                      r="30" 
-                      fill={isSelected ? ringColor : '#2a2d43'} 
-                      stroke="#0f0c0c" 
-                      strokeWidth="3" 
-                      className="group-hover:fill-white transition-colors"
-                    />
-
-                    {/* Emoji Icon */}
-                    <text 
-                      y="8" 
-                      textAnchor="middle" 
-                      fontSize="22" 
-                      className="select-none pointer-events-none"
-                    >
-                      {node.icon}
-                    </text>
-
-                    {/* Node Title Label */}
-                    <rect 
-                      x="-80" 
-                      y="42" 
-                      width="160" 
-                      height="28" 
-                      fill="#0f0c0c" 
-                      stroke={ringColor} 
-                      strokeWidth="2"
-                      rx="0"
-                    />
-                    <text 
-                      y="60" 
-                      textAnchor="middle" 
-                      fontSize="12" 
-                      fontFamily="Orbitron, sans-serif" 
-                      fontWeight="900" 
-                      fill="#ffffff"
-                      className="select-none pointer-events-none tracking-wider"
-                    >
-                      {node.name.toUpperCase()}
-                    </text>
-                  </g>
-                </g>
-              );
-            })}
-
-            {/* Party Token Avatar on Current Node */}
-            <g 
-              transform={`translate(${currentNode.x}, ${currentNode.y - 55})`}
-              className="transition-all duration-500 ease-out pointer-events-none"
-            >
-              <polygon 
-                points="0,-36 28,-10 0,16 -28,-10" 
-                fill="#facc15" 
-                stroke="#0f0c0c" 
-                strokeWidth="4" 
-              />
-              <text 
-                y="-4" 
-                textAnchor="middle" 
-                fontSize="20"
-              >
-                🧑‍🎤
-              </text>
-              <text 
-                y="-46" 
-                textAnchor="middle" 
-                fontSize="11" 
-                fontFamily="Orbitron, sans-serif" 
-                fontWeight="900" 
-                fill="#facc15"
-                className="drop-shadow-[1px_1px_0px_#0f0c0c]"
-              >
-                PARTY HERE
-              </text>
-            </g>
-          </svg>
         </div>
       </div>
 
       {/* Right/Sidebar: Location Details & Type Weakness Chart */}
-      <aside className="w-full lg:w-96 flex flex-col gap-4">
+      <aside className="w-full lg:w-96 flex flex-col gap-4 bg-[#151828] p-4 border-t-[4px] md:border-t-0 border-[#0f0c0c] md:overflow-y-auto">
+        
         {/* Location Info Card */}
         <div className="bg-[#1e2238] border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] p-5 flex flex-col gap-4">
           <div className="flex items-center justify-between">
@@ -364,7 +442,6 @@ export function ExpeditionOverworld({
             </span>
           </div>
 
-          {/* Action Buttons based on node type */}
           <div className="pt-2 flex flex-col gap-2.5">
             {currentNode.type === 'town' ? (
               <button

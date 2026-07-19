@@ -7,7 +7,6 @@ import { ProgressProvider, useProgress } from './context/ProgressProvider';
 
 import { TitleScreen } from './components/TitleScreen';
 import { OnboardingScreen } from './components/OnboardingScreen';
-import { MapScreen } from './components/MapScreen';
 import { LocationServicesScreen } from './components/LocationServicesScreen';
 import { Scanner } from './components/Scanner';
 import { PipelineConsole } from './components/PipelineConsole';
@@ -53,7 +52,7 @@ function InnerApp() {
   const handleStartTitle = useCallback(() => {
     const hasSeenOnboarding = localStorage.getItem('filinstruments_has_seen_onboarding');
     if (hasSeenOnboarding) {
-      setView('map');
+      setView('expedition'); // Directly to expedition
     } else {
       setView('onboarding');
     }
@@ -61,7 +60,7 @@ function InnerApp() {
 
   const handleOnboardingComplete = useCallback(() => {
     localStorage.setItem('filinstruments_has_seen_onboarding', 'true');
-    setView('map');
+    setView('expedition'); // Directly to expedition
   }, []);
 
   const handleQuit = useCallback(() => {
@@ -69,7 +68,7 @@ function InnerApp() {
     setPipelineImage(null);
     setInstrumentName(undefined);
     setFinalGameState(null);
-    setView('map');
+    setView('expedition'); // Return to expedition on quit
   }, []);
 
   const handleSelectInstrument = useCallback((selectedInstrumentName: string) => {
@@ -201,46 +200,42 @@ function InnerApp() {
   }, []);
 
   const handleKorlongDiscovered = useCallback(() => {
-  // 1. Drop the curtain INSTANTLY (0ms delay)
-  setIsTransitioning(true);
+    setIsTransitioning(true);
 
-  // 2. Wait just 50ms to ensure the browser paints the solid color
-  setTimeout(() => {
-    const isNew = recordScan(KORLONG_INSTRUMENT.name);
-    if (isNew) addXP(100, 'korlong_hunt');
-    
-    const korlongProfile: ActiveInstrumentProfile = {
-      ...FALLBACK_PROFILES.string,
-      isFallback: true,
-      fallbackReason: 'map-selection',
-      imageBase64: '',
-      imageMimeType: '',
-    };
-    korlongProfile.instrument = {
-      ...FALLBACK_PROFILES.string.instrument,
-          name: KORLONG_INSTRUMENT.name,
-          localName: 'Korlong',
-          ethnoLinguisticGroup: 'Waray-Waray / Eastern Visayan',
-          culturalPurpose: 'Critically endangered two-stringed fiddle, rarely heard today',
-          category: 'string',
-          description: 'A critically endangered two-stringed fiddle from Eastern Visayas, traditionally using abaca or horsehair strings. One of the rarest instruments in the Visayan archipelago.',
-          history: KORLONG_INSTRUMENT.history,
-          region: 'Eastern Visayas',
-        };
-        
-        setActiveProfile(korlongProfile);
-        setInstrumentName(KORLONG_INSTRUMENT.name);
-        
-        // 3. Swap the components behind the solid curtain
-        setView('discoveryCard');
+    setTimeout(() => {
+      const isNew = recordScan(KORLONG_INSTRUMENT.name);
+      if (isNew) addXP(100, 'korlong_hunt');
+      
+      const korlongProfile: ActiveInstrumentProfile = {
+        ...FALLBACK_PROFILES.string,
+        isFallback: true,
+        fallbackReason: 'map-selection',
+        imageBase64: '',
+        imageMimeType: '',
+      };
+      korlongProfile.instrument = {
+        ...FALLBACK_PROFILES.string.instrument,
+            name: KORLONG_INSTRUMENT.name,
+            localName: 'Korlong',
+            ethnoLinguisticGroup: 'Waray-Waray / Eastern Visayan',
+            culturalPurpose: 'Critically endangered two-stringed fiddle, rarely heard today',
+            category: 'string',
+            description: 'A critically endangered two-stringed fiddle from Eastern Visayas, traditionally using abaca or horsehair strings. One of the rarest instruments in the Visayan archipelago.',
+            history: KORLONG_INSTRUMENT.history,
+            region: 'Eastern Visayas',
+          };
+          
+          setActiveProfile(korlongProfile);
+          setInstrumentName(KORLONG_INSTRUMENT.name);
+          
+          setView('discoveryCard');
 
-        // 4. Lift the curtain smoothly to reveal the card
-        setTimeout(() => {
-          setIsTransitioning(false);
-        }, 50);
-        
-      }, 50); 
-    }, [recordScan, addXP]);
+          setTimeout(() => {
+            setIsTransitioning(false);
+          }, 50);
+          
+        }, 50); 
+      }, [recordScan, addXP]);
 
   const handleGameFinish = useCallback((gameState?: GameplayState) => {
     if (gameState) setFinalGameState(gameState);
@@ -261,7 +256,6 @@ function InnerApp() {
   }, []);
 
   return (
-    // Note the added 'relative' class here to contain the fixed overlay properly if needed
     <div className="min-h-screen bg-obsidian text-light-gray overflow-x-hidden relative">
       
       <div 
@@ -273,12 +267,13 @@ function InnerApp() {
         }}
       />
 
-      {/* Dev Menu — only show on map screen */}
-      {view === 'map' && <DevMenu 
+      {/* Dev Menu — only show on expedition screen now */}
+      {view === 'expedition' && <DevMenu 
         onOpenStudentSession={() => setView('teachableStudent')} 
         onOpenKorlongHunt={() => setView('korlongHunt')}
         onStartGameplay={handleSelectInstrument}
       />}
+      
       {view === 'title' && (
         <TitleScreen onStart={handleStartTitle} />
       )}
@@ -287,36 +282,33 @@ function InnerApp() {
         <OnboardingScreen onComplete={handleOnboardingComplete} />
       )}
 
-      {view === 'map' && (
-        <MapScreen 
+      {/* Replaced MapScreen with ExpeditionScreen as the main hub */}
+      {view === 'expedition' && (
+        <ExpeditionScreen 
+          isRootMap={true}
+          onBack={() => setView('title')}
           onOpenScanner={() => setView('scanner')}
           onOpenLocationServices={() => setView('locationServices')}
-          onSelectInstrument={handleSelectInstrument}
           onOpenCollection={() => setView('collection')}
           onOpenBadges={() => setView('badges')}
           onOpenRanks={() => setView('ranks')}
-          onOpenExpedition={() => setView('expedition')}
         />
       )}
 
-      {view === 'expedition' && (
-        <ExpeditionScreen onBack={() => setView('map')} />
-      )}
-
       {view === 'badges' && (
-        <BadgesScreen onBack={() => setView('map')} />
+        <BadgesScreen onBack={() => setView('expedition')} />
       )}
 
       {view === 'ranks' && (
         <RanksScreen 
-          onBack={() => setView('map')} 
+          onBack={() => setView('expedition')} 
           onOpenBadges={() => setView('badges')} 
         />
       )}
 
       {view === 'collection' && (
         <CollectionScreen 
-          onBack={() => setView('map')} 
+          onBack={() => setView('expedition')} 
           onSelectInstrument={handleSelectInstrument}
           onSelectCustomProfile={handleSelectCustomProfile}
           onOpenKorlongHunt={() => setView('korlongHunt')}
@@ -325,7 +317,7 @@ function InnerApp() {
       )}
 
       {view === 'locationServices' && (
-        <LocationServicesScreen onBack={() => setView('map')} />
+        <LocationServicesScreen onBack={() => setView('expedition')} />
       )}
 
       {view === 'scanner' && (
@@ -354,8 +346,8 @@ function InnerApp() {
       {view === 'teachableStudent' && (
         <TeachableStudentScreen
           unlockedInstruments={progress.unlockedInstruments}
-          onBack={() => setView('map')}
-          onSessionComplete={() => { addXP(30, 'teaching'); setView('map'); }}
+          onBack={() => setView('expedition')}
+          onSessionComplete={() => { addXP(30, 'teaching'); setView('expedition'); }}
         />
       )}
 
