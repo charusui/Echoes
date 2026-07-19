@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Sparkles, Timer, Check } from 'lucide-react';
+import { Sparkles, Check } from 'lucide-react';
 import { audioEngine } from '../../services/audioSynth';
 import { type HeroProfile, type HarmonydexEntry } from '../../types/expedition';
 
@@ -73,7 +73,7 @@ const shuffleArray = <T,>(array: T[]): T[] => {
   return arr;
 };
 
-export function SpellCastingOverlay({ hero, instrument, onComplete }: SpellCastingOverlayProps) {
+export function SpellCastingOverlay({ hero, instrument: _instrument, onComplete }: SpellCastingOverlayProps) {
   // Cycle sequentially through Scatter -> Linear -> Circle
   const mode = useMemo<PhaseMode>(() => {
     const modes: PhaseMode[] = ['scatter', 'linear', 'circle'];

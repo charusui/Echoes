@@ -65,7 +65,7 @@ export function RhythmHighwayOverlay({
 }: RhythmHighwayOverlayProps) {
   
   const highwayRef = useRef<HTMLDivElement>(null);
-  const [laneW, setLaneW] = useState(80);
+  const [_laneW, setLaneW] = useState(80);
   const laneWRef = useRef(80);
 
   useEffect(() => {

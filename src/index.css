@@ -122,6 +122,15 @@ body {
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
+@keyframes boss-breathe {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-8px) scale(1.015); }
+}
+
+.animate-boss-breathe {
+  animation: boss-breathe 3.6s ease-in-out infinite;
+}
+
 /* ─── Scrollbar ──────────────────────────────────────────────────────────────── */
 
 ::-webkit-scrollbar       { width: 4px; }

@@ -21,7 +21,9 @@ import seventeen from '../assets/running animation/17.png';
 import eighteen from '../assets/running animation/18.png';
 import nineteen from '../assets/running animation/19.png';
 import twenty from '../assets/running animation/20.png';
-import fullbg from '../assets/running animation/fullbg.png';
+import layer1Topmost from '../assets/titlescreen/layer1_topmost.png';
+import layer2Middle from '../assets/titlescreen/layer2_middle.png';
+import layer3Backmost from '../assets/titlescreen/layer3_backmost.png';
 
 const FRAMES = [
   one, two, three, four, five, six, seven, eight, nine, ten,
@@ -38,6 +40,7 @@ interface TitleScreenProps {
 export function TitleScreen({ onStart }: TitleScreenProps) {
   const [mounted, setMounted] = useState(false);
   const [frameIdx, setFrameIdx] = useState(0);
+  const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -52,20 +55,72 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, []);
 
-  return (
-    <div className="relative w-full h-[100dvh] overflow-hidden flex flex-col bg-[#181926]">
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const { innerWidth, innerHeight } = window;
+    const x = (e.clientX / innerWidth - 0.5) * 2; // -1 to +1
+    const y = (e.clientY / innerHeight - 0.5) * 2; // -1 to +1
+    setMouseOffset({ x, y });
+  };
 
-      {/* ── SCROLLING BACKGROUND ── */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+  const handleMouseLeave = () => {
+    setMouseOffset({ x: 0, y: 0 });
+  };
+
+  return (
+    <div
+      className="relative w-full h-[100dvh] overflow-hidden flex flex-col bg-[#181926]"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
+
+      {/* ── STATIC MULTI-LAYERED BACKGROUND ── */}
+      {/* Backmost Layer (z-[1]): Sky and Clouds — CAROUSEL EFFECT ONLY */}
+      <div className="absolute inset-0 z-[1] pointer-events-none overflow-hidden flex items-center">
         <div
           className="flex h-full w-max"
-          style={{ animation: 'scrollBgLoop 60s linear infinite' }}
+          style={{
+            animation: 'scrollBgLoop 120s linear infinite',
+          }}
         >
           {[0, 1, 2].map(i => (
-            <img key={i} src={fullbg} alt="" aria-hidden
-              className="h-full w-auto max-w-none object-cover" />
+            <img
+              key={i}
+              src={layer3Backmost}
+              alt=""
+              aria-hidden
+              className="h-full w-auto max-w-none object-cover"
+              style={{ imageRendering: 'pixelated' }}
+            />
           ))}
         </div>
+      </div>
+
+      {/* Middle Layer (z-[2]): layer1_topmost.png — COMPLETELY STILL */}
+      <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden flex items-center justify-center">
+        <img
+          src={layer1Topmost}
+          alt=""
+          aria-hidden
+          className="w-full h-full object-cover object-center"
+          style={{
+            imageRendering: 'pixelated',
+          }}
+        />
+      </div>
+
+      {/* Topmost Layer (z-[3]): layer2_middle.png — PARALLAX EFFECT ONLY */}
+      <div className="absolute inset-0 z-[3] pointer-events-none overflow-hidden flex items-center justify-center">
+        <img
+          src={layer2Middle}
+          alt=""
+          aria-hidden
+          className="w-full h-full object-cover object-center"
+          style={{
+            imageRendering: 'pixelated',
+            transform: `scale(1.06) translate3d(${mouseOffset.x * -28}px, ${mouseOffset.y * -14}px, 0)`,
+            transition: 'transform 0.25s cubic-bezier(0.25, 1, 0.5, 1)',
+          }}
+        />
       </div>
 
       {/* ── SUBTLE DOT OVERLAY ── */}
@@ -272,9 +327,9 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
               borderColor: 'transparent transparent transparent #0d0d12',
               flexShrink: 0,
               marginTop: '4px',
-              position: 'relative', zIndex: 2, 
+              position: 'relative', zIndex: 2,
             }} />
-            
+
             <span style={{
               fontFamily: "'Press Start 2P', monospace",
               fontSize: 'clamp(0.75rem, 3vw, 0.9rem)',
@@ -282,7 +337,7 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
               textTransform: 'uppercase',
               whiteSpace: 'nowrap',
               WebkitFontSmoothing: 'none',
-              lineHeight: 1, 
+              lineHeight: 1,
               marginTop: '4px',
               position: 'relative', zIndex: 2,
             }}>

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Volume2, VolumeX, ArrowLeft, Map, BookOpen, Settings, ScrollText, Camera, Flame, Shield, Lock, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { Volume2, VolumeX, ArrowLeft, Map, BookOpen, Settings, Camera, Flame, Shield, Lock, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { useProgress } from '../context/ProgressProvider';
 import mapImg from '../assets/png/visayas_map.png';
 import { audioEngine } from '../services/audioSynth';

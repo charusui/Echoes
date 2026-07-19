@@ -278,14 +278,14 @@ export const EXPEDITION_NODES: Record<string, MapNode> = {
   echo_woods: {
     id: 'echo_woods',
     name: 'Echo Village',
-    type: 'battle',
-    icon: '🎻',
+    type: 'boss',
+    icon: '👹',
     x: 480,
     y: 330,
     unlocked: true,
-    desc: 'A forest village vibrating with erratic string frequencies. A Corrupted Violin stalks this area.',
+    desc: 'The sacred Echo Village, now vibrating with intense boss frequencies. The Anomalous Boss awaits!',
     enemyId: 'corrupted_violin',
-    rewards: '150 XP & String Attunement Chance',
+    rewards: '500 XP & String Attunement Chance',
   },
   harmonic_shrine: {
     id: 'harmonic_shrine',

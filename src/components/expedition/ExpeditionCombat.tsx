@@ -13,6 +13,7 @@ import { RhythmHighwayOverlay } from './RhythmHighwayOverlay';
 import { SpellCastingOverlay } from './SpellCastingOverlay';
 import { ParryQteOverlay } from './ParryQteOverlay';
 import { AttuneCaptureOverlay } from './AttuneCaptureOverlay';
+import { WingSlamCounterMinigame } from './WingSlamCounterMinigame';
 
 interface ExpeditionCombatProps {
   party: Record<string, HeroProfile>;
@@ -42,7 +43,7 @@ export function ExpeditionCombat({
   onUpdateParty,
 }: ExpeditionCombatProps) {
   const baseEnemyInst = EXPEDITION_INSTRUMENTS[enemyId] || EXPEDITION_INSTRUMENTS['corrupted_violin']!;
-  const isBoss = baseEnemyInst.id === 'lord_cacophony';
+  const isBoss = baseEnemyInst.id === 'lord_cacophony' || baseEnemyInst.id === 'corrupted_violin';
 
   const [enemy, setEnemy] = useState<EnemyProfile>(() => ({
     id: baseEnemyInst.id,
@@ -73,6 +74,11 @@ export function ExpeditionCombat({
   const [ghostHp, setGhostHp] = useState(enemy.hp);
   const [hpShaking, setHpShaking] = useState(false);
 
+  const [bossAttackVariation, setBossAttackVariation] = useState<'dual_slam' | 'right_sweep'>('dual_slam');
+  const [bossAttackPhase, setBossAttackPhase] = useState<'idle' | 'rise' | 'down' | 'slam' | 'sweep_prep'>('idle');
+  const [canCounterAttack, setCanCounterAttack] = useState(false);
+  const [parryResolved, setParryResolved] = useState(false);
+
   // ─── UPGRADED: Combo Ghost Trail & Shake Logic ───
   useEffect(() => {
     if (enemy.hp < ghostHp) {
@@ -94,16 +100,35 @@ export function ExpeditionCombat({
   }, [enemy.hp, ghostHp]);
 
   const partyList = useMemo(() => Object.values(party), [party]);
-  const turnQueue: TurnUnit[] = useMemo(() => [
-    { isHero: true, unit: partyList[0]! },
-    { isHero: false, unit: enemy },
-    { isHero: true, unit: partyList[1] || partyList[0]! },
-    { isHero: true, unit: partyList[2] || partyList[0]! },
-  ], [partyList, enemy]);
+  const turnQueue: TurnUnit[] = useMemo(() => {
+    const p0 = partyList[0]!;
+    const p1 = partyList[1] || p0;
+    const p2 = partyList[2] || p0;
+    return [
+      { isHero: true, unit: p0 },
+      { isHero: false, unit: enemy },
+      { isHero: true, unit: p1 },
+      { isHero: false, unit: enemy },
+      { isHero: true, unit: p2 },
+      { isHero: false, unit: enemy },
+    ];
+  }, [partyList, enemy]);
 
   const currentTurnUnit = turnQueue[turnIndex % turnQueue.length] || turnQueue[0]!;
   const isHeroTurn = currentTurnUnit.isHero;
-  const activeHero = isHeroTurn ? currentTurnUnit.unit as HeroProfile : partyList[0]!;
+  const activeHero = useMemo(() => {
+    if (isHeroTurn) {
+      return currentTurnUnit.unit as HeroProfile;
+    } else {
+      // During enemy turn/slam, the target is the active hero whose turn just preceded this enemy attack
+      const prevIdx = (turnIndex - 1 + turnQueue.length) % turnQueue.length;
+      const prevUnit = turnQueue[prevIdx];
+      if (prevUnit && prevUnit.isHero) {
+        return prevUnit.unit as HeroProfile;
+      }
+      return partyList[0]!;
+    }
+  }, [isHeroTurn, currentTurnUnit, turnIndex, turnQueue, partyList]);
 
   const triggerDamagePopup = useCallback((text: string, isEnemy: boolean, color: string, effectType?: 'slash' | 'magic' | 'block') => {
     const id = Date.now() + Math.random();
@@ -131,6 +156,32 @@ export function ExpeditionCombat({
     }
   }, [activeAction, isEndingBattle]);
 
+  // Boss specific attack sequence: dual slam or alternating right sweep
+  useEffect(() => {
+    if (activeAction === 'parry' && isBoss) {
+      setCanCounterAttack(false);
+      setParryResolved(false);
+      if (bossAttackVariation === 'dual_slam') {
+        setBossAttackPhase('rise');
+        const t1 = setTimeout(() => setBossAttackPhase('down'), 450);
+        const t2 = setTimeout(() => setBossAttackPhase('slam'), 600);
+        return () => {
+          clearTimeout(t1);
+          clearTimeout(t2);
+        };
+      } else {
+        setBossAttackPhase('sweep_prep');
+        const t1 = setTimeout(() => setBossAttackPhase('slam'), 550);
+        return () => clearTimeout(t1);
+      }
+    } else if (activeAction !== 'parry') {
+      setBossAttackPhase('idle');
+      setCanCounterAttack(false);
+      setParryResolved(false);
+    }
+  }, [activeAction, isBoss, bossAttackVariation]);
+
+  // Play looping battle background music during combat
   useEffect(() => {
     const bgm = new Audio('/assets/expedition/battle_bg_music.mp3');
     bgm.loop = true;
@@ -183,13 +234,19 @@ export function ExpeditionCombat({
       const nextUnit = turnQueue[nextIdx]!;
       if (!nextUnit.isHero) {
         setTimeout(() => {
-          if (!finishedRef.current && !isEndingBattle) setActiveAction('parry');
+          if (!finishedRef.current && !isEndingBattle) {
+            if (isBoss) {
+              setBossAttackVariation(v => v === 'dual_slam' ? 'right_sweep' : 'dual_slam');
+            }
+            setActiveAction('parry');
+          }
         }, 800);
       }
       return nextIdx;
     });
-  }, [turnQueue, isEndingBattle]);
+  }, [turnQueue, isEndingBattle, isBoss]);
 
+  // Command handlers
   const handleCommandAttack = () => { if (!isHeroTurn || activeHero.ap < 1 || isEndingBattle) return; setActiveAction('rhythm'); };
   const handleCommandSkill = () => { if (!isHeroTurn || activeHero.ap < 2 || isEndingBattle) return; setActiveAction('spell'); };
   
@@ -321,7 +378,17 @@ export function ExpeditionCombat({
   }, [activeHero, dex, enemy, onUpdateParty, checkPostTurnStates, advanceTurn, triggerDamagePopup]);
 
   const handleParryResult = useCallback((parried: boolean) => {
-    setActiveAction('none');
+    setParryResolved(true);
+    if (isBoss) {
+      setBossAttackPhase('slam');
+      if (parried) {
+        setCanCounterAttack(true);
+      } else {
+        setCanCounterAttack(false);
+      }
+    } else {
+      setActiveAction('none');
+    }
     const rawDmg = Math.round(enemy.baseDmg * (enemy.staggered ? 0.5 : 1.0));
     const dmg = parried || parryStanceActive ? Math.round(rawDmg * 0.25) : rawDmg;
 
@@ -349,10 +416,23 @@ export function ExpeditionCombat({
     });
 
     setParryStanceActive(false);
-    setTimeout(() => {
-      if (enemy.hp > 0 && !isEndingBattle) advanceTurn();
-    }, 1200);
-  }, [enemy, parryStanceActive, activeHero, onUpdateParty, partyList, checkPostTurnStates, advanceTurn, triggerDamagePopup, isEndingBattle]);
+    if (isBoss && !parried) {
+      // If player missed the parry against the boss, show slam impact briefly without counter minigame, then advance
+      setTimeout(() => {
+        setActiveAction('none');
+        setBossAttackPhase('idle');
+        setCanCounterAttack(false);
+        setTimeout(() => {
+          if (enemy.hp > 0 && !isEndingBattle) advanceTurn();
+        }, 400);
+      }, 1100);
+    } else if (!isBoss) {
+      setTimeout(() => {
+        if (enemy.hp > 0 && !isEndingBattle) advanceTurn();
+      }, 600);
+    }
+    // When isBoss && parried is true, canCounterAttack === true renders WingSlamCounterMinigame which triggers handleWingSlamCounterComplete
+  }, [enemy, parryStanceActive, activeHero, onUpdateParty, partyList, checkPostTurnStates, advanceTurn, triggerDamagePopup, isEndingBattle, isBoss]);
 
   const finishedRef = useRef(false);
   const hpPct = Math.max(0, Math.min(100, (enemy.hp / enemy.maxHp) * 100));
@@ -360,6 +440,33 @@ export function ExpeditionCombat({
   // ─── UPGRADED: Calculate ghost percentage independently ───
   const ghostPct = Math.max(0, Math.min(100, (ghostHp / enemy.maxHp) * 100));
   const staggerPct = Math.max(0, Math.min(100, (enemy.stagger / enemy.maxStagger) * 100));
+
+  // Complete Wing Slam Counter-Attack Minigame
+  const handleWingSlamCounterComplete = useCallback((totalDmg: number, totalStag: number) => {
+    let updatedEnemyHp = enemy.hp;
+    setEnemy(prev => {
+      updatedEnemyHp = Math.max(0, prev.hp - totalDmg);
+      return {
+        ...prev,
+        hp: updatedEnemyHp,
+        stagger: Math.min(prev.maxStagger, prev.stagger + totalStag),
+        staggered: prev.stagger + totalStag >= prev.maxStagger ? true : prev.staggered,
+      };
+    });
+
+    if (updatedEnemyHp <= 0) {
+      checkPostTurnStates(0, partyList);
+    }
+
+    setActiveAction('none');
+    setBossAttackPhase('idle');
+    setCanCounterAttack(false);
+    setTimeout(() => {
+      if (!isEndingBattle) advanceTurn();
+    }, 400);
+  }, [enemy, checkPostTurnStates, partyList, advanceTurn, isEndingBattle]);
+
+  const isRightSweepAttack = isBoss && bossAttackVariation === 'right_sweep' && (bossAttackPhase === 'sweep_prep' || bossAttackPhase === 'slam');
 
   return (
     <div 
@@ -427,10 +534,109 @@ export function ExpeditionCombat({
         <div className="absolute inset-0 bg-white z-50 pointer-events-none animate-[flashWhite_2s_ease-out_forwards]" />
       )}
 
-      {/* 2D Flat Ground Floor */}
+      {/* ── ECHO VILLAGE & SUMMIT BOSS: 3rd Image (Boss Body) behind the floor (z-10) but on top of background (z-0) — SLOW BREATHING LOOP ── */}
+      {isBoss && (
+        <div className="absolute inset-0 z-[1] pointer-events-none flex items-center justify-center overflow-hidden">
+          <div className="animate-boss-breathe w-full h-full flex items-center justify-center">
+            <img
+              src="/assets/expedition/echo_boss_body.png"
+              alt="Echo Boss"
+              className="w-auto h-[50%] sm:h-[55%] max-w-none object-contain -translate-y-14 sm:-translate-y-20"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ── ECHO VILLAGE & SUMMIT BOSS: 1st & 2nd Images (Boss Wings) behind the floor (z-[2]) OR on top of floor behind bottom UI during slam (z-15) ── */}
+      {/* ── ECHO VILLAGE & SUMMIT BOSS WINGS (BEHIND FLOOR: z-[2]) ── */}
+      {isBoss && (
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden z-[2]">
+          <div className="animate-boss-breathe w-full h-full flex items-center justify-center">
+            {isRightSweepAttack ? (
+              /* Left wing stays behind floor in base form next to boss body */
+              <div className="flex items-center justify-center w-full h-full">
+                <div className="w-1/2 flex justify-end items-center h-full">
+                  <img
+                    src="/assets/expedition/echo_boss_wings_strike_left.png"
+                    alt="Left Wing Base Form"
+                    className="w-auto h-[52%] sm:h-[57%] max-w-none object-contain -translate-y-4 sm:-translate-y-6"
+                  />
+                </div>
+                <div className="w-1/2" />
+              </div>
+            ) : !(bossAttackPhase === 'slam' || (activeAction === 'parry' && enemyFrame >= 4 && !isBoss)) && (
+              /* Left & Right Strike Wings side-by-side behind floor */
+              <div
+                className={`flex items-center justify-center transition-all ${
+                  bossAttackPhase === 'rise'
+                    ? 'duration-500 ease-out scale-120 -translate-y-36 sm:-translate-y-48 animate-pulse drop-shadow-[0_0_35px_rgba(250,204,21,0.9)]'
+                    : bossAttackPhase === 'down'
+                    ? 'duration-150 ease-in scale-95 translate-y-10 sm:translate-y-14'
+                    : 'duration-300 scale-100 -translate-y-4 sm:-translate-y-6'
+                }`}
+              >
+                <img
+                  src="/assets/expedition/echo_boss_wings_strike_left.png"
+                  alt="Left Wing Base Form / Strike Prep"
+                  className="w-auto h-[52%] sm:h-[57%] max-w-none object-contain"
+                />
+                <img
+                  src="/assets/expedition/echo_boss_wings_strike_right.png"
+                  alt="Right Wing Base Form / Strike Prep"
+                  className="w-auto h-[52%] sm:h-[57%] max-w-none object-contain"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── ECHO VILLAGE & SUMMIT BOSS WINGS (ABOVE FLOOR: z-15) ── */}
+      {isBoss && (
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-hidden z-15">
+          <div className="animate-boss-breathe w-full h-full flex items-center justify-center">
+            {isRightSweepAttack ? (
+              /* Right wing only turns into slam version and sweeps across top of floor */
+              <div className="flex items-center justify-center w-full h-full">
+                <div className="w-1/2" />
+                <div className="w-1/2 flex justify-start items-center h-full overflow-visible">
+                  <img
+                    src="/assets/expedition/echo_boss_wings_slam_right.png"
+                    alt="Right Wing Sweep Slam"
+                    className={`w-auto h-[54%] sm:h-[59%] max-w-none object-contain transition-all ${
+                      bossAttackPhase === 'sweep_prep'
+                        ? 'duration-300 scale-130 translate-x-[160px] sm:translate-x-[360px] translate-y-20 sm:translate-y-28 drop-shadow-[0_0_30px_rgba(218,45,70,0.8)]'
+                        : 'duration-450 ease-out scale-140 -translate-x-[320px] sm:-translate-x-[640px] translate-y-20 sm:translate-y-28 drop-shadow-[0_0_50px_rgba(218,45,70,1)]'
+                    }`}
+                  />
+                </div>
+              </div>
+            ) : (bossAttackPhase === 'slam' || (activeAction === 'parry' && enemyFrame >= 4 && !isBoss)) && (
+              /* Left & Right Slam Wings side-by-side above floor (Dual Slam) */
+              <div className="flex items-center justify-center transition-all duration-200 scale-130 translate-y-20 sm:translate-y-28 drop-shadow-[0_0_40px_rgba(218,45,70,1)]">
+                <img
+                  src="/assets/expedition/echo_boss_wings_slam_left.png"
+                  alt="Left Wing Slam on Floor"
+                  className="w-auto h-[54%] sm:h-[59%] max-w-none object-contain"
+                />
+                <img
+                  src="/assets/expedition/echo_boss_wings_slam_right.png"
+                  alt="Right Wing Slam on Floor"
+                  className="w-auto h-[54%] sm:h-[59%] max-w-none object-contain"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 2D Flat Ground Floor stretching edge-to-edge from absolute left/right to absolute bottom (z-10) */}
       <div 
-        className="absolute inset-x-0 bottom-0 top-[48%] sm:top-[54%] bg-repeat-x bg-bottom pointer-events-none z-0 opacity-95 drop-shadow-[0_-8px_16px_rgba(0,0,0,0.95)]"
-        style={{ backgroundImage: `url('/assets/expedition/battle_ground.png')`, backgroundSize: 'auto 100%' }}
+        className="absolute inset-x-0 bottom-0 top-[48%] sm:top-[54%] bg-repeat-x bg-bottom pointer-events-none z-10 opacity-95 drop-shadow-[0_-8px_16px_rgba(0,0,0,0.95)]"
+        style={{
+          backgroundImage: `url('/assets/expedition/battle_ground.png')`,
+          backgroundSize: 'auto 100%',
+        }}
       />
 
       {/* FLOATING VFX & DAMAGE RENDER NODE */}
@@ -585,36 +791,36 @@ export function ExpeditionCombat({
           </button>
         </div>
 
-        {/* Center: Overlays (Mini-games) */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-40">
-          <div className="pointer-events-auto w-full max-w-2xl px-2">
-            {activeAction === 'rhythm' && <RhythmHighwayOverlay mode="attack" preset={enemy.preset} isCapture={enemy.hp <= enemy.maxHp * 0.35 || enemy.staggered} onComplete={(stats) => handleRhythmComplete(stats, enemy.hp <= enemy.maxHp * 0.35 || enemy.staggered)} />}
-            {activeAction === 'spell' && <SpellCastingOverlay hero={activeHero} instrument={dex[activeHero.equippedId] || dex['solaris_strat']!} onComplete={handleSpellComplete} />}
-            {activeAction === 'parry' && <ParryQteOverlay enemyName={enemy.name} onParry={handleParryResult} />}
-            {activeAction === 'attune' && <AttuneCaptureOverlay enemy={enemy} onComplete={handleAttuneComplete} />}
+        {/* Right (Center-Right on Mobile): Enemy Sprite Frame Planted on Ground (Only for regular non-boss monsters) */}
+        {!isBoss ? (
+          <div className="absolute bottom-[20%] sm:bottom-[15%] right-4 sm:right-[15%] flex flex-col items-center gap-1 sm:gap-3 z-0 pointer-events-none">
+            <div 
+              className={`relative origin-bottom flex items-center justify-center ${
+                enemy.hp <= 0 ? 'animate-[bossDeath_2s_ease-in_forwards]' : enemy.staggered ? 'animate-bounce' : 'transition-all duration-300'
+              }`}
+            >
+              <img src={`/assets/expedition/enemy_frame_${enemyFrame}.png`} alt={enemy.name} className="w-40 h-40 sm:w-72 sm:h-72 object-contain drop-shadow-[0px_8px_16px_rgba(0,0,0,0.8)] sm:drop-shadow-[0px_12px_24px_rgba(0,0,0,0.8)] scale-x-[-1]" onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }} />
+              {enemy.hp <= 0 && <div className="absolute inset-0 bg-red-600/50 mix-blend-color-burn rounded-full animate-[ping_0.5s_cubic-bezier(0,0,0.2,1)_infinite]" />}
+              {enemy.staggered && enemy.hp > 0 && <div className="absolute inset-0 bg-[#facc15]/30 rounded-full flex items-center justify-center font-orbitron font-black text-lg sm:text-2xl text-[#0f0c0c] drop-shadow-[2px_2px_0px_#ffffff]">⚡ STAGGERED!</div>}
+            </div>
+            <span className="font-orbitron font-black text-[10px] sm:text-sm uppercase tracking-wider text-[#da2d46] bg-[#0f0c0c] px-3 sm:px-4 py-0.5 sm:py-1 border-[2px] border-[#da2d46] shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[3px_3px_0px_0px_#0f0c0c] -skew-x-6 truncate max-w-[150px] sm:max-w-none text-center">
+              {enemy.name}
+            </span>
           </div>
-        </div>
-
-        {/* Right (Center-Right on Mobile): Enemy Sprite Frame Planted on Ground */}
-        <div className="absolute bottom-[20%] sm:bottom-[15%] right-4 sm:right-[15%] flex flex-col items-center gap-1 sm:gap-3 z-0 pointer-events-none">
-          <div 
-            className={`relative origin-bottom flex items-center justify-center ${
-              enemy.hp <= 0 ? 'animate-[bossDeath_2s_ease-in_forwards]' : enemy.staggered ? 'animate-bounce' : 'transition-all duration-300'
-            }`}
-          >
-            <img src={`/assets/expedition/enemy_frame_${enemyFrame}.png`} alt={enemy.name} className="w-40 h-40 sm:w-72 sm:h-72 object-contain drop-shadow-[0px_8px_16px_rgba(0,0,0,0.8)] sm:drop-shadow-[0px_12px_24px_rgba(0,0,0,0.8)] scale-x-[-1]" onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }} />
-            {enemy.hp <= 0 && <div className="absolute inset-0 bg-red-600/50 mix-blend-color-burn rounded-full animate-[ping_0.5s_cubic-bezier(0,0,0.2,1)_infinite]" />}
-            {enemy.staggered && enemy.hp > 0 && <div className="absolute inset-0 bg-[#facc15]/30 rounded-full flex items-center justify-center font-orbitron font-black text-lg sm:text-2xl text-[#0f0c0c] drop-shadow-[2px_2px_0px_#ffffff]">⚡ STAGGERED!</div>}
-          </div>
-          <span className="font-orbitron font-black text-[10px] sm:text-sm uppercase tracking-wider text-[#da2d46] bg-[#0f0c0c] px-3 sm:px-4 py-0.5 sm:py-1 border-[2px] border-[#da2d46] shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[3px_3px_0px_0px_#0f0c0c] -skew-x-6 truncate max-w-[150px] sm:max-w-none text-center">
-            {enemy.name}
-          </span>
-        </div>
+        ) : (
+          /* For Bosses, the giant central figure + wings IS the boss! Show staggered indicator over center arena */
+          enemy.staggered ? (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-40">
+              <div className="bg-[#facc15]/95 border-[4px] border-[#0f0c0c] px-8 py-3 -skew-x-12 flex items-center justify-center font-orbitron font-black text-3xl sm:text-4xl text-[#0f0c0c] drop-shadow-[4px_4px_0px_#ffffff] animate-bounce">
+                ⚡ BOSS STAGGERED!
+              </div>
+            </div>
+          ) : null
+        )}
       </div>
 
-      {/* Bottom Combat HUD: Responsive Action Command Grid */}
-      <div className="z-30 flex flex-col items-center justify-between gap-3 sm:gap-4 bg-[#1e2238] border-[3px] sm:border-[4px] border-[#0f0c0c] shadow-[0px_-4px_0px_0px_#0f0c0c] p-3 sm:p-4">
-        
+      {/* Bottom Combat HUD: Action Command Panel */}
+      <div className="relative z-40 flex flex-col items-center justify-between gap-3 sm:gap-4 bg-[#1e2238] border-[3px] sm:border-[4px] border-[#0f0c0c] shadow-[0px_-4px_0px_0px_#0f0c0c] p-3 sm:p-4">
         {/* Active Hero Status Badge */}
         <div className="w-full sm:w-auto flex items-center justify-center gap-2 sm:gap-3 px-3 py-1.5 sm:px-4 sm:py-2 bg-[#0f0c0c] text-[#facc15] border-[2px] sm:border-[3px] border-[#facc15] font-orbitron font-black text-[10px] sm:text-sm uppercase tracking-wider -skew-x-6">
           <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#da2d46] fill-current animate-pulse" />
@@ -662,6 +868,45 @@ export function ExpeditionCombat({
               <span className="text-[7px] sm:text-2xs font-bold opacity-80 leading-tight hidden sm:block">Flee Battle</span>
             </div>
           </button>
+        </div>
+      </div>
+
+      {/* ── TOPMOST OVERLAYS CONTAINER (z-[60]): Minigames, QTEs, Spells always on top of floor, boss, and HUD ── */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[60]">
+        <div className="pointer-events-auto w-full max-w-2xl flex items-center justify-center p-4">
+          {activeAction === 'rhythm' && (
+            <RhythmHighwayOverlay 
+              mode="attack"
+              preset={enemy.preset}
+              isCapture={enemy.hp <= enemy.maxHp * 0.35 || enemy.staggered}
+              onComplete={(stats) => handleRhythmComplete(stats, enemy.hp <= enemy.maxHp * 0.35 || enemy.staggered)}
+            />
+          )}
+          {activeAction === 'spell' && (
+            <SpellCastingOverlay 
+              hero={activeHero}
+              instrument={dex[activeHero.equippedId] || dex['solaris_strat']!}
+              onComplete={handleSpellComplete}
+            />
+          )}
+          {activeAction === 'parry' && !parryResolved && !canCounterAttack && (
+            <ParryQteOverlay 
+              enemyName={enemy.name}
+              onParry={handleParryResult}
+            />
+          )}
+          {activeAction === 'parry' && isBoss && bossAttackPhase === 'slam' && canCounterAttack && (
+            <WingSlamCounterMinigame 
+              bossName={enemy.name}
+              onComplete={handleWingSlamCounterComplete}
+            />
+          )}
+          {activeAction === 'attune' && (
+            <AttuneCaptureOverlay 
+              enemy={enemy}
+              onComplete={handleAttuneComplete}
+            />
+          )}
         </div>
       </div>
     </div>

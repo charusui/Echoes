@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { Play, MessageSquare, Compass, ShieldAlert, Camera, Map, Flame, Shield, MapPin, X, ChevronUp } from 'lucide-react';
+import { Play, MessageSquare, Compass, ShieldAlert, Camera, Map, Flame, Shield, X, ChevronUp } from 'lucide-react';
 import { type MapNode, type ExpeditionQuest } from '../../types/expedition';
 import visayasMap from '../../assets/png/visayas_map.png';
 
@@ -23,7 +23,7 @@ export function ExpeditionOverworld({
   onSelectNode,
   onStartBattle,
   onOpenQuests,
-  quests,
+  quests: _quests,
   onOpenScanner,
   onOpenLocationServices,
   onOpenBadges,
