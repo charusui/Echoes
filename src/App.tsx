@@ -31,7 +31,7 @@ import { MASTER_INSTRUMENTS, FALLBACK_PROFILES, KORLONG_INSTRUMENT } from './con
 function InnerApp() {
   const { client } = useGemini();
   const [view, setView] = useState<AppView>('title');
-  
+  const [isCombatScreen, setIsCombatScreen] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   
   // Pipeline tracking
@@ -268,8 +268,8 @@ function InnerApp() {
         }}
       />
 
-      {/* Dev Menu — only show on expedition screen now */}
-      {view === 'expedition' && <DevMenu 
+      {/* Dev Menu — only show on expedition screen overworld, hidden during combat */}
+      {view === 'expedition' && !isCombatScreen && <DevMenu 
         onOpenStudentSession={() => setView('teachableStudent')} 
         onOpenKorlongHunt={() => setView('korlongHunt')}
         onStartGameplay={handleSelectInstrument}
@@ -293,6 +293,7 @@ function InnerApp() {
           onOpenCollection={() => setView('collection')}
           onOpenBadges={() => setView('badges')}
           onOpenRanks={() => setView('ranks')}
+          onCombatStateChange={setIsCombatScreen}
         />
       )}
 

@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ShieldAlert, Crosshair } from 'lucide-react';
 import { audioEngine } from '../../services/audioSynth';
 
 interface ParryQteOverlayProps {
@@ -23,7 +22,7 @@ const STAGGER = 350; // Delay between each circle spawning (ms)
 const PRE_DELAY = 500; // Give the player half a second before the first one appears
 
 export function ParryQteOverlay({
-  enemyName,
+  enemyName: _enemyName,
   onParry,
 }: ParryQteOverlayProps) {
   const [circles, setCircles] = useState<OsuCircle[]>([]);
@@ -138,17 +137,6 @@ export function ParryQteOverlay({
     });
   }, []);
 
-  // ─── KEYBOARD BINDS ───
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (['z', 'x', 'Z', 'X', ' ', 'Enter'].includes(e.key)) {
-        e.preventDefault();
-        triggerHit(); 
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [triggerHit]);
 
   const shakeTransform = screenShake 
     ? `translate(${(Math.random() - 0.5) * 10}px, ${(Math.random() - 0.5) * 10}px)` 
@@ -175,12 +163,6 @@ export function ParryQteOverlay({
           100% { transform: scale(1.5); opacity: 0; }
         }
       `}</style>
-
-      {/* Top Banner Alert - Pinned responsive to top */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 bg-[#0f0c0c]/90 text-[#da2d46] px-3 sm:px-4 py-1.5 sm:py-2 border-[2px] sm:border-[3px] border-[#da2d46] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-base uppercase tracking-widest -skew-x-6 z-10 w-max max-w-[90%] pointer-events-none backdrop-blur-sm">
-        <ShieldAlert className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse shrink-0" />
-        <span className="skew-x-6 truncate">INCOMING COMBO: {enemyName}</span>
-      </div>
 
       {/* Play Area */}
       <div className="absolute inset-0 w-full h-full pointer-events-none">
@@ -248,11 +230,6 @@ export function ParryQteOverlay({
         })}
       </div>
 
-      {/* Bottom Hint */}
-      <div className="absolute bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 flex items-center justify-center gap-2 sm:gap-3 font-orbitron font-black text-slate-200 text-[9px] sm:text-sm tracking-wider bg-[#0f0c0c]/90 px-3 sm:px-4 py-1.5 sm:py-2 border border-white/20 rounded-full w-max max-w-[90%] pointer-events-none backdrop-blur-sm shadow-lg">
-        <Crosshair className="w-3 h-3 sm:w-4 sm:h-4 text-[#38bdf8] shrink-0" />
-        <span className="truncate">TAP CIRCLES OR MASH [Z] / [X]</span>
-      </div>
 
     </div>
   );

@@ -14,7 +14,7 @@ import {
   type ExpeditionQuest
 } from '../types/expedition';
 import { ExpeditionOverworld } from './expedition/ExpeditionOverworld';
-import { ExpeditionCombat } from './expedition/ExpeditionCombat';
+import { ExpeditionCombat, type TurnUpdateInfo } from './expedition/ExpeditionCombat';
 import { HarmonydexModal } from './expedition/HarmonydexModal';
 import { EquipmentModal } from './expedition/EquipmentModal';
 import { QuestsModal } from './expedition/QuestsModal';
@@ -28,6 +28,7 @@ export interface ExpeditionScreenProps {
   onOpenBadges?: () => void;
   onOpenRanks?: () => void;
   isRootMap?: boolean;
+  onCombatStateChange?: (inCombat: boolean) => void;
 }
 
 export function ExpeditionScreen({
@@ -38,6 +39,7 @@ export function ExpeditionScreen({
   onOpenBadges,
   onOpenRanks,
   isRootMap,
+  onCombatStateChange,
 }: ExpeditionScreenProps) {
   // State for party, inventory, nodes, and quests
   const [party, setParty] = useState<Record<string, HeroProfile>>({ ...DEFAULT_HEROES });
@@ -59,6 +61,11 @@ export function ExpeditionScreen({
   } | null>(null);
 
   const [isMuted, setIsMuted] = useState(false);
+  const [turnInfo, setTurnInfo] = useState<TurnUpdateInfo | null>(null);
+
+  useEffect(() => {
+    onCombatStateChange?.(subView === 'combat');
+  }, [subView, onCombatStateChange]);
 
   const handleToggleMute = useCallback(() => {
     const muted = audioEngine.toggleMute();
@@ -171,46 +178,69 @@ export function ExpeditionScreen({
           {/* Active Quest Pill */}
           <div 
             onClick={() => setActiveModal('quests')}
-            className="cursor-pointer flex items-center gap-2 px-3 py-1 bg-[#da2d46] text-white border-[3px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 hover:bg-[#ff3b56] transition-all"
+            className="cursor-pointer flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-0.5 sm:py-1 bg-[#da2d46] text-white border-[2px] sm:border-[3px] border-[#0f0c0c] shadow-[1px_1px_0px_0px_#0f0c0c] sm:shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 hover:bg-[#ff3b56] transition-all max-w-[145px] sm:max-w-xs"
             title="Click to view Quest Journal"
           >
-            <span className="w-2.5 h-2.5 rounded-full bg-[#facc15] animate-pulse border border-[#0f0c0c]" />
-            <span className="font-orbitron font-bold text-2xs sm:text-xs uppercase tracking-wider">
+            <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#facc15] animate-pulse border border-[#0f0c0c] shrink-0" />
+            <span className="font-orbitron font-bold text-[9px] sm:text-xs uppercase tracking-wider truncate">
               QUEST: {activeQuest ? activeQuest.title.split('. ')[1] || activeQuest.title : 'Valley Cleansed!'}
             </span>
           </div>
         </div>
 
-        {/* Right: Navigation Buttons */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Right: Navigation Buttons & Mobile Turn Bar right next to mute sound button */}
+        <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-end">
           <button
             onClick={() => onOpenCollection ? onOpenCollection() : setActiveModal('harmonydex')}
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-[#38bdf8] text-[#0f0c0c] border-[3px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] font-orbitron font-bold text-xs uppercase -skew-x-6 hover:bg-[#5cd0ff] transition-all active:translate-y-0.5 active:shadow-none"
+            className="flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-3 py-1 sm:py-1.5 bg-[#38bdf8] text-[#0f0c0c] border-[2px] sm:border-[3px] border-[#0f0c0c] shadow-[1px_1px_0px_0px_#0f0c0c] sm:shadow-[2px_2px_0px_0px_#0f0c0c] font-orbitron font-bold text-[10px] sm:text-xs uppercase -skew-x-6 hover:bg-[#5cd0ff] transition-all active:translate-y-0.5 active:shadow-none"
             title="Instrument Encyclopedia"
           >
             <BookOpen className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">DEX</span>
-            <span className="px-1.5 py-0.5 bg-[#0f0c0c] text-[#facc15] rounded-none text-[10px] font-black skew-x-6">
+            <span className="hidden sm:inline">DEX</span>
+            <span className="px-1 py-0.5 bg-[#0f0c0c] text-[#facc15] rounded-none text-[9px] sm:text-[10px] font-black skew-x-6">
               {capturedCount}/{totalCount}
             </span>
           </button>
 
           <button
             onClick={() => setActiveModal('equipment')}
-            className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 bg-[#4ade80] text-[#0f0c0c] border-[3px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] font-orbitron font-bold text-xs uppercase -skew-x-6 hover:bg-[#6bee9c] transition-all active:translate-y-0.5 active:shadow-none"
+            className="flex items-center gap-1 px-1.5 sm:px-3 py-1 sm:py-1.5 bg-[#4ade80] text-[#0f0c0c] border-[2px] sm:border-[3px] border-[#0f0c0c] shadow-[1px_1px_0px_0px_#0f0c0c] sm:shadow-[2px_2px_0px_0px_#0f0c0c] font-orbitron font-bold text-[10px] sm:text-xs uppercase -skew-x-6 hover:bg-[#6bee9c] transition-all active:translate-y-0.5 active:shadow-none"
             title="Equip Weapons to Heroes"
           >
             <Settings className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">EQUIP</span>
+            <span className="hidden sm:inline">EQUIP</span>
           </button>
 
           <button
             onClick={handleToggleMute}
-            className="p-1.5 sm:p-2 bg-[#e0e5ed] text-[#0f0c0c] border-[3px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 hover:bg-[#da2d46] hover:text-white transition-all active:translate-y-0.5 active:shadow-none"
+            className="p-1 sm:p-2 bg-[#e0e5ed] text-[#0f0c0c] border-[2px] sm:border-[3px] border-[#0f0c0c] shadow-[1px_1px_0px_0px_#0f0c0c] sm:shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 hover:bg-[#da2d46] hover:text-white transition-all active:translate-y-0.5 active:shadow-none"
             title="Toggle Audio"
           >
-            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            {isMuted ? <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
           </button>
+
+          {subView === 'combat' && turnInfo && (
+            <div className="lg:hidden flex items-center gap-0.5 bg-[#1e2238]/95 border-[2px] border-[#0f0c0c] shadow-[1px_1px_0px_0px_#0f0c0c] px-1.5 py-0.5 -skew-x-2 backdrop-blur-sm scale-[0.82] sm:scale-95 origin-left">
+              <span className="font-orbitron font-black text-[8px] text-[#facc15] uppercase border-r border-slate-600 pr-1">
+                TURN
+              </span>
+              <div className="flex items-center gap-0.5">
+                {turnInfo.queue.map((unit, idx) => {
+                  const isCurrent = idx === turnInfo.index % turnInfo.queue.length;
+                  return (
+                    <div 
+                      key={idx}
+                      className={`px-1 py-0.5 border border-[#0f0c0c] font-orbitron font-bold text-[8px] sm:text-[9px] flex items-center transition-all ${
+                        isCurrent ? 'bg-[#facc15] text-[#0f0c0c] scale-105 shadow-[1px_1px_0px_0px_#0f0c0c]' : unit.isHero ? 'bg-[#2a2d43] text-white' : 'bg-[#da2d46] text-white'
+                      }`}
+                    >
+                      <span>{unit.avatar}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
@@ -238,6 +268,7 @@ export function ExpeditionScreen({
             onCombatResult={handleCombatResult}
             onFlee={() => setSubView('overworld')}
             onUpdateParty={setParty}
+            onTurnUpdate={setTurnInfo}
           />
         )}
       </main>
