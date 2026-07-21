@@ -132,18 +132,18 @@ export function DevMenu({ onOpenStudentSession, onOpenKorlongHunt, onStartGamepl
 
   return (
     <>
-      {/* Floating toggle button - FORCED LEFT */}
+      {/* Pushed down to top-20 so it clears the map header banner */}
       <button
         onClick={() => setOpen(p => !p)}
-        className="fixed top-4 left-4 right-auto z-[200] w-10 h-10 bg-[#0f0c0c] border-[3px] border-[#da2d46] flex items-center justify-center text-[#da2d46] shadow-[3px_3px_0px_0px_#da2d46] hover:bg-[#da2d46] hover:text-[#0f0c0c] transition-all active:translate-y-0.5 active:shadow-none"
+        className="absolute top-20 left-4 z-[200] w-10 h-10 bg-[#0f0c0c] border-[3px] border-[#da2d46] flex items-center justify-center text-[#da2d46] shadow-[3px_3px_0px_0px_#da2d46] hover:bg-[#da2d46] hover:text-[#0f0c0c] transition-all active:translate-y-0.5 active:shadow-none"
         title="Dev Menu"
       >
         {open ? <X size={18} className="stroke-[2.5px]" /> : <Settings size={18} className="stroke-[2.5px]" />}
       </button>
 
-      {/* Panel - FORCED LEFT */}
+      {/* Pushed down to top-32 to align below the new button position */}
       {open && (
-        <div className="fixed top-16 left-4 right-auto z-[199] w-64 bg-[#0f0c0c] border-[4px] border-[#da2d46] shadow-[8px_8px_0px_0px_#da2d46]">
+        <div className="absolute top-32 left-4 z-[199] w-64 bg-[#0f0c0c] border-[4px] border-[#da2d46] shadow-[8px_8px_0px_0px_#da2d46]">
           {/* Panel header */}
           <div className="bg-[#da2d46] px-3 py-2 border-b-[3px] border-[#0f0c0c]">
             <p className="font-orbitron text-[10px] font-black text-[#0f0c0c] tracking-widest uppercase">
@@ -182,16 +182,16 @@ export function DevMenu({ onOpenStudentSession, onOpenKorlongHunt, onStartGamepl
         </div>
       )}
 
-      {/* Toast */}
+      {/* Toast - CHANGED TO ABSOLUTE */}
       {toast && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[300] bg-[#0f0c0c] border-[3px] border-[#da2d46] px-4 py-2 shadow-[4px_4px_0px_0px_#da2d46] -skew-x-6 pointer-events-none">
+        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-[300] bg-[#0f0c0c] border-[3px] border-[#da2d46] px-4 py-2 shadow-[4px_4px_0px_0px_#da2d46] -skew-x-6 pointer-events-none">
           <p className="font-space-mono text-xs font-black text-[#da2d46] skew-x-6 whitespace-nowrap">{toast}</p>
         </div>
       )}
 
-      {/* Community Reviews Modal */}
+      {/* Community Reviews Modal - CHANGED TO ABSOLUTE */}
       {showReviews && (
-        <div className="fixed inset-0 z-[250] bg-[#0f0c0c]/80 flex items-center justify-center p-4">
+        <div className="absolute inset-0 z-[250] bg-[#0f0c0c]/80 flex items-center justify-center p-4">
           <div className="bg-[#2a2d43] border-[4px] border-[#da2d46] w-full max-w-md max-h-[80vh] flex flex-col shadow-[8px_8px_0px_0px_#0f0c0c] -skew-x-2">
             <div className="flex justify-between items-center bg-[#da2d46] p-3 border-b-[4px] border-[#0f0c0c] skew-x-2">
               <h3 className="font-orbitron font-black text-[#0f0c0c] text-sm tracking-widest uppercase">Community Reviews</h3>
@@ -234,9 +234,9 @@ export function DevMenu({ onOpenStudentSession, onOpenKorlongHunt, onStartGamepl
         </div>
       )}
 
-      {/* Gameplay Demo Modal */}
+      {/* Gameplay Demo Modal - CHANGED TO ABSOLUTE */}
       {showGameplayDemoModal && (
-        <div className="fixed inset-0 z-[250] bg-[#0f0c0c]/80 flex items-center justify-center p-4">
+        <div className="absolute inset-0 z-[250] bg-[#0f0c0c]/80 flex items-center justify-center p-4">
           <div className="bg-[#2a2d43] border-[4px] border-[#da2d46] w-full max-w-sm flex flex-col shadow-[8px_8px_0px_0px_#0f0c0c] -skew-x-2">
             <div className="flex justify-between items-center bg-[#da2d46] p-3 border-b-[4px] border-[#0f0c0c] skew-x-2">
               <h3 className="font-orbitron font-black text-[#0f0c0c] text-sm tracking-widest uppercase">Gameplay Demo Select</h3>

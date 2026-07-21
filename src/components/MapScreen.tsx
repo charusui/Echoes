@@ -172,7 +172,7 @@ export function ExpeditionScreen({
 
           <div className="flex items-center gap-2">
             <span className="text-xl sm:text-2xl font-orbitron font-black text-[#facc15] tracking-wider drop-shadow-[2px_2px_0px_#0f0c0c]">
-              🎼 MUSIKULTURA
+              MUSIKULTURA
             </span>
           </div>
 

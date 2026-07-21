@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Play, MessageSquare, Compass, ShieldAlert, Camera, Map, Flame, Shield, X, ChevronUp } from 'lucide-react';
 import { type MapNode, type ExpeditionQuest } from '../../types/expedition';
 import visayasMap from '../../assets/png/visayas_map.png';
+import { DevMenu } from '../DevMenu'; 
 
 interface ExpeditionOverworldProps {
   nodes: Record<string, MapNode>;
@@ -16,6 +17,10 @@ interface ExpeditionOverworldProps {
   onOpenBadges?: () => void;
   onOpenRanks?: () => void;
   onOpenShop?: () => void;
+  
+  onOpenStudentSession?: () => void;
+  onOpenKorlongHunt?: () => void;
+  onStartGameplay?: (instrument: string) => void;
 }
 
 export function ExpeditionOverworld({
@@ -30,28 +35,39 @@ export function ExpeditionOverworld({
   onOpenBadges,
   onOpenRanks,
   onOpenShop,
+  onOpenStudentSession,
+  onOpenKorlongHunt,
+  onStartGameplay
 }: ExpeditionOverworldProps) {
   const [showDialogue, setShowDialogue] = useState(false);
   const [dialogueStep, setDialogueStep] = useState(0);
   const [avatarPos, setAvatarPos] = useState<{ x: number; y: number } | null>(null);
   const [isTraveling, setIsTraveling] = useState(false);
   
-  // New state to control the mobile bottom sheet
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // ─── MOUNT STATE FOR ENTRANCE ANIMATIONS ───
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   const currentNode = nodes[currentNodeId] || nodes['cadence_town']!;
   const LINEAR_NODES = ['cadence_town', 'echo_woods', 'harmonic_shrine', 'silent_peak'];
 
-  // ─── HELPER: ADJUST WATER NODES ONTO LAND ───
+  // ─── HELPER: ADJUST WATER NODES ONTO LANDMARKS ───
   const getDisplayCoords = useCallback((nodeId: string, originalX: number, originalY: number) => {
-    if (nodeId === 'cadence_town') return { x: 300, y: 380 };
-    if (nodeId === 'harmonic_shrine') return { x: 750, y: 430 };
+    if (nodeId === 'cadence_town') return { x: 260, y: 270 };    
+    if (nodeId === 'echo_woods') return { x: 330, y: 550 };      
+    if (nodeId === 'harmonic_shrine') return { x: 630, y: 480 }; 
+    if (nodeId === 'silent_peak') return { x: 780, y: 220 };     
     return { x: originalX, y: originalY };
   }, []);
 
   const handleNodeClick = (targetId: string) => {
     if (isTraveling || targetId === currentNodeId) {
-      setIsSidebarOpen(true); // Just open the menu if they click the current node
+      setIsSidebarOpen(true); 
       return;
     }
 
@@ -60,7 +76,7 @@ export function ExpeditionOverworld({
 
     if (fromIndex !== -1 && toIndex !== -1 && Math.abs(toIndex - fromIndex) > 1) {
       setIsTraveling(true);
-      setIsSidebarOpen(false); // Hide panel so they can watch the travel animation
+      setIsSidebarOpen(false); 
       
       const stepDirection = toIndex > fromIndex ? 1 : -1;
       let stepIndex = fromIndex + stepDirection;
@@ -78,7 +94,7 @@ export function ExpeditionOverworld({
           setIsTraveling(false);
           onSelectNode(targetId);
           setAvatarPos(null);
-          setIsSidebarOpen(true); // Re-open panel when arrived
+          setIsSidebarOpen(true); 
         } else {
           stepIndex += stepDirection;
           const stepNodeId = LINEAR_NODES[stepIndex];
@@ -92,13 +108,13 @@ export function ExpeditionOverworld({
             setIsTraveling(false);
             onSelectNode(targetId);
             setAvatarPos(null);
-            setIsSidebarOpen(true); // Re-open panel when arrived
+            setIsSidebarOpen(true); 
           }
         }
       }, 450);
     } else {
       onSelectNode(targetId);
-      setIsSidebarOpen(true); // Open panel immediately
+      setIsSidebarOpen(true); 
     }
   };
 
@@ -113,7 +129,7 @@ export function ExpeditionOverworld({
       speaker: 'Elder Cadence',
       avatar: '👴',
       text: 'To restore equilibrium, you must engage the anomalies in turn-based acoustic combat and seal their resonance.',
-      choice: 'Understood! We will head to Echo Village.',
+      choice: 'Understood! We will head to Western Visayas.',
     },
     {
       speaker: 'Elder Cadence',
@@ -132,7 +148,6 @@ export function ExpeditionOverworld({
     }
   };
 
-  // ─── HIGH PERFORMANCE MAP PANNING & ZOOMING ───
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const panWrapperRef = useRef<HTMLDivElement>(null);
   const panOffsetRef = useRef({ x: 0, y: 0 }); 
@@ -185,7 +200,6 @@ export function ExpeditionOverworld({
     const newOffset = getBoundedPan(clientX - panStart.x, clientY - panStart.y, mapScale);
     panOffsetRef.current = newOffset;
 
-    // Use requestAnimationFrame for smooth 60fps tracking without layout thrashing
     if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     animationFrameRef.current = requestAnimationFrame(() => {
       if (panWrapperRef.current) {
@@ -250,7 +264,6 @@ export function ExpeditionOverworld({
     });
   };
 
-  // ─── DYNAMIC SCALING CALCULATIONS ───
   const isMobile = dimensions.width < 768;
   const screenScaleAdjustment = isMobile ? 1.4 : 1;
   const dynamicPinScale = (1 / Math.pow(mapScale, 1.3)) * screenScaleAdjustment;
@@ -258,35 +271,50 @@ export function ExpeditionOverworld({
   const path1Width = 10 * dynamicPinScale;
   const path1Dash = `16,10`.split(',').map(n => parseInt(n) * dynamicPinScale).join(',');
 
-  // ─── MEMOIZED SVG NODES ───
   const memoizedNodes = useMemo(() => {
-    return Object.values(nodes).map(node => {
-      const isSelected = node.id === currentNodeId;
-      const isBoss = node.type === 'boss';
-      const isShrine = node.type === 'shrine';
-      
-      const { x: renderX, y: renderY } = getDisplayCoords(node.id, node.x, node.y);
-      const ringColor = isBoss ? '#da2d46' : isShrine ? '#facc15' : '#38bdf8';
+  const regionMeta: Record<string, {
+    region: string;
+    collection: string;
+    collectionBg: string;
+    collectionText: string;
+  }> = {
+    echo_woods:      { region: 'WESTERN VISAYAS', collection: '0 / 6 INSTRUMENTS', collectionBg: '#0d2233', collectionText: '#38bdf8' },
+    harmonic_shrine: { region: 'CENTRAL VISAYAS',  collection: '0 / 5 INSTRUMENTS', collectionBg: '#2a2000', collectionText: '#facc15' },
+    silent_peak:     { region: 'EASTERN VISAYAS',  collection: '✦ LEGENDARY HUNT',  collectionBg: '#2a0810', collectionText: '#da2d46' },
+  };
 
-      const isLongName = node.name.length > 16;
-      const labelFontSize = isLongName ? 10.5 : 12;
-      const labelWidth = Math.max(160, node.name.length * (isLongName ? 8.5 : 10) + 32);
-      const labelX = -labelWidth / 2;
+  return Object.values(nodes).map(node => {
+    const isSelected = node.id === currentNodeId;
+    const isBoss = node.type === 'boss';
+    const isShrine = node.type === 'shrine';
 
-      return (
-        <g 
-          key={node.id} 
+    const { x: renderX, y: renderY } = getDisplayCoords(node.id, node.x, node.y);
+    const ringColor = isBoss ? '#da2d46' : isShrine ? '#facc15' : '#38bdf8';
+
+    const isLongName = node.name.length > 16;
+    const labelFontSize = isLongName ? 10.5 : 12;
+    const labelWidth = Math.max(160, node.name.length * (isLongName ? 8.5 : 10) + 32);
+    const labelX = -labelWidth / 2;
+
+    const meta = regionMeta[node.id];
+    // Sub-rows need to be at least as wide as the name label
+    const subWidth = Math.max(labelWidth, 200);
+    const subX = -subWidth / 2;
+
+    return (
+        <g
+          key={node.id}
           transform={`translate(${renderX}, ${renderY}) scale(${dynamicPinScale})`}
           className="cursor-pointer group pointer-events-auto"
           onClick={() => handleNodeClick(node.id)}
         >
           <g className="transition-transform duration-200 group-hover:scale-110">
             {isSelected && (
-              <circle 
-                r="46" 
-                fill="none" 
-                stroke={ringColor} 
-                strokeWidth="3" 
+              <circle
+                r="46"
+                fill="none"
+                stroke={ringColor}
+                strokeWidth="3"
                 strokeDasharray="6 6"
                 className="animate-spin"
                 style={{ animationDuration: '8s' }}
@@ -294,11 +322,11 @@ export function ExpeditionOverworld({
             )}
 
             <circle r="34" fill="#1e2238" stroke="#0f0c0c" strokeWidth="6" />
-            <circle 
-              r="30" 
-              fill={isSelected ? ringColor : '#2a2d43'} 
-              stroke="#0f0c0c" 
-              strokeWidth="3" 
+            <circle
+              r="30"
+              fill={isSelected ? ringColor : '#2a2d43'}
+              stroke="#0f0c0c"
+              strokeWidth="3"
               className="group-hover:fill-white transition-colors"
             />
 
@@ -306,18 +334,52 @@ export function ExpeditionOverworld({
               {node.icon}
             </text>
 
+            {/* ── Main name label ── */}
             <rect x={labelX} y="42" width={labelWidth} height="28" fill="#0f0c0c" stroke={ringColor} strokeWidth="2" rx="0" />
-            <text 
-              y="60" 
-              textAnchor="middle" 
-              fontSize={labelFontSize} 
-              fontFamily="Orbitron, sans-serif" 
-              fontWeight="900" 
+            <text
+              y="60"
+              textAnchor="middle"
+              fontSize={labelFontSize}
+              fontFamily="Orbitron, sans-serif"
+              fontWeight="900"
               fill="#ffffff"
               className="select-none pointer-events-none tracking-wider"
             >
               {node.name.toUpperCase()}
             </text>
+
+            {/* ── Region tag + collection badge (only for regional nodes) ── */}
+            {meta && (
+              <>
+                {/* Region row — same border colour as the ring so it feels connected */}
+                <rect x={subX} y="74" width={subWidth} height="20" fill="#0f0c0c" stroke={ringColor} strokeWidth="1.5" />
+                <text
+                  y="88"
+                  textAnchor="middle"
+                  fontSize="9"
+                  fontFamily="Orbitron, sans-serif"
+                  fontWeight="700"
+                  fill={ringColor}
+                  className="select-none pointer-events-none tracking-widest"
+                >
+                  {meta.region}
+                </text>
+
+                {/* Collection badge row — tinted background matching the accent colour */}
+                <rect x={subX} y="98" width={subWidth} height="21" fill={meta.collectionBg} stroke="#0f0c0c" strokeWidth="1.5" />
+                <text
+                  y="113"
+                  textAnchor="middle"
+                  fontSize="9.5"
+                  fontFamily="Orbitron, sans-serif"
+                  fontWeight="900"
+                  fill={meta.collectionText}
+                  className="select-none pointer-events-none tracking-widest"
+                >
+                  {meta.collection}
+                </text>
+              </>
+            )}
           </g>
         </g>
       );
@@ -327,7 +389,12 @@ export function ExpeditionOverworld({
   return (
     <div className="flex-1 flex flex-col md:flex-row overflow-hidden w-full h-full relative">
       
-      {/* Mobile Backdrop for Drawer */}
+      <DevMenu 
+        onOpenStudentSession={onOpenStudentSession || (() => {})} 
+        onOpenKorlongHunt={onOpenKorlongHunt || (() => {})} 
+        onStartGameplay={onStartGameplay} 
+      />
+
       {isSidebarOpen && (
         <div 
           className="md:hidden fixed inset-0 bg-[#0f0c0c]/60 z-40 animate-in fade-in duration-300"
@@ -335,14 +402,13 @@ export function ExpeditionOverworld({
         />
       )}
 
-      {/* Left Area: Map Viewpoint */}
       <div className="flex-1 flex flex-col bg-[#151828] border-b md:border-b-0 md:border-r-[4px] border-[#0f0c0c] overflow-hidden relative">
         
-        {/* Top Region Banner */}
-        <div className="bg-[#1e2238] px-3 sm:px-4 py-2 sm:py-2.5 border-b-[4px] border-[#0f0c0c] flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 z-40 relative shrink-0">
+        {/* ─── ANIMATED HEADER ─── */}
+        <div className={`bg-[#1e2238] px-3 sm:px-4 py-2 sm:py-2.5 border-b-[4px] border-[#0f0c0c] flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 z-40 relative shrink-0 transition-all duration-500 ease-out transform ${mounted ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
           <div>
             <h2 className="font-orbitron font-black text-sm sm:text-lg text-white uppercase tracking-wider">
-              🗺️ MAP OF THE SILENT VALLEY
+              MAP OF THE SILENT VALLEY
             </h2>
             <p className="text-[10px] sm:text-xs text-slate-300 font-medium">
               Click nodes to travel, converse with NPCs, or trigger encounters
@@ -355,8 +421,8 @@ export function ExpeditionOverworld({
           </div>
         </div>
 
-        {/* Merged Overworld Map Viewpoint with Pan/Zoom */}
-        <div ref={mapContainerRef} className="flex-1 w-full h-full relative bg-[#2a2d43] overflow-hidden">
+        {/* ─── MAP CONTAINER ─── */}
+        <div ref={mapContainerRef} className={`flex-1 w-full h-full relative bg-[#2a2d43] overflow-hidden transition-opacity duration-700 ease-in-out delay-100 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
           
           <div
             ref={panWrapperRef}
@@ -381,7 +447,6 @@ export function ExpeditionOverworld({
             onTouchEnd={handleTouchEnd}
             onWheel={handleWheel}
           >
-            {/* Background Map Image */}
             <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden will-change-transform">
               <img
                 src={visayasMap}
@@ -401,8 +466,6 @@ export function ExpeditionOverworld({
               <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#38bdf8]/15 rounded-full blur-3xl pointer-events-none" />
             </div>
 
-            {/* SVG Map Data */}
-            {/* Removed the heavy drop-shadow filter from this SVG container to fix mobile rendering lag */}
             <svg 
               className="w-full h-full absolute inset-0 z-10 pointer-events-none" 
               viewBox="0 0 1000 650"
@@ -411,13 +474,13 @@ export function ExpeditionOverworld({
               <defs>
                 <linearGradient id="map-path-grad" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.8" />
-                  <stop offset="100%" stopColor="#da2d46" stopOpacity="0.8" />
+                  <stop offset="100%" stopColor="#da2d46" stopOpacity="0.9" />
                 </linearGradient>
               </defs>
 
-              {/* Connecting Path */}
+              {/* Updated Path for new Node Anchors matching the map artwork */}
               <path 
-                d="M 300,380 C 370,380 390,330 480,330 C 580,330 640,430 750,430 C 820,430 840,280 820,180" 
+                d="M 260,270 C 245,420 295,555 330,550 C 440,520 530,510 630,480 C 700,460 795,340 780,220"
                 fill="none" 
                 stroke="url(#map-path-grad)" 
                 strokeWidth={path1Width} 
@@ -425,10 +488,8 @@ export function ExpeditionOverworld({
                 strokeLinecap="round"
               />
 
-              {/* Render Memoized Nodes to prevent lag on pan */}
               {memoizedNodes}
 
-              {/* Party Token Avatar on Current Node */}
               {(() => {
                 const currentRenderCoords = getDisplayCoords(currentNode.id, currentNode.x, currentNode.y);
                 const displayPos = avatarPos || { x: currentRenderCoords.x, y: currentRenderCoords.y };
@@ -456,8 +517,8 @@ export function ExpeditionOverworld({
             </svg>
           </div>
 
-          {/* ─── FIXED HUD ELEMENTS OVER MAP ─── */}
-          <div className="absolute top-2 right-2 sm:top-3 sm:right-3 z-30 p-1 sm:p-2 flex flex-col items-end gap-1.5 sm:gap-2 pointer-events-none w-full max-w-[190px] sm:max-w-[240px] md:max-w-[260px]">
+          {/* ─── ANIMATED TOP RIGHT HUD ─── */}
+          <div className={`absolute top-2 right-2 sm:top-3 sm:right-3 z-30 p-1 sm:p-2 flex flex-col items-end gap-1.5 sm:gap-2 pointer-events-none w-full max-w-[190px] sm:max-w-[240px] md:max-w-[260px] transition-all duration-500 ease-out delay-200 transform ${mounted ? 'translate-x-0 opacity-100' : 'translate-x-12 opacity-0'}`}>
             <div className="bg-[#e0e5ed] border-[2px] sm:border-[3px] border-[#0f0c0c] p-1.5 sm:p-2 shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-2 pointer-events-auto w-full">
               <div className="flex items-start justify-between gap-2 skew-x-2">
                 <div className="text-left flex-1">
@@ -516,7 +577,8 @@ export function ExpeditionOverworld({
             </div>
           </div>
 
-          <div className="absolute bottom-4 sm:bottom-5 left-1/2 -translate-x-1/2 z-30 w-[90%] max-w-[280px] sm:max-w-sm px-2 sm:px-4 pointer-events-none">
+          {/* ─── ANIMATED SCAN BUTTON ─── */}
+          <div className={`absolute bottom-4 sm:bottom-5 left-1/2 -translate-x-1/2 z-30 w-[90%] max-w-[280px] sm:max-w-sm px-2 sm:px-4 pointer-events-none transition-all duration-500 ease-out delay-300 transform ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'}`}>
             <button
               onClick={onOpenScanner}
               className="w-full flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 md:py-3.5 bg-[#da2d46] border-[3px] sm:border-[4px] md:border-[5px] border-[#0f0c0c] text-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] sm:shadow-[6px_6px_0px_0px_#0f0c0c] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_#0f0c0c] sm:hover:shadow-[8px_8px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all -skew-x-6 pointer-events-auto group"
@@ -528,7 +590,6 @@ export function ExpeditionOverworld({
             </button>
           </div>
 
-          {/* Floating Toggle Button for Mobile Drawer (Redesigned) */}
           <button
             onClick={() => setIsSidebarOpen(true)}
             className={`
@@ -547,17 +608,18 @@ export function ExpeditionOverworld({
         </div>
       </div>
 
-      {/* Right/Bottom Sidebar (Drawer on Mobile): Location Details & Type Weakness Chart */}
+      {/* ─── RIGHT SIDEBAR (ANIMATED ENTRANCE ON DESKTOP) ─── */}
       <aside className={`
         fixed md:relative inset-x-0 bottom-0 md:bottom-auto z-50 md:z-0
         w-full md:w-80 xl:w-96 max-h-[85vh] md:max-h-none
         flex flex-col gap-2.5 bg-[#151828] p-4 md:p-3 border-t-[4px] md:border-t-0 border-[#0f0c0c]
         overflow-y-auto md:overflow-hidden select-none shrink-0 md:shrink
-        transition-transform duration-300 ease-out shadow-[0px_-10px_20px_rgba(0,0,0,0.5)] md:shadow-none
-        ${isSidebarOpen ? 'translate-y-0' : 'translate-y-full md:translate-y-0'}
+        transition-all duration-500 ease-out delay-200 shadow-[0px_-10px_20px_rgba(0,0,0,0.5)] md:shadow-none
+        ${isMobile 
+          ? (isSidebarOpen ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0') 
+          : (mounted ? 'translate-x-0 opacity-100' : 'translate-x-12 opacity-0')}
       `}>
         
-        {/* Drawer Drag Handle (Mobile Only) */}
         <div 
           className="md:hidden w-full flex items-center justify-center pb-3 pt-1 cursor-pointer group" 
           onClick={() => setIsSidebarOpen(false)}
@@ -565,7 +627,6 @@ export function ExpeditionOverworld({
           <div className="w-12 h-1.5 bg-slate-600 rounded-full group-hover:bg-slate-400 transition-colors" />
         </div>
 
-        {/* Close Button (Mobile Only) */}
         <button 
           onClick={() => setIsSidebarOpen(false)}
           className="md:hidden absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
@@ -573,7 +634,6 @@ export function ExpeditionOverworld({
           <X size={20} />
         </button>
 
-        {/* Location Info Card */}
         <div className="bg-[#1e2238] border-[3px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] p-3.5 flex flex-col gap-2 shrink-0 md:flex-1 md:justify-between md:min-h-0 md:overflow-hidden">
           <div className="pr-6 md:pr-0">
             <div className="flex items-center justify-between mb-1">
@@ -607,7 +667,7 @@ export function ExpeditionOverworld({
                   onClick={() => {
                     setDialogueStep(0);
                     setShowDialogue(true);
-                    if (isMobile) setIsSidebarOpen(false); // Hide panel on mobile when dialogue opens
+                    if (isMobile) setIsSidebarOpen(false); 
                   }}
                   className="w-full py-2.5 sm:py-2 xl:py-2.5 bg-[#facc15] text-[#0f0c0c] border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-xs xl:text-sm uppercase -skew-x-6 hover:bg-[#ffdf3d] transition-all flex items-center justify-center gap-1.5 sm:gap-2 active:translate-y-0.5 active:shadow-none"
                 >
@@ -646,7 +706,6 @@ export function ExpeditionOverworld({
           </div>
         </div>
 
-        {/* Type Weakness Circle Chart Card */}
         <div className="bg-[#1e2238] border-[3px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] p-3 flex flex-col gap-2 shrink-0 mb-4 md:mb-0">
           <div className="flex items-center gap-1.5 border-b border-[#0f0c0c] pb-1.5">
             <ShieldAlert className="w-3.5 h-3.5 text-[#facc15]" />
@@ -675,7 +734,6 @@ export function ExpeditionOverworld({
         </div>
       </aside>
 
-      {/* NPC Dialogue Box Modal */}
       {showDialogue && (
         <div className="fixed inset-0 z-[60] bg-[#0f0c0c]/90 flex items-center justify-center p-3 sm:p-4">
           <div className="bg-[#1e2238] border-[4px] sm:border-[5px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] sm:shadow-[8px_8px_0px_0px_#0f0c0c] max-w-xl w-full p-4 sm:p-6 flex flex-col sm:flex-row gap-3 sm:gap-5 items-center sm:items-start -skew-x-2 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">

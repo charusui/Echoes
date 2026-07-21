@@ -23,7 +23,6 @@ import { TeachableStudentScreen } from './components/TeachableStudentScreen';
 import { BadgesScreen } from './components/BadgesScreen';
 import { RanksScreen } from './components/RanksScreen';
 
-import { DevMenu } from './components/DevMenu';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { initializeInstrumentPipeline } from './services/geminiPipeline';
 import { MASTER_INSTRUMENTS, FALLBACK_PROFILES, KORLONG_INSTRUMENT } from './constants';
@@ -267,13 +266,6 @@ function InnerApp() {
           zIndex: 99999 
         }}
       />
-
-      {/* Dev Menu — only show on expedition screen overworld, hidden during combat */}
-      {view === 'expedition' && !isCombatScreen && <DevMenu 
-        onOpenStudentSession={() => setView('teachableStudent')} 
-        onOpenKorlongHunt={() => setView('korlongHunt')}
-        onStartGameplay={handleSelectInstrument}
-      />}
       
       {view === 'title' && (
         <TitleScreen onStart={handleStartTitle} />
