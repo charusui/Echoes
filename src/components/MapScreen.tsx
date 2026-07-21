@@ -19,6 +19,7 @@ import { HarmonydexModal } from './expedition/HarmonydexModal';
 import { EquipmentModal } from './expedition/EquipmentModal';
 import { QuestsModal } from './expedition/QuestsModal';
 import { CombatResultModal } from './expedition/CombatResultModal';
+import { MariaShopModal } from './expedition/MariaShopModal';
 
 export interface ExpeditionScreenProps {
   onBack: () => void;
@@ -53,7 +54,7 @@ export function ExpeditionScreen({
   const [currentNodeId, setCurrentNodeId] = useState<string>('cadence_town');
   
   // Modal states
-  const [activeModal, setActiveModal] = useState<'none' | 'harmonydex' | 'equipment' | 'quests' | 'result'>('none');
+  const [activeModal, setActiveModal] = useState<'none' | 'harmonydex' | 'equipment' | 'quests' | 'result' | 'shop'>('none');
   const [lastBattleResult, setLastBattleResult] = useState<{
     victory: boolean;
     xpGained: number;
@@ -259,6 +260,7 @@ export function ExpeditionScreen({
             onOpenCollection={onOpenCollection}
             onOpenBadges={onOpenBadges}
             onOpenRanks={onOpenRanks}
+            onOpenShop={() => setActiveModal('shop')}
           />
         ) : (
           <ExpeditionCombat 
@@ -286,6 +288,14 @@ export function ExpeditionScreen({
           party={party}
           dex={dex}
           onEquip={handleEquipWeapon}
+          onClose={() => setActiveModal('none')}
+        />
+      )}
+
+      {activeModal === 'shop' && (
+        <MariaShopModal 
+          party={party}
+          onUpdateParty={setParty}
           onClose={() => setActiveModal('none')}
         />
       )}

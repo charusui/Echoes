@@ -272,8 +272,8 @@ export const EXPEDITION_NODES: Record<string, MapNode> = {
     x: 180,
     y: 480,
     unlocked: true,
-    desc: 'A peaceful village where the elder guards the ancient traditions of musical attunement.',
-    rewards: 'Heal Party & Quest Briefing',
+    desc: 'A peaceful village home to Elder Cadence and Maria\'s Fine Goods—the premier shop for tonics, gear, and acoustic upgrades.',
+    rewards: 'Heal Party, Shop Access & Quest Briefing',
   },
   echo_woods: {
     id: 'echo_woods',

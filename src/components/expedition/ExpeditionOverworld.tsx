@@ -15,6 +15,7 @@ interface ExpeditionOverworldProps {
   onOpenCollection?: () => void;
   onOpenBadges?: () => void;
   onOpenRanks?: () => void;
+  onOpenShop?: () => void;
 }
 
 export function ExpeditionOverworld({
@@ -28,6 +29,7 @@ export function ExpeditionOverworld({
   onOpenLocationServices,
   onOpenBadges,
   onOpenRanks,
+  onOpenShop,
 }: ExpeditionOverworldProps) {
   const [showDialogue, setShowDialogue] = useState(false);
   const [dialogueStep, setDialogueStep] = useState(0);
@@ -600,17 +602,30 @@ export function ExpeditionOverworld({
 
           <div className="flex flex-col gap-2 sm:gap-2 pt-1 shrink-0">
             {currentNode.type === 'town' ? (
-              <button
-                onClick={() => {
-                  setDialogueStep(0);
-                  setShowDialogue(true);
-                  if (isMobile) setIsSidebarOpen(false); // Hide panel on mobile when dialogue opens
-                }}
-                className="w-full py-2.5 sm:py-2 xl:py-2.5 bg-[#facc15] text-[#0f0c0c] border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-xs xl:text-sm uppercase -skew-x-6 hover:bg-[#ffdf3d] transition-all flex items-center justify-center gap-1.5 sm:gap-2 active:translate-y-0.5 active:shadow-none"
-              >
-                <MessageSquare className="w-4 h-4 sm:w-3.5 sm:h-3.5 fill-current shrink-0" />
-                <span className="truncate">TALK TO ELDER CADENCE</span>
-              </button>
+              <div className="flex flex-col gap-2 w-full">
+                <button
+                  onClick={() => {
+                    setDialogueStep(0);
+                    setShowDialogue(true);
+                    if (isMobile) setIsSidebarOpen(false); // Hide panel on mobile when dialogue opens
+                  }}
+                  className="w-full py-2.5 sm:py-2 xl:py-2.5 bg-[#facc15] text-[#0f0c0c] border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-xs xl:text-sm uppercase -skew-x-6 hover:bg-[#ffdf3d] transition-all flex items-center justify-center gap-1.5 sm:gap-2 active:translate-y-0.5 active:shadow-none"
+                >
+                  <MessageSquare className="w-4 h-4 sm:w-3.5 sm:h-3.5 fill-current shrink-0" />
+                  <span className="truncate">TALK TO ELDER CADENCE</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (onOpenShop) onOpenShop();
+                    if (isMobile) setIsSidebarOpen(false);
+                  }}
+                  className="w-full py-2.5 sm:py-2 xl:py-2.5 bg-[#f97316] text-white border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-xs xl:text-sm uppercase -skew-x-6 hover:bg-[#fb923c] transition-all flex items-center justify-center gap-1.5 sm:gap-2 active:translate-y-0.5 active:shadow-none animate-pulse"
+                >
+                  <span className="text-sm sm:text-base leading-none">🏪</span>
+                  <span className="truncate font-black tracking-wider">VISIT MARIA'S FINE GOODS</span>
+                </button>
+              </div>
             ) : (
               <button
                 onClick={() => currentNode.enemyId && onStartBattle(currentNode.enemyId)}
