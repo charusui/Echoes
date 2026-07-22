@@ -203,10 +203,10 @@ export function MariaShopModal({ party: _party, onUpdateParty, onClose, onAddXP 
   ] as const;
 
   return (
-    <div className="fixed inset-0 z-50 w-screen h-screen overflow-hidden flex text-white animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-50 w-screen h-screen overflow-hidden flex text-white shop-anim-fade">
       
       {/* ─── LEFT SIDEBAR NAVIGATION ─── */}
-      <aside className="hidden lg:flex flex-col w-[260px] bg-[#151828] border-r-[3px] border-[#0f0c0c] z-20 relative">
+      <aside className="hidden lg:flex flex-col w-[260px] bg-[#151828] border-r-[3px] border-[#0f0c0c] z-20 relative shop-anim-slide-left">
         <div className="p-6 border-b-[3px] border-[#0f0c0c] bg-[#1e2238]">
           <div className="flex items-center gap-3">
             <span className="p-2 bg-[#da2d46] text-white border-[2px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6">
@@ -270,7 +270,7 @@ export function MariaShopModal({ party: _party, onUpdateParty, onClose, onAddXP 
         </div>
 
         {/* Top Header */}
-        <header className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4 relative z-20 border-b-[3px] border-[#0f0c0c] bg-[#1e2238]/90 backdrop-blur-md">
+        <header className="flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4 relative z-20 border-b-[3px] border-[#0f0c0c] bg-[#1e2238]/90 backdrop-blur-md shop-anim-slide-down">
           
           <div className="lg:hidden flex items-center gap-3">
             <span className="p-2 bg-[#da2d46] text-white border-[2px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6">
@@ -319,7 +319,8 @@ export function MariaShopModal({ party: _party, onUpdateParty, onClose, onAddXP 
             {/* ─── DASHBOARD HERO BANNER ─── */}
             <div 
               onClick={handleNextDialogue}
-              className="relative w-full h-[180px] sm:h-[240px] lg:h-[260px] cursor-pointer group mt-2 mb-2" 
+              className="relative w-full h-[180px] sm:h-[240px] lg:h-[260px] cursor-pointer group mt-2 mb-2 shop-anim-pop"
+              style={{ animationDelay: '150ms' }}
             >
               <div className="absolute inset-0 bg-[#1e2238] border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_rgba(0,0,0,0.4)] overflow-hidden">
                 <img 
@@ -360,7 +361,10 @@ export function MariaShopModal({ party: _party, onUpdateParty, onClose, onAddXP 
             </div>
 
             {/* ─── MOBILE CATEGORY FILTERS ─── */}
-            <div className="lg:hidden bg-[#151828] border-[3px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] p-2">
+            <div 
+              className="lg:hidden bg-[#151828] border-[3px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] p-2 shop-anim-pop"
+              style={{ animationDelay: '200ms' }}
+            >
               <div className="flex overflow-x-auto gap-2 pb-0 hide-scrollbar">
                 {categories.map(cat => (
                   <button
@@ -381,7 +385,10 @@ export function MariaShopModal({ party: _party, onUpdateParty, onClose, onAddXP 
 
             {/* ─── ITEM GRID (FULL IMAGE COVER) ─── */}
             <div>
-              <div className="flex items-center justify-between mb-4">
+              <div 
+                className="flex items-center justify-between mb-4 shop-anim-pop"
+                style={{ animationDelay: '250ms' }}
+              >
                 <h2 className="font-orbitron font-black text-base sm:text-lg text-white uppercase tracking-widest flex items-center gap-2 drop-shadow-[2px_2px_0px_#000]">
                   <Sparkles className="text-[#facc15]" />
                   {activeCategory === 'All' ? 'Hot Items' : `${activeCategory} Goods`}
@@ -392,84 +399,90 @@ export function MariaShopModal({ party: _party, onUpdateParty, onClose, onAddXP 
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5 sm:gap-7 pb-12">
-                {filteredItems.map((item) => {
+                {filteredItems.map((item, idx) => {
                   const isOutOfStock = item.stock === 0;
                   const canAfford = shards >= item.price;
 
                   return (
-                    <div
-                      key={item.id}
-                      onClick={() => setPreviewItemId(item.id)}
-                      className={`flex flex-col bg-[#f8fafc] border-[3px] sm:border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] sm:shadow-[8px_8px_0px_0px_#0f0c0c] group transition-all duration-200 relative overflow-hidden cursor-pointer ${
-                        isOutOfStock ? 'opacity-60 grayscale' : 'hover:-translate-y-1.5'
-                      }`}
+                    // The animation wrapper (preserves hover styling on the child card)
+                    <div 
+                      key={`${activeCategory}-${item.id}`} 
+                      className="shop-anim-pop h-full"
+                      style={{ animationDelay: `${300 + idx * 60}ms` }}
                     >
-                      {/* Full-bleed Header Image */}
-                      <div className="h-32 relative flex items-center justify-center border-b-[3px] sm:border-[4px] border-[#0f0c0c] bg-[#151828] overflow-hidden">
-                        
-                        <img 
-                          src={item.icon} 
-                          alt={item.name} 
-                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                        />
-                        
-                        <div className="absolute top-2 left-[-4px] flex gap-2 z-20">
-                          <span className={`text-[10px] font-orbitron font-black px-3 py-1 uppercase tracking-widest border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] ${
-                            item.category === 'Tonic' ? 'bg-[#4ade80] text-[#0f0c0c]' :
-                            item.category === 'Upgrade' ? 'bg-[#a855f7] text-white' :
-                            item.category === 'Gear' ? 'bg-[#38bdf8] text-[#0f0c0c]' :
-                            'bg-[#facc15] text-[#0f0c0c]'
-                          }`}>
-                            {item.category}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="p-4 sm:p-5 flex-1 flex flex-col bg-[#f8fafc]">
-                        <h4 className="font-orbitron font-black text-sm sm:text-base text-[#0f0c0c] leading-tight mb-2 uppercase drop-shadow-[1px_1px_0px_rgba(0,0,0,0.1)]">
-                          {item.name}
-                        </h4>
-                        <p className="text-[10px] sm:text-xs text-slate-700 font-bold leading-relaxed mb-4 line-clamp-2">
-                          {item.description}
-                        </p>
-                        
-                        <div className="mt-auto bg-white p-3 border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] mb-4 relative -skew-x-2">
-                          <div className="absolute -top-3 left-2 bg-[#facc15] px-1.5 border-[2px] border-[#0f0c0c]">
-                            <span className="block font-orbitron font-black text-[9px] text-[#0f0c0c] uppercase">Effect</span>
-                          </div>
-                          <span className="block font-space-mono text-[10px] sm:text-xs text-[#0f0c0c] font-bold leading-tight line-clamp-2 pt-1 skew-x-2">
-                            {item.effectText}
-                          </span>
-                        </div>
-
-                        <div className="pt-3 flex items-center justify-between gap-3">
-                          <div className="flex flex-col">
-                            <span className="font-orbitron font-black text-lg sm:text-xl text-[#da2d46] drop-shadow-[1px_1px_0px_#0f0c0c]">
-                              💎 {item.price}
+                      <div
+                        onClick={() => setPreviewItemId(item.id)}
+                        className={`flex flex-col h-full bg-[#f8fafc] border-[3px] sm:border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] sm:shadow-[8px_8px_0px_0px_#0f0c0c] group transition-all duration-200 relative overflow-hidden cursor-pointer ${
+                          isOutOfStock ? 'opacity-60 grayscale' : 'hover:-translate-y-1.5'
+                        }`}
+                      >
+                        {/* Full-bleed Header Image */}
+                        <div className="h-32 relative flex items-center justify-center border-b-[3px] sm:border-[4px] border-[#0f0c0c] bg-[#151828] overflow-hidden">
+                          
+                          <img 
+                            src={item.icon} 
+                            alt={item.name} 
+                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                          />
+                          
+                          <div className="absolute top-2 left-[-4px] flex gap-2 z-20">
+                            <span className={`text-[10px] font-orbitron font-black px-3 py-1 uppercase tracking-widest border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] ${
+                              item.category === 'Tonic' ? 'bg-[#4ade80] text-[#0f0c0c]' :
+                              item.category === 'Upgrade' ? 'bg-[#a855f7] text-white' :
+                              item.category === 'Gear' ? 'bg-[#38bdf8] text-[#0f0c0c]' :
+                              'bg-[#facc15] text-[#0f0c0c]'
+                            }`}>
+                              {item.category}
                             </span>
-                            {typeof item.stock === 'number' && (
-                              <span className="text-[9px] font-space-mono text-slate-500 uppercase font-black tracking-widest mt-[-2px]">
-                                Stock: {item.stock}
-                              </span>
-                            )}
+                          </div>
+                        </div>
+
+                        <div className="p-4 sm:p-5 flex-1 flex flex-col bg-[#f8fafc]">
+                          <h4 className="font-orbitron font-black text-sm sm:text-base text-[#0f0c0c] leading-tight mb-2 uppercase drop-shadow-[1px_1px_0px_rgba(0,0,0,0.1)]">
+                            {item.name}
+                          </h4>
+                          <p className="text-[10px] sm:text-xs text-slate-700 font-bold leading-relaxed mb-4 line-clamp-2">
+                            {item.description}
+                          </p>
+                          
+                          <div className="mt-auto bg-white p-3 border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] mb-4 relative -skew-x-2">
+                            <div className="absolute -top-3 left-2 bg-[#facc15] px-1.5 border-[2px] border-[#0f0c0c]">
+                              <span className="block font-orbitron font-black text-[9px] text-[#0f0c0c] uppercase">Effect</span>
+                            </div>
+                            <span className="block font-space-mono text-[10px] sm:text-xs text-[#0f0c0c] font-bold leading-tight line-clamp-2 pt-1 skew-x-2">
+                              {item.effectText}
+                            </span>
                           </div>
 
-                          <button
-                            disabled={isOutOfStock || !canAfford}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleBuy(item);
-                            }}
-                            className={`px-4 py-2 font-orbitron font-black text-xs uppercase border-[3px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] transition-all -skew-x-6 active:translate-y-1 active:shadow-none ${
-                              isOutOfStock
-                                ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                                : !canAfford
-                                ? 'bg-[#da2d46] text-white cursor-not-allowed'
-                                : 'bg-[#4ade80] text-[#0f0c0c] hover:bg-[#6bee9c]'
-                            }`}
-                          >
-                            <span className="skew-x-6">{isOutOfStock ? 'SOLD OUT' : 'BUY NOW'}</span>
-                          </button>
+                          <div className="pt-3 flex items-center justify-between gap-3">
+                            <div className="flex flex-col">
+                              <span className="font-orbitron font-black text-lg sm:text-xl text-[#da2d46] drop-shadow-[1px_1px_0px_#0f0c0c]">
+                                💎 {item.price}
+                              </span>
+                              {typeof item.stock === 'number' && (
+                                <span className="text-[9px] font-space-mono text-slate-500 uppercase font-black tracking-widest mt-[-2px]">
+                                  Stock: {item.stock}
+                                </span>
+                              )}
+                            </div>
+
+                            <button
+                              disabled={isOutOfStock || !canAfford}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleBuy(item);
+                              }}
+                              className={`px-4 py-2 font-orbitron font-black text-xs uppercase border-[3px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] transition-all -skew-x-6 active:translate-y-1 active:shadow-none ${
+                                isOutOfStock
+                                  ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                                  : !canAfford
+                                  ? 'bg-[#da2d46] text-white cursor-not-allowed'
+                                  : 'bg-[#4ade80] text-[#0f0c0c] hover:bg-[#6bee9c]'
+                              }`}
+                            >
+                              <span className="skew-x-6">{isOutOfStock ? 'SOLD OUT' : 'BUY NOW'}</span>
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -568,7 +581,40 @@ export function MariaShopModal({ party: _party, onUpdateParty, onClose, onAddXP 
         </div>
       )}
 
+      {/* ─── CUSTOM GAME-FEEL ANIMATIONS ─── */}
       <style>{`
+        @keyframes shopFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes shopSlideLeft {
+          from { transform: translateX(-100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes shopSlideDown {
+          from { transform: translateY(-30px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes shopPopIn {
+          0% { transform: translateY(30px) scale(0.95); opacity: 0; }
+          100% { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        .shop-anim-fade { 
+          animation: shopFadeIn 0.3s ease-out forwards; 
+        }
+        .shop-anim-slide-left { 
+          animation: shopSlideLeft 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; 
+        }
+        .shop-anim-slide-down { 
+          animation: shopSlideDown 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; 
+        }
+        .shop-anim-pop { 
+          /* A cubic-bezier that gives a slight bouncy "pop" effect */
+          animation: shopPopIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; 
+          opacity: 0; 
+        }
+
         .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }

@@ -46,6 +46,12 @@ export function ExpeditionOverworld({
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  // ─── DRAWER DRAG STATE ───
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDraggingDrawer, setIsDraggingDrawer] = useState(false);
+  const dragStartY = useRef(0);
+  const dragDeltaY = useRef(0);
+
   // ─── MOUNT STATE FOR ENTRANCE ANIMATIONS ───
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -264,44 +270,77 @@ export function ExpeditionOverworld({
     });
   };
 
-  const isMobile = dimensions.width < 768;
-  const screenScaleAdjustment = isMobile ? 1.4 : 1;
-  const dynamicPinScale = (1 / Math.pow(mapScale, 1.3)) * screenScaleAdjustment;
-  
-  const path1Width = 10 * dynamicPinScale;
-  const path1Dash = `16,10`.split(',').map(n => parseInt(n) * dynamicPinScale).join(',');
-
-  const memoizedNodes = useMemo(() => {
-  const regionMeta: Record<string, {
-    region: string;
-    collection: string;
-    collectionBg: string;
-    collectionText: string;
-  }> = {
-    echo_woods:      { region: 'WESTERN VISAYAS', collection: '0 / 6 INSTRUMENTS', collectionBg: '#0d2233', collectionText: '#38bdf8' },
-    harmonic_shrine: { region: 'CENTRAL VISAYAS',  collection: '0 / 5 INSTRUMENTS', collectionBg: '#2a2000', collectionText: '#facc15' },
-    silent_peak:     { region: 'EASTERN VISAYAS',  collection: '✦ LEGENDARY HUNT',  collectionBg: '#2a0810', collectionText: '#da2d46' },
+  // ─── DRAWER TOUCH HANDLERS ───
+  const handleDrawerTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    dragStartY.current = clientY;
+    dragDeltaY.current = 0;
+    setIsDraggingDrawer(true);
   };
 
-  return Object.values(nodes).map(node => {
-    const isSelected = node.id === currentNodeId;
-    const isBoss = node.type === 'boss';
-    const isShrine = node.type === 'shrine';
+  const handleDrawerTouchMove = (e: React.TouchEvent | React.MouseEvent) => {
+    if (!isDraggingDrawer) return;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const delta = clientY - dragStartY.current;
+    dragDeltaY.current = delta;
+    
+    if (delta > 0) {
+      setDragOffset(delta);
+    } else {
+      setDragOffset(delta * 0.15); // Slight resistance pulling up
+    }
+  };
 
-    const { x: renderX, y: renderY } = getDisplayCoords(node.id, node.x, node.y);
-    const ringColor = isBoss ? '#da2d46' : isShrine ? '#facc15' : '#38bdf8';
+  const handleDrawerTouchEnd = () => {
+    if (!isDraggingDrawer) return;
+    setIsDraggingDrawer(false);
+    
+    if (dragDeltaY.current > 60) {
+      setIsSidebarOpen(false); // Slid far enough to close
+    } else if (Math.abs(dragDeltaY.current) < 5) {
+      setIsSidebarOpen(false); // Treat as a tap to close
+    }
+    
+    setDragOffset(0);
+    dragDeltaY.current = 0;
+  };
 
-    const isLongName = node.name.length > 16;
-    const labelFontSize = isLongName ? 10.5 : 12;
-    const labelWidth = Math.max(160, node.name.length * (isLongName ? 8.5 : 10) + 32);
-    const labelX = -labelWidth / 2;
+  // ─── REFINED SCALING LOGIC ───
+  const isMobile = dimensions.width < 768;
+  const basePinScale = isMobile ? 0.65 : 0.9; 
+  const dynamicPinScale = basePinScale * (1 / Math.pow(mapScale, 0.75));
+  
+  const path1Width = 12 * dynamicPinScale; 
+  const path1Dash = `20,12`.split(',').map(n => parseInt(n) * dynamicPinScale).join(',');
 
-    const meta = regionMeta[node.id];
-    // Sub-rows need to be at least as wide as the name label
-    const subWidth = Math.max(labelWidth, 200);
-    const subX = -subWidth / 2;
+  const memoizedNodes = useMemo(() => {
+    const regionMeta: Record<string, {
+      region: string;
+      collection: string;
+      collectionBg: string;
+      collectionText: string;
+    }> = {
+      echo_woods:      { region: 'WESTERN VISAYAS', collection: '0 / 6 INSTRUMENTS', collectionBg: '#f8fafc', collectionText: '#38bdf8' },
+      harmonic_shrine: { region: 'CENTRAL VISAYAS',  collection: '0 / 5 INSTRUMENTS', collectionBg: '#f8fafc', collectionText: '#d97706' },
+      silent_peak:     { region: 'EASTERN VISAYAS',  collection: '✦ LEGENDARY HUNT',  collectionBg: '#facc15', collectionText: '#0f0c0c' },
+    };
 
-    return (
+    return Object.values(nodes).map(node => {
+      const isSelected = node.id === currentNodeId;
+      const isBoss = node.type === 'boss';
+      const isShrine = node.type === 'shrine';
+
+      const { x: renderX, y: renderY } = getDisplayCoords(node.id, node.x, node.y);
+      const ringColor = isBoss ? '#da2d46' : isShrine ? '#facc15' : '#38bdf8';
+
+      const isLongName = node.name.length > 14;
+      const mainFontSize = isLongName ? 10 : 12;
+      const boxWidth = Math.max(150, node.name.length * (isLongName ? 7 : 8.5) + 20);
+      const boxX = -boxWidth / 2;
+
+      const meta = regionMeta[node.id];
+
+      return (
         <g
           key={node.id}
           transform={`translate(${renderX}, ${renderY}) scale(${dynamicPinScale})`}
@@ -311,70 +350,69 @@ export function ExpeditionOverworld({
           <g className="transition-transform duration-200 group-hover:scale-110">
             {isSelected && (
               <circle
-                r="46"
+                r="48"
                 fill="none"
                 stroke={ringColor}
-                strokeWidth="3"
-                strokeDasharray="6 6"
-                className="animate-spin"
-                style={{ animationDuration: '8s' }}
+                strokeWidth="4"
+                strokeDasharray="8 8"
+                className="animate-spin drop-shadow-[2px_2px_0px_#0f0c0c]"
+                style={{ animationDuration: '6s' }}
               />
             )}
 
-            <circle r="34" fill="#1e2238" stroke="#0f0c0c" strokeWidth="6" />
+            {/* Comic Node Base - KEPT UNTOUCHED AS REQUESTED */}
+            <circle r="36" fill="#f8fafc" stroke="#0f0c0c" strokeWidth="6" />
             <circle
               r="30"
-              fill={isSelected ? ringColor : '#2a2d43'}
+              fill={isSelected ? ringColor : '#e2e8f0'}
               stroke="#0f0c0c"
-              strokeWidth="3"
-              className="group-hover:fill-white transition-colors"
+              strokeWidth="4"
+              className="transition-colors group-hover:fill-white"
             />
 
-            <text y="8" textAnchor="middle" fontSize="22" className="select-none pointer-events-none">
+            <text y="8" textAnchor="middle" fontSize="22" className="select-none pointer-events-none drop-shadow-[2px_2px_0px_rgba(0,0,0,0.3)]">
               {node.icon}
             </text>
 
-            {/* ── Main name label ── */}
-            <rect x={labelX} y="42" width={labelWidth} height="28" fill="#0f0c0c" stroke={ringColor} strokeWidth="2" rx="0" />
+            {/* ── Main Name Box (Comic Style) ── */}
+            <rect x={boxX} y="44" width={boxWidth} height="24" fill="#f8fafc" stroke="#0f0c0c" strokeWidth="4" />
             <text
               y="60"
               textAnchor="middle"
-              fontSize={labelFontSize}
+              fontSize={mainFontSize}
               fontFamily="Orbitron, sans-serif"
               fontWeight="900"
-              fill="#ffffff"
+              fill="#0f0c0c"
               className="select-none pointer-events-none tracking-wider"
             >
               {node.name.toUpperCase()}
             </text>
 
-            {/* ── Region tag + collection badge (only for regional nodes) ── */}
+            {/* ── Region + Collection Stack ── */}
             {meta && (
               <>
-                {/* Region row — same border colour as the ring so it feels connected */}
-                <rect x={subX} y="74" width={subWidth} height="20" fill="#0f0c0c" stroke={ringColor} strokeWidth="1.5" />
+                <rect x={boxX} y="68" width={boxWidth} height="16" fill={ringColor} stroke="#0f0c0c" strokeWidth="4" />
                 <text
-                  y="88"
+                  y="79"
                   textAnchor="middle"
-                  fontSize="9"
+                  fontSize="8"
                   fontFamily="Orbitron, sans-serif"
-                  fontWeight="700"
-                  fill={ringColor}
+                  fontWeight="900"
+                  fill="#0f0c0c"
                   className="select-none pointer-events-none tracking-widest"
                 >
                   {meta.region}
                 </text>
 
-                {/* Collection badge row — tinted background matching the accent colour */}
-                <rect x={subX} y="98" width={subWidth} height="21" fill={meta.collectionBg} stroke="#0f0c0c" strokeWidth="1.5" />
+                <rect x={boxX} y="84" width={boxWidth} height="18" fill={meta.collectionBg} stroke="#0f0c0c" strokeWidth="4" />
                 <text
-                  y="113"
+                  y="96"
                   textAnchor="middle"
-                  fontSize="9.5"
+                  fontSize="8.5"
                   fontFamily="Orbitron, sans-serif"
                   fontWeight="900"
                   fill={meta.collectionText}
-                  className="select-none pointer-events-none tracking-widest"
+                  className="select-none pointer-events-none tracking-widest drop-shadow-[1px_1px_0px_#0f0c0c]"
                 >
                   {meta.collection}
                 </text>
@@ -387,7 +425,7 @@ export function ExpeditionOverworld({
   }, [nodes, currentNodeId, dynamicPinScale, getDisplayCoords]);
 
   return (
-    <div className="flex-1 flex flex-col md:flex-row overflow-hidden w-full h-full relative">
+    <div className="flex-1 flex flex-col md:flex-row overflow-hidden w-full h-full relative font-orbitron">
       
       <DevMenu 
         onOpenStudentSession={onOpenStudentSession || (() => {})} 
@@ -397,25 +435,31 @@ export function ExpeditionOverworld({
 
       {isSidebarOpen && (
         <div 
-          className="md:hidden fixed inset-0 bg-[#0f0c0c]/60 z-40 animate-in fade-in duration-300"
+          className="md:hidden fixed inset-0 bg-[#0f0c0c]/80 z-40 animate-in fade-in duration-300"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
+      {/* CHANGED FROM bg-white TO bg-[#151828] */}
       <div className="flex-1 flex flex-col bg-[#151828] border-b md:border-b-0 md:border-r-[4px] border-[#0f0c0c] overflow-hidden relative">
         
-        {/* ─── ANIMATED HEADER ─── */}
-        <div className={`bg-[#1e2238] px-3 sm:px-4 py-2 sm:py-2.5 border-b-[4px] border-[#0f0c0c] flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2 z-40 relative shrink-0 transition-all duration-500 ease-out transform ${mounted ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
-          <div>
-            <h2 className="font-orbitron font-black text-sm sm:text-lg text-white uppercase tracking-wider">
+        {/* ─── COMIC STYLE HEADER (DARK) ─── */}
+        {/* CHANGED FROM bg-[#f8fafc] TO bg-[#1e2238] */}
+        <div className={`bg-[#1e2238] px-3 py-2 sm:px-4 sm:py-3 border-b-[4px] border-[#0f0c0c] shadow-[0_4px_0_0_#0f0c0c] flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2 z-40 relative shrink-0 transition-all duration-500 ease-out transform ${mounted ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
+          <div className="absolute inset-0 opacity-[0.2]" style={{ backgroundImage: 'radial-gradient(#0f0c0c 2px, transparent 2px)', backgroundSize: '12px 12px' }} />
+          
+          <div className="relative z-10">
+            {/* CHANGED text-[#0f0c0c] TO text-white */}
+            <h2 className="font-orbitron font-black text-sm sm:text-xl text-white uppercase tracking-wider leading-none">
               MAP OF THE SILENT VALLEY
             </h2>
-            <p className="text-[10px] sm:text-xs text-slate-300 font-medium">
+            {/* CHANGED text-slate-700 TO text-slate-300 */}
+            <p className="text-[9px] sm:text-xs text-slate-300 font-bold mt-1">
               Click nodes to travel, converse with NPCs, or trigger encounters
             </p>
           </div>
-          <div className="flex items-center gap-2 self-start sm:self-auto">
-            <span className="px-2 py-1 bg-[#38bdf8] text-[#0f0c0c] font-orbitron font-bold text-[9px] sm:text-2xs uppercase -skew-x-6 border-[2px] border-[#0f0c0c]">
+          <div className="relative z-10 flex items-center gap-2 self-start sm:self-auto mt-1 sm:mt-0">
+            <span className="px-3 py-1 sm:py-1.5 bg-[#38bdf8] text-[#0f0c0c] font-black text-[9px] sm:text-xs uppercase -skew-x-6 border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c]">
               REGION 1 OF 4
             </span>
           </div>
@@ -453,36 +497,33 @@ export function ExpeditionOverworld({
                 alt="Visayas Map Background"
                 className="w-full h-full object-cover"
                 style={{
-                  opacity: 0.85,
-                  mixBlendMode: 'hard-light',
-                  filter: 'saturate(1.5) contrast(1.2) sepia(0.3) hue-rotate(-10deg)',
+                  opacity: 0.95,
+                  mixBlendMode: 'normal',
                 }}
               />
               <div 
-                className="absolute inset-0 opacity-25"
-                style={{ backgroundImage: 'radial-gradient(#da2d46 2px, transparent 2px)', backgroundSize: '20px 20px' }}
+                className="absolute inset-0 opacity-10"
+                style={{ backgroundImage: 'radial-gradient(#0f0c0c 2.5px, transparent 2.5px)', backgroundSize: '24px 24px' }}
               />
-              <div className="absolute top-0 right-0 w-96 h-96 bg-[#da2d46]/15 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#38bdf8]/15 rounded-full blur-3xl pointer-events-none" />
             </div>
 
             <svg 
-              className="w-full h-full absolute inset-0 z-10 pointer-events-none" 
+              className="w-full h-full absolute inset-0 z-10 pointer-events-none drop-shadow-[4px_4px_0px_rgba(0,0,0,0.5)]" 
               viewBox="0 0 1000 650"
               preserveAspectRatio="xMidYMid slice"
             >
-              <defs>
-                <linearGradient id="map-path-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.8" />
-                  <stop offset="100%" stopColor="#da2d46" stopOpacity="0.9" />
-                </linearGradient>
-              </defs>
-
-              {/* Updated Path for new Node Anchors matching the map artwork */}
               <path 
                 d="M 260,270 C 245,420 295,555 330,550 C 440,520 530,510 630,480 C 700,460 795,340 780,220"
                 fill="none" 
-                stroke="url(#map-path-grad)" 
+                stroke="#0f0c0c" 
+                strokeWidth={path1Width + 4} 
+                strokeLinecap="round"
+                className="opacity-50"
+              />
+              <path 
+                d="M 260,270 C 245,420 295,555 330,550 C 440,520 530,510 630,480 C 700,460 795,340 780,220"
+                fill="none" 
+                stroke="#ffffff" 
                 strokeWidth={path1Width} 
                 strokeDasharray={path1Dash} 
                 strokeLinecap="round"
@@ -493,23 +534,31 @@ export function ExpeditionOverworld({
               {(() => {
                 const currentRenderCoords = getDisplayCoords(currentNode.id, currentNode.x, currentNode.y);
                 const displayPos = avatarPos || { x: currentRenderCoords.x, y: currentRenderCoords.y };
+                
+                // ─── RESPONSIVE AVATAR TOOLTIP FIX ───
+                const labelText = isTraveling ? 'TRAVELING' : 'PARTY HERE';
+                const boxW = Math.max(50, (labelText.length * 5) + 8); 
+
                 return (
                   <g 
-                    transform={`translate(${displayPos.x}, ${displayPos.y - (55 * dynamicPinScale)}) scale(${dynamicPinScale})`}
+                    transform={`translate(${displayPos.x}, ${displayPos.y - (50 * dynamicPinScale)}) scale(${dynamicPinScale})`}
                     className="transition-all duration-450 ease-in-out pointer-events-none"
                   >
-                    <polygon points="0,-36 28,-10 0,16 -28,-10" fill="#facc15" stroke="#0f0c0c" strokeWidth="4" />
-                    <text y="-4" textAnchor="middle" fontSize="20">🧑‍🎤</text>
+                    <path 
+                      d={`M-${boxW},-50 L${boxW},-50 L${boxW},-20 L10,-20 L0,-5 L-10,-20 L-${boxW},-20 Z`} 
+                      fill="#facc15" 
+                      stroke="#0f0c0c" 
+                      strokeWidth="4" 
+                    />
                     <text 
-                      y="-46" 
+                      y="-31" 
                       textAnchor="middle" 
-                      fontSize="11" 
+                      fontSize="12" 
                       fontFamily="Orbitron, sans-serif" 
                       fontWeight="900" 
-                      fill="#facc15"
-                      className="drop-shadow-[1px_1px_0px_#0f0c0c]"
+                      fill="#0f0c0c"
                     >
-                      {isTraveling ? 'TRAVELING...' : 'PARTY HERE'}
+                      {labelText}
                     </text>
                   </g>
                 );
@@ -517,74 +566,78 @@ export function ExpeditionOverworld({
             </svg>
           </div>
 
-          {/* ─── ANIMATED TOP RIGHT HUD ─── */}
-          <div className={`absolute top-2 right-2 sm:top-3 sm:right-3 z-30 p-1 sm:p-2 flex flex-col items-end gap-1.5 sm:gap-2 pointer-events-none w-full max-w-[190px] sm:max-w-[240px] md:max-w-[260px] transition-all duration-500 ease-out delay-200 transform ${mounted ? 'translate-x-0 opacity-100' : 'translate-x-12 opacity-0'}`}>
-            <div className="bg-[#e0e5ed] border-[2px] sm:border-[3px] border-[#0f0c0c] p-1.5 sm:p-2 shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-2 pointer-events-auto w-full">
-              <div className="flex items-start justify-between gap-2 skew-x-2">
+          {/* ─── COMIC TOP RIGHT HUD (DARK) ─── */}
+          <div className={`absolute top-2 right-2 sm:top-3 sm:right-3 z-30 p-1 sm:p-2 flex flex-col items-end gap-2 pointer-events-none w-full max-w-[150px] sm:max-w-[220px] md:max-w-[260px] transition-all duration-500 ease-out delay-200 transform ${mounted ? 'translate-x-0 opacity-100' : 'translate-x-12 opacity-0'}`}>
+            {/* CHANGED bg-white TO bg-[#1e2238] */}
+            <div className="bg-[#1e2238] border-[3px] sm:border-[4px] border-[#0f0c0c] p-2 sm:p-3 shadow-[4px_4px_0px_0px_#0f0c0c] sm:shadow-[6px_6px_0px_0px_#0f0c0c] -skew-x-2 pointer-events-auto w-full relative overflow-hidden">
+              <div className="absolute inset-0 opacity-[0.1]" style={{ backgroundImage: 'radial-gradient(#0f0c0c 2px, transparent 2px)', backgroundSize: '8px 8px' }} />
+              
+              <div className="flex items-start justify-between gap-1.5 sm:gap-2 skew-x-2 relative z-10">
                 <div className="text-left flex-1">
-                  <h1 className="font-orbitron text-xs sm:text-sm md:text-lg font-black uppercase text-[#e0e5ed] leading-none" style={{ textShadow: '2px 2px 0px #0f0c0c, -1px 0px 0px #da2d46' }}>
+                  {/* CHANGED text-[#0f0c0c] TO text-white */}
+                  <h1 className="font-orbitron text-[10px] sm:text-sm md:text-lg font-black uppercase text-white leading-none drop-shadow-[2px_2px_0px_#0f0c0c]">
                     VISAYAS ARC
                   </h1>
-                  <div className="inline-block bg-[#0f0c0c] px-1 sm:px-1.5 py-0.5 mt-1 -skew-x-6">
-                    <p className="font-space-mono text-[6px] sm:text-[7px] md:text-[9px] uppercase font-bold text-[#f0dde0] skew-x-6 tracking-widest leading-tight">
+                  <div className="inline-block bg-[#facc15] border-[2px] border-[#0f0c0c] px-1.5 sm:px-2 py-0.5 mt-1.5 -skew-x-6">
+                    <p className="font-space-mono text-[6px] sm:text-[8px] md:text-[10px] uppercase font-black text-[#0f0c0c] skew-x-6 tracking-widest leading-none">
                       APPRENTICE
                     </p>
                   </div>
                 </div>
                 <div className="flex flex-col items-end">
-                  <div className="flex items-center gap-1 font-orbitron font-black text-[10px] sm:text-xs md:text-sm bg-[#da2d46] border-2 border-[#0f0c0c] px-1 sm:px-1.5 shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 text-[#0f0c0c]">
-                    <Flame size={isMobile ? 10 : 12} className="skew-x-6" />
+                  <div className="flex items-center gap-1 font-orbitron font-black text-[9px] sm:text-xs md:text-sm bg-[#da2d46] border-[2px] sm:border-[3px] border-[#0f0c0c] px-1.5 sm:px-2 shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 text-white">
+                    <Flame size={isMobile ? 10 : 14} fill="currentColor" className="skew-x-6" />
                     <span className="skew-x-6">1</span>
-                  </div>
-                  <div className="flex gap-0.5 mt-1 hidden sm:flex">
-                    <Shield size={8} className="text-[#0f0c0c] fill-[#f0dde0]" />
                   </div>
                 </div>
               </div>
-              <div className="mt-1.5 sm:mt-2 skew-x-2">
-                <div className="flex justify-between mb-0.5 font-space-mono text-[6px] sm:text-[7px] md:text-[8px] font-black text-[#0f0c0c] uppercase">
+              <div className="mt-2 sm:mt-3 skew-x-2 relative z-10">
+                {/* CHANGED text-[#0f0c0c] TO text-white */}
+                <div className="flex justify-between mb-1 font-space-mono text-[6px] sm:text-[8px] md:text-[10px] font-black text-white uppercase drop-shadow-[1px_1px_0px_#0f0c0c]">
                   <span>LVL 1</span>
                   <span>0 / 100 XP</span>
                 </div>
-                <div className="h-1 sm:h-1.5 md:h-2 w-full border-[1px] sm:border-[2px] border-[#0f0c0c] bg-[#2a2d43] relative skew-x-6">
-                  <div className="h-full bg-[#da2d46] w-[15%]" />
+                {/* CHANGED bg-slate-200 TO bg-[#0f0c0c] */}
+                <div className="h-2 sm:h-2.5 md:h-3 w-full border-[2px] sm:border-[3px] border-[#0f0c0c] bg-[#0f0c0c] relative skew-x-6">
+                  <div className="h-full bg-[#38bdf8] border-r-[2px] sm:border-r-[3px] border-[#0f0c0c] w-[15%]" />
                 </div>
               </div>
             </div>
 
-            <div className="flex gap-1 sm:gap-1.5 pointer-events-auto w-full justify-end">
+            <div className="flex gap-1.5 sm:gap-2 pointer-events-auto w-full justify-end mt-1">
+              {/* HUD Buttons CHANGED TO DARK BLUE (bg-[#2a2d43] text-white) */}
               <button
                 onClick={onOpenLocationServices}
-                className="flex-1 py-1 sm:py-1.5 bg-[#f0dde0] border-[2px] border-[#0f0c0c] flex flex-col items-center justify-center gap-0.5 shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 hover:bg-[#da2d46] hover:text-white transition-all group"
+                className="flex-1 py-1.5 sm:py-2 bg-[#2a2d43] border-[3px] border-[#0f0c0c] flex flex-col items-center justify-center gap-1 shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6 hover:bg-[#38bdf8] hover:text-[#0f0c0c] transition-all group active:translate-y-1 active:translate-x-1 active:shadow-none text-white"
               >
-                <Map size={isMobile ? 11 : 13} className="skew-x-6 text-[#0f0c0c] group-hover:text-white" />
-                <span className="font-space-mono uppercase font-black text-[6px] sm:text-[7px] md:text-[8px] skew-x-6 text-[#0f0c0c] group-hover:text-white">Radar</span>
+                <Map size={isMobile ? 12 : 16} className="skew-x-6 text-white group-hover:text-[#0f0c0c]" />
+                <span className="font-space-mono uppercase font-black text-[6px] sm:text-[8px] md:text-[9px] skew-x-6 text-white group-hover:text-[#0f0c0c]">Radar</span>
               </button>
               <button
                 onClick={onOpenBadges}
-                className="flex-1 py-1 sm:py-1.5 bg-[#fbe8eb] border-[2px] border-[#0f0c0c] flex flex-col items-center justify-center gap-0.5 shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 hover:bg-[#da2d46] hover:text-white transition-all group"
+                className="flex-1 py-1.5 sm:py-2 bg-[#2a2d43] border-[3px] border-[#0f0c0c] flex flex-col items-center justify-center gap-1 shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6 hover:bg-[#da2d46] hover:text-white transition-all group active:translate-y-1 active:translate-x-1 active:shadow-none text-white"
               >
-                <ShieldAlert size={isMobile ? 11 : 13} className="skew-x-6 text-[#da2d46] group-hover:text-white" />
-                <span className="font-space-mono uppercase font-black text-[6px] sm:text-[7px] md:text-[8px] skew-x-6 text-[#0f0c0c] group-hover:text-white">Badges</span>
+                <ShieldAlert size={isMobile ? 12 : 16} className="skew-x-6 text-white group-hover:text-white" />
+                <span className="font-space-mono uppercase font-black text-[6px] sm:text-[8px] md:text-[9px] skew-x-6 text-white group-hover:text-white">Badges</span>
               </button>
               <button
                 onClick={onOpenRanks}
-                className="flex-1 py-1 sm:py-1.5 bg-[#fef3c7] border-[2px] border-[#0f0c0c] flex flex-col items-center justify-center gap-0.5 shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 hover:bg-[#da2d46] hover:text-white transition-all group"
+                className="flex-1 py-1.5 sm:py-2 bg-[#2a2d43] border-[3px] border-[#0f0c0c] flex flex-col items-center justify-center gap-1 shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6 hover:bg-[#facc15] hover:text-[#0f0c0c] transition-all group active:translate-y-1 active:translate-x-1 active:shadow-none text-white"
               >
-                <Flame size={isMobile ? 11 : 13} className="skew-x-6 text-[#d97706] group-hover:text-white" />
-                <span className="font-space-mono uppercase font-black text-[6px] sm:text-[7px] md:text-[8px] skew-x-6 text-[#0f0c0c] group-hover:text-white">Ranks</span>
+                <Flame size={isMobile ? 12 : 16} className="skew-x-6 text-white group-hover:text-[#0f0c0c]" />
+                <span className="font-space-mono uppercase font-black text-[6px] sm:text-[8px] md:text-[9px] skew-x-6 text-white group-hover:text-[#0f0c0c]">Ranks</span>
               </button>
             </div>
           </div>
 
           {/* ─── ANIMATED SCAN BUTTON ─── */}
-          <div className={`absolute bottom-4 sm:bottom-5 left-1/2 -translate-x-1/2 z-30 w-[90%] max-w-[280px] sm:max-w-sm px-2 sm:px-4 pointer-events-none transition-all duration-500 ease-out delay-300 transform ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'}`}>
+          <div className={`absolute bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 z-30 w-[85%] max-w-[240px] sm:max-w-[320px] px-2 sm:px-4 pointer-events-none transition-all duration-500 ease-out delay-300 transform ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'}`}>
             <button
               onClick={onOpenScanner}
-              className="w-full flex items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 md:py-3.5 bg-[#da2d46] border-[3px] sm:border-[4px] md:border-[5px] border-[#0f0c0c] text-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] sm:shadow-[6px_6px_0px_0px_#0f0c0c] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_#0f0c0c] sm:hover:shadow-[8px_8px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all -skew-x-6 pointer-events-auto group"
+              className="w-full flex items-center justify-center gap-2 sm:gap-3 py-2 sm:py-3.5 md:py-4 bg-[#da2d46] border-[4px] sm:border-[5px] border-[#0f0c0c] text-white shadow-[6px_6px_0px_0px_#0f0c0c] sm:shadow-[8px_8px_0px_0px_#0f0c0c] hover:bg-[#ff3b56] active:translate-y-[4px] active:translate-x-[4px] active:shadow-none transition-all -skew-x-6 pointer-events-auto group"
             >
-              <Camera className="skew-x-6 font-black w-4 h-4 sm:w-5 sm:h-5" />
-              <span className="font-space-mono font-black text-[11px] sm:text-xs md:text-base tracking-widest uppercase skew-x-6">
+              <Camera className="skew-x-6 font-black w-4 h-4 sm:w-6 sm:h-6 fill-current" />
+              <span className="font-orbitron font-black text-xs sm:text-sm md:text-lg tracking-widest uppercase skew-x-6 drop-shadow-[2px_2px_0px_#0f0c0c]">
                 SCAN INSTRUMENT
               </span>
             </button>
@@ -593,86 +646,107 @@ export function ExpeditionOverworld({
           <button
             onClick={() => setIsSidebarOpen(true)}
             className={`
-              md:hidden absolute right-0 bottom-24 z-30
-              bg-[#facc15] text-[#0f0c0c] py-2 px-3 pl-4 rounded-l-md border-y-[3px] border-l-[3px] border-[#0f0c0c] shadow-[-4px_4px_0px_0px_#0f0c0c]
+              md:hidden absolute right-0 bottom-20 z-30
+              bg-[#facc15] text-[#0f0c0c] py-2 px-2.5 pl-3.5 rounded-l-none border-y-[4px] border-l-[4px] border-[#0f0c0c] shadow-[-6px_6px_0px_0px_#0f0c0c]
               transition-all duration-300 ease-in-out hover:bg-[#ffdf3d] active:translate-y-1 active:shadow-[0px_0px_0px_0px_#0f0c0c]
               flex items-center gap-1.5 cursor-pointer
               ${isSidebarOpen ? 'translate-x-full opacity-0 pointer-events-none' : 'translate-x-0 opacity-100'}
             `}
           >
-            <ChevronUp size={16} className="font-black -rotate-90" />
-            <span className="font-orbitron font-black text-[10px] tracking-widest uppercase">
-              NODE INFO
+            <ChevronUp size={18} className="font-black -rotate-90" />
+            <span className="font-orbitron font-black text-[11px] tracking-widest uppercase">
+              INFO
             </span>
           </button>
         </div>
       </div>
 
-      {/* ─── RIGHT SIDEBAR (ANIMATED ENTRANCE ON DESKTOP) ─── */}
-      <aside className={`
-        fixed md:relative inset-x-0 bottom-0 md:bottom-auto z-50 md:z-0
-        w-full md:w-80 xl:w-96 max-h-[85vh] md:max-h-none
-        flex flex-col gap-2.5 bg-[#151828] p-4 md:p-3 border-t-[4px] md:border-t-0 border-[#0f0c0c]
-        overflow-y-auto md:overflow-hidden select-none shrink-0 md:shrink
-        transition-all duration-500 ease-out delay-200 shadow-[0px_-10px_20px_rgba(0,0,0,0.5)] md:shadow-none
-        ${isMobile 
-          ? (isSidebarOpen ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0') 
-          : (mounted ? 'translate-x-0 opacity-100' : 'translate-x-12 opacity-0')}
-      `}>
+      {/* ─── COMIC RIGHT SIDEBAR (DARK) ─── */}
+      <aside 
+        className={`
+          fixed md:relative inset-x-0 bottom-0 md:bottom-auto z-50 md:z-0
+          w-full md:w-[340px] xl:w-[400px] max-h-[85vh] md:max-h-none
+          flex flex-col gap-3 bg-[#151828] p-4 md:p-5 border-t-[4px] md:border-t-0 md:border-l-[4px] border-[#0f0c0c]
+          overflow-y-auto md:overflow-hidden select-none shrink-0 md:shrink
+          transition-all duration-500 ease-out shadow-[0px_-10px_20px_rgba(0,0,0,0.3)] md:shadow-none
+          ${isMobile 
+            ? (isSidebarOpen ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0') 
+            : (mounted ? 'translate-x-0 opacity-100' : 'translate-x-12 opacity-0')}
+        `}
+        style={{
+          ...(isMobile && isSidebarOpen && {
+            transform: `translate3d(0, ${isDraggingDrawer ? dragOffset : 0}px, 0)`,
+            transition: isDraggingDrawer ? 'none' : 'transform 0.25s ease-out, opacity 0.25s ease-out',
+          })
+        }}
+      >
         
+        <div className="absolute inset-0 opacity-[0.2]" style={{ backgroundImage: 'radial-gradient(#0f0c0c 2px, transparent 2px)', backgroundSize: '12px 12px' }} />
+
+        {/* ─── DRAGGABLE HANDLE ─── */}
         <div 
-          className="md:hidden w-full flex items-center justify-center pb-3 pt-1 cursor-pointer group" 
-          onClick={() => setIsSidebarOpen(false)}
+          className="md:hidden w-full flex items-center justify-center pb-4 pt-1 cursor-grab active:cursor-grabbing group relative z-10 touch-none" 
+          onTouchStart={handleDrawerTouchStart}
+          onTouchMove={handleDrawerTouchMove}
+          onTouchEnd={handleDrawerTouchEnd}
+          onMouseDown={handleDrawerTouchStart}
+          onMouseMove={handleDrawerTouchMove}
+          onMouseUp={handleDrawerTouchEnd}
+          onMouseLeave={handleDrawerTouchEnd}
         >
-          <div className="w-12 h-1.5 bg-slate-600 rounded-full group-hover:bg-slate-400 transition-colors" />
+          <div className="w-14 h-2 bg-[#0f0c0c] rounded-full group-hover:bg-slate-700 transition-colors" />
         </div>
 
         <button 
           onClick={() => setIsSidebarOpen(false)}
-          className="md:hidden absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+          className="md:hidden absolute top-4 right-4 text-white hover:text-[#da2d46] transition-colors z-10"
         >
-          <X size={20} />
+          <X size={28} className="font-black" />
         </button>
 
-        <div className="bg-[#1e2238] border-[3px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] p-3.5 flex flex-col gap-2 shrink-0 md:flex-1 md:justify-between md:min-h-0 md:overflow-hidden">
+        {/* CHANGED bg-white TO bg-[#1e2238] */}
+        <div className="bg-[#1e2238] border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] p-4 flex flex-col gap-3 shrink-0 md:flex-1 md:justify-between md:min-h-0 md:overflow-hidden relative z-10">
           <div className="pr-6 md:pr-0">
-            <div className="flex items-center justify-between mb-1">
-              <span className="px-1.5 sm:px-2 py-0.5 bg-[#38bdf8] text-[#0f0c0c] border-[2px] border-[#0f0c0c] font-orbitron font-black text-[9px] sm:text-2xs uppercase -skew-x-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="px-2 py-1 bg-[#38bdf8] text-[#0f0c0c] border-[3px] border-[#0f0c0c] font-orbitron font-black text-[10px] sm:text-xs uppercase -skew-x-6 shadow-[3px_3px_0px_0px_#0f0c0c]">
                 {currentNode.type.toUpperCase()} NODE
               </span>
-              <span className="text-lg sm:text-xl leading-none hidden md:block">{currentNode.icon}</span>
+              <span className="text-2xl leading-none hidden md:block drop-shadow-[2px_2px_0px_#0f0c0c]">{currentNode.icon}</span>
             </div>
 
-            <h3 className="font-orbitron font-black text-base sm:text-base xl:text-lg text-white tracking-wider leading-tight truncate">
+            {/* CHANGED text-[#0f0c0c] TO text-white */}
+            <h3 className="font-orbitron font-black text-xl sm:text-xl xl:text-2xl text-white tracking-wider leading-tight line-clamp-2 mt-2">
               {currentNode.name}
             </h3>
-            <p className="text-[11px] sm:text-2xs xl:text-xs text-slate-300 mt-1 leading-snug line-clamp-2">
+            {/* CHANGED text-slate-700 TO text-slate-300, border-[#0f0c0c] TO border-[#38bdf8] */}
+            <p className="text-xs sm:text-sm text-slate-300 font-bold mt-2 leading-relaxed line-clamp-3 border-l-[4px] border-[#38bdf8] pl-3">
               {currentNode.desc}
             </p>
           </div>
 
-          <div className="bg-[#0f0c0c] p-2 border-[2px] border-[#0f0c0c] flex flex-col gap-0.5 shrink-0 my-1 md:my-0">
-            <span className="text-[9px] sm:text-3xs xl:text-2xs font-orbitron font-bold uppercase text-[#facc15] tracking-wider">
-              📍 REGIONAL REWARDS / OPPORTUNITY
+            {/* CHANGED bg-[#facc15] TO bg-[#0f0c0c] */}
+          <div className="bg-[#0f0c0c] p-3 border-[4px] border-[#0f0c0c] flex flex-col gap-1 shrink-0 my-2 md:my-0 shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-2">
+            <span className="text-[10px] sm:text-xs font-orbitron font-black uppercase text-[#facc15] tracking-wider skew-x-2">
+              📍 REGIONAL REWARDS
             </span>
-            <span className="text-[11px] sm:text-2xs xl:text-xs text-white font-bold truncate">
+            <span className="text-xs sm:text-sm text-white font-black truncate skew-x-2">
               {currentNode.rewards}
             </span>
           </div>
 
-          <div className="flex flex-col gap-2 sm:gap-2 pt-1 shrink-0">
+          <div className="flex flex-col gap-3 pt-2 shrink-0">
             {currentNode.type === 'town' ? (
-              <div className="flex flex-col gap-2 w-full">
+              <div className="flex flex-col gap-3 w-full">
                 <button
                   onClick={() => {
                     setDialogueStep(0);
                     setShowDialogue(true);
                     if (isMobile) setIsSidebarOpen(false); 
                   }}
-                  className="w-full py-2.5 sm:py-2 xl:py-2.5 bg-[#facc15] text-[#0f0c0c] border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-xs xl:text-sm uppercase -skew-x-6 hover:bg-[#ffdf3d] transition-all flex items-center justify-center gap-1.5 sm:gap-2 active:translate-y-0.5 active:shadow-none"
+                  className="w-full py-3 bg-[#facc15] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#ffdf3d] transition-all flex items-center justify-center gap-2 active:translate-y-[4px] active:translate-x-[4px] active:shadow-none"
                 >
-                  <MessageSquare className="w-4 h-4 sm:w-3.5 sm:h-3.5 fill-current shrink-0" />
-                  <span className="truncate">TALK TO ELDER CADENCE</span>
+                  <MessageSquare className="w-5 h-5 fill-current shrink-0 skew-x-6" />
+                  <span className="truncate skew-x-6">TALK TO ELDER CADENCE</span>
                 </button>
 
                 <button
@@ -680,87 +754,90 @@ export function ExpeditionOverworld({
                     if (onOpenShop) onOpenShop();
                     if (isMobile) setIsSidebarOpen(false);
                   }}
-                  className="w-full py-2.5 sm:py-2 xl:py-2.5 bg-[#f97316] text-white border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-xs xl:text-sm uppercase -skew-x-6 hover:bg-[#fb923c] transition-all flex items-center justify-center gap-1.5 sm:gap-2 active:translate-y-0.5 active:shadow-none animate-pulse"
+                  className="w-full py-3 bg-[#da2d46] text-white border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#ff3b56] transition-all flex items-center justify-center gap-2 active:translate-y-[4px] active:translate-x-[4px] active:shadow-none"
                 >
-                  <span className="text-sm sm:text-base leading-none">🏪</span>
-                  <span className="truncate font-black tracking-wider">VISIT MARIA'S FINE GOODS</span>
+                  <span className="truncate font-black tracking-wider skew-x-6 drop-shadow-[2px_2px_0px_#0f0c0c]">SHOP</span>
                 </button>
               </div>
             ) : (
               <button
                 onClick={() => currentNode.enemyId && onStartBattle(currentNode.enemyId)}
-                className="w-full py-2.5 sm:py-2 xl:py-2.5 bg-[#da2d46] text-white border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-xs xl:text-sm uppercase -skew-x-6 hover:bg-[#ff3b56] transition-all flex items-center justify-center gap-1.5 sm:gap-2 active:translate-y-0.5 active:shadow-none"
+                className="w-full py-3 sm:py-4 bg-[#da2d46] text-white border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] font-orbitron font-black text-sm sm:text-base uppercase -skew-x-6 hover:bg-[#ff3b56] transition-all flex items-center justify-center gap-2 active:translate-y-[4px] active:translate-x-[4px] active:shadow-none"
               >
-                <Play className="w-4 h-4 sm:w-3.5 sm:h-3.5 fill-current shrink-0" />
-                <span className="truncate">ENTER BATTLE ({currentNode.name.split(' ')[0]})</span>
+                <Play className="w-5 h-5 fill-current shrink-0 skew-x-6" />
+                <span className="truncate skew-x-6 drop-shadow-[2px_2px_0px_#0f0c0c]">BATTLE {currentNode.name.split(' ')[0]}</span>
               </button>
             )}
 
             <button
               onClick={onOpenQuests}
-              className="w-full py-2 xl:py-2 bg-[#2a2d43] text-[#38bdf8] border-[2px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] font-orbitron font-bold text-[10px] sm:text-2xs xl:text-xs uppercase -skew-x-6 hover:bg-[#323652] transition-all flex items-center justify-center gap-1.5 active:translate-y-0.5 active:shadow-none"
+              className="w-full py-2.5 bg-[#38bdf8] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#7dd3fc] transition-all flex items-center justify-center gap-2 active:translate-y-[4px] active:translate-x-[4px] active:shadow-none mt-1"
             >
-              <Compass className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">CHECK ACTIVE QUEST JOURNAL</span>
+              <Compass className="w-4 h-4 shrink-0 skew-x-6" />
+              <span className="truncate skew-x-6">OPEN QUEST JOURNAL</span>
             </button>
           </div>
         </div>
 
-        <div className="bg-[#1e2238] border-[3px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] p-3 flex flex-col gap-2 shrink-0 mb-4 md:mb-0">
-          <div className="flex items-center gap-1.5 border-b border-[#0f0c0c] pb-1.5">
-            <ShieldAlert className="w-3.5 h-3.5 text-[#facc15]" />
-            <h4 className="font-orbitron font-black text-[10px] sm:text-2xs uppercase tracking-wider text-[#facc15]">
-              ⚡ TYPE WEAKNESS MATRIX
-            </h4>
+        {/* CHANGED bg-white TO bg-[#1e2238] */}
+        <div className="bg-[#1e2238] border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] p-4 flex flex-col gap-3 shrink-0 mb-4 md:mb-0 relative z-10">
+          <div className="absolute -top-4 left-4 bg-[#facc15] px-3 py-1 border-[3px] border-[#0f0c0c] -skew-x-6 shadow-[3px_3px_0px_0px_#0f0c0c]">
+             <h4 className="font-orbitron font-black text-[10px] sm:text-xs uppercase tracking-wider text-[#0f0c0c] skew-x-6 flex items-center gap-1.5">
+               <ShieldAlert size={14} className="fill-[#0f0c0c] text-[#facc15]"/> WEAKNESS MATRIX
+             </h4>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-1 text-[9px] sm:text-3xs xl:text-2xs font-orbitron font-bold py-0.5">
-            <span className="px-1.5 py-0.5 bg-[#da2d46] text-white border border-[#0f0c0c] -skew-x-6">STRING</span>
-            <span>➔</span>
-            <span className="px-1.5 py-0.5 bg-[#facc15] text-[#0f0c0c] border border-[#0f0c0c] -skew-x-6">PERC</span>
-            <span>➔</span>
-            <span className="px-1.5 py-0.5 bg-[#f97316] text-white border border-[#0f0c0c] -skew-x-6">BRASS</span>
-            <span>➔</span>
-            <span className="px-1.5 py-0.5 bg-[#a855f7] text-white border border-[#0f0c0c] -skew-x-6">SYNTH</span>
-            <span>➔</span>
-            <span className="px-1.5 py-0.5 bg-[#4ade80] text-[#0f0c0c] border border-[#0f0c0c] -skew-x-6">WOOD</span>
-            <span>➔</span>
-            <span className="px-1.5 py-0.5 bg-[#da2d46] text-white border border-[#0f0c0c] -skew-x-6">STRING</span>
+          <div className="flex flex-wrap items-center justify-center gap-1.5 text-[9px] sm:text-xs font-orbitron font-black pt-4 pb-1">
+            <span className="px-2 py-1 bg-[#da2d46] text-white border-[2px] border-[#0f0c0c] -skew-x-6 shadow-[2px_2px_0px_0px_#0f0c0c]">STRING</span>
+            {/* CHANGED text-[#0f0c0c] TO text-white */}
+            <span className="text-white font-black drop-shadow-[1px_1px_0px_#0f0c0c]">➔</span>
+            <span className="px-2 py-1 bg-[#facc15] text-[#0f0c0c] border-[2px] border-[#0f0c0c] -skew-x-6 shadow-[2px_2px_0px_0px_#0f0c0c]">PERC</span>
+            <span className="text-white font-black drop-shadow-[1px_1px_0px_#0f0c0c]">➔</span>
+            <span className="px-2 py-1 bg-[#f97316] text-white border-[2px] border-[#0f0c0c] -skew-x-6 shadow-[2px_2px_0px_0px_#0f0c0c]">BRASS</span>
+            <span className="text-white font-black drop-shadow-[1px_1px_0px_#0f0c0c]">➔</span>
+            <span className="px-2 py-1 bg-[#a855f7] text-white border-[2px] border-[#0f0c0c] -skew-x-6 shadow-[2px_2px_0px_0px_#0f0c0c]">SYNTH</span>
+            <span className="text-white font-black drop-shadow-[1px_1px_0px_#0f0c0c]">➔</span>
+            <span className="px-2 py-1 bg-[#4ade80] text-[#0f0c0c] border-[2px] border-[#0f0c0c] -skew-x-6 shadow-[2px_2px_0px_0px_#0f0c0c]">WOOD</span>
           </div>
 
-          <p className="text-[10px] sm:text-3xs xl:text-2xs text-slate-300 leading-tight bg-[#0f0c0c] p-2 border border-[#0f0c0c]">
-            Super Effective attacks deal <strong className="text-[#4ade80]">2.0x Damage</strong> and double your Stagger bar buildup!
+          {/* CHANGED bg-slate-100 TO bg-[#0f0c0c], text-[#0f0c0c] TO text-slate-300 */}
+          <p className="text-[10px] sm:text-xs text-slate-300 font-bold leading-tight bg-[#0f0c0c] p-2.5 border-[2px] border-[#0f0c0c]">
+            Super Effective attacks deal <strong className="text-[#da2d46] font-black">2.0x Damage</strong> and double Stagger buildup!
           </p>
         </div>
       </aside>
 
+      {/* ─── COMIC DIALOGUE MODAL (DARK) ─── */}
       {showDialogue && (
-        <div className="fixed inset-0 z-[60] bg-[#0f0c0c]/90 flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-[#1e2238] border-[4px] sm:border-[5px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] sm:shadow-[8px_8px_0px_0px_#0f0c0c] max-w-xl w-full p-4 sm:p-6 flex flex-col sm:flex-row gap-3 sm:gap-5 items-center sm:items-start -skew-x-2 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
-            <div className="text-4xl sm:text-5xl bg-[#0f0c0c] p-3 sm:p-4 border-[3px] border-[#facc15] shadow-[4px_4px_0px_0px_#facc15] flex items-center justify-center shrink-0">
+        <div className="fixed inset-0 z-[60] bg-[#0f0c0c]/80 backdrop-blur-sm flex items-center justify-center p-4">
+          {/* CHANGED bg-white TO bg-[#1e2238] */}
+          <div className="bg-[#1e2238] border-[5px] border-[#0f0c0c] shadow-[12px_12px_0px_0px_#0f0c0c] max-w-2xl w-full p-6 sm:p-8 flex flex-col sm:flex-row gap-5 items-center sm:items-start -skew-x-2 animate-in fade-in zoom-in-95 duration-200">
+            {/* CHANGED bg-[#f8fafc] TO bg-[#0f0c0c] */}
+            <div className="text-5xl sm:text-6xl bg-[#0f0c0c] p-4 sm:p-5 border-[4px] border-[#facc15] shadow-[6px_6px_0px_0px_#facc15] flex items-center justify-center shrink-0">
               {dialogues[dialogueStep]?.avatar}
             </div>
 
-            <div className="flex-1 flex flex-col gap-2 sm:gap-3 text-center sm:text-left w-full">
-              <div className="flex flex-col sm:flex-row items-center justify-between border-b-[2px] border-[#0f0c0c] pb-2 gap-1 sm:gap-0">
-                <span className="font-orbitron font-black text-base sm:text-lg text-[#facc15] tracking-wider">
+            <div className="flex-1 flex flex-col gap-3 sm:gap-4 text-center sm:text-left w-full skew-x-2">
+              <div className="flex flex-col sm:flex-row items-center justify-between border-b-[4px] border-[#0f0c0c] pb-3 gap-2 sm:gap-0">
+                <span className="font-orbitron font-black text-lg sm:text-xl text-[#0f0c0c] bg-[#facc15] px-3 py-1 border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] -skew-x-3">
                   {dialogues[dialogueStep]?.speaker}
                 </span>
-                <span className="text-[10px] sm:text-2xs font-orbitron text-slate-400 font-bold">
+                <span className="text-[10px] sm:text-xs font-orbitron text-slate-400 font-black">
                   STEP {dialogueStep + 1}/{dialogues.length}
                 </span>
               </div>
 
-              <p className="text-sm sm:text-base text-white font-medium leading-relaxed my-2 sm:my-0">
+              {/* CHANGED text-[#0f0c0c] TO text-white */}
+              <p className="text-base sm:text-xl text-white font-black leading-relaxed my-2">
                 "{dialogues[dialogueStep]?.text}"
               </p>
 
-              <div className="pt-2 sm:pt-3">
+              <div className="pt-2 sm:pt-4">
                 <button
                   onClick={handleNextDialogue}
-                  className="w-full py-2 sm:py-2.5 bg-[#4ade80] text-[#0f0c0c] border-[3px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-[11px] sm:text-sm uppercase -skew-x-6 hover:bg-[#6bee9c] transition-all active:translate-y-0.5 active:shadow-none break-words px-2"
+                  className="w-full py-3 sm:py-4 bg-[#4ade80] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] font-orbitron font-black text-sm sm:text-base uppercase -skew-x-3 hover:bg-[#6bee9c] transition-all active:translate-y-[4px] active:translate-x-[4px] active:shadow-none"
                 >
-                  ▶ {dialogues[dialogueStep]?.choice}
+                  <span className="skew-x-3 drop-shadow-[1px_1px_0px_rgba(0,0,0,0.2)]">▶ {dialogues[dialogueStep]?.choice}</span>
                 </button>
               </div>
             </div>
