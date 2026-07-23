@@ -36,9 +36,9 @@ function getPRNG(seed: string) {
 export function generateFixedChart(mapping: InputMapping, difficulty: Difficulty, duration: number, version: 'v1' | 'v2', totalLanesOverride?: number): Note[] {
   const notes: Note[] = [];
   let bps = 1; // Default
-  if (difficulty === 'apprentice') bps = 1; // 1 note per sec
-  else if (difficulty === 'musician') bps = 1.66; // 100 BPM
-  else if (difficulty === 'virtuoso') bps = 2.5; // 150 BPM
+  if (difficulty === 'apprentice') bps = 2; // 120 BPM
+  else if (difficulty === 'musician') bps = 2.333; // 140 BPM
+  else if (difficulty === 'virtuoso') bps = 4; // 240 BPM
   
   const totalBeats = Math.floor(duration * bps);
   let idCounter = 0;
@@ -90,7 +90,7 @@ export function generateFixedChart(mapping: InputMapping, difficulty: Difficulty
 
 export function generateProceduralChart(mapping: InputMapping, duration: number, version: 'v1' | 'v2', totalLanesOverride?: number): Note[] {
   const notes: Note[] = [];
-  const bps = 2.5; // 150 BPM for Mastery
+  const bps = 4.0; // 240 BPM for Mastery
   const totalBeats = Math.floor(duration * bps);
   let idCounter = 0;
 

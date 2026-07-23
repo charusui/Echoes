@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { Play, MessageSquare, Compass, ShieldAlert, Camera, Map, Flame, Shield, X, ChevronUp } from 'lucide-react';
+import { Play, MessageSquare, Compass, ShieldAlert, Camera, Map, Flame, X, ChevronUp } from 'lucide-react';
 import { type MapNode, type ExpeditionQuest } from '../../types/expedition';
 import visayasMap from '../../assets/png/visayas_map.png';
 import { DevMenu } from '../DevMenu'; 
@@ -8,7 +8,7 @@ interface ExpeditionOverworldProps {
   nodes: Record<string, MapNode>;
   currentNodeId: string;
   onSelectNode: (nodeId: string) => void;
-  onStartBattle: (enemyId: string) => void;
+  onStartBattle: (enemyId: string, enemyGauntlet?: string[]) => void;
   onOpenQuests: () => void;
   quests: Record<string, ExpeditionQuest>;
   onOpenScanner?: () => void;
@@ -60,14 +60,14 @@ export function ExpeditionOverworld({
   }, []);
 
   const currentNode = nodes[currentNodeId] || nodes['cadence_town']!;
-  const LINEAR_NODES = ['cadence_town', 'echo_woods', 'harmonic_shrine', 'silent_peak'];
+  const LINEAR_NODES = ['cadence_town', 'crossroads', 'echo_woods', 'whispering_path', 'harmonic_shrine', 'silent_peak'];
 
   // ─── HELPER: ADJUST WATER NODES ONTO LANDMARKS ───
   const getDisplayCoords = useCallback((nodeId: string, originalX: number, originalY: number) => {
-    if (nodeId === 'cadence_town') return { x: 260, y: 270 };    
-    if (nodeId === 'echo_woods') return { x: 330, y: 550 };      
-    if (nodeId === 'harmonic_shrine') return { x: 630, y: 480 }; 
-    if (nodeId === 'silent_peak') return { x: 780, y: 220 };     
+    if (nodeId === 'cadence_town') return { x: 300, y: 380 };
+    if (nodeId === 'crossroads') return { x: 382, y: 355 };
+    if (nodeId === 'whispering_path') return { x: 611, y: 380 };
+    if (nodeId === 'harmonic_shrine') return { x: 750, y: 430 };
     return { x: originalX, y: originalY };
   }, []);
 
@@ -124,26 +124,62 @@ export function ExpeditionOverworld({
     }
   };
 
-  const dialogues = useMemo(() => [
-    {
-      speaker: 'Elder Cadence',
-      avatar: '👴',
-      text: 'Welcome to the Silent Valley, brave harmonist. The dissonance anomaly has twisted the local instruments.',
-      choice: 'We are ready to restore harmony, Elder.',
-    },
-    {
-      speaker: 'Elder Cadence',
-      avatar: '👴',
-      text: 'To restore equilibrium, you must engage the anomalies in turn-based acoustic combat and seal their resonance.',
-      choice: 'Understood! We will head to Western Visayas.',
-    },
-    {
-      speaker: 'Elder Cadence',
-      avatar: '👴',
-      text: 'Beware Lord Cacophony at The Wild Peak Summit! His brass shockwaves can shatter an unprepared party in seconds.',
-      choice: 'To battle!',
-    },
-  ], []);
+  const dialogues = useMemo(() => {
+    if (currentNodeId === 'crossroads') {
+      return [
+        {
+          speaker: 'Rescued Traveler',
+          avatar: '🧑',
+          text: 'Thank you for saving me! Those bandits were fierce.',
+          choice: 'Are you hurt?',
+        },
+        {
+          speaker: 'Rescued Traveler',
+          avatar: '🧑',
+          text: 'I am fine... but be careful on your way to Echo Village. There is a Wakwak boss wreaking havoc there!',
+          choice: 'A Wakwak? We will be ready.',
+        }
+      ];
+    }
+    
+    if (currentNodeId === 'whispering_path') {
+      return [
+        {
+          speaker: 'Wandering Merchant',
+          avatar: '🧕',
+          text: 'You head toward the Harmonic Shrine? I would reconsider.',
+          choice: 'Why? What is there?',
+        },
+        {
+          speaker: 'Wandering Merchant',
+          avatar: '🧕',
+          text: 'Rumors say the Shrine is guarded by a massive brass beast that hypnotizes travelers with deep, resonant shockwaves.',
+          choice: 'Hypnosis? Thanks for the warning.',
+        }
+      ];
+    }
+    
+    return [
+      {
+        speaker: 'Elder Cadence',
+        avatar: '👴',
+        text: 'Welcome to the Silent Valley, brave harmonist. The dissonance anomaly has twisted the local instruments.',
+        choice: 'We are ready to restore harmony, Elder.',
+      },
+      {
+        speaker: 'Elder Cadence',
+        avatar: '👴',
+        text: 'To restore equilibrium, you must engage the anomalies in turn-based acoustic combat and seal their resonance.',
+        choice: 'Understood! We will head to Echo Village.',
+      },
+      {
+        speaker: 'Elder Cadence',
+        avatar: '👴',
+        text: 'Beware Lord Cacophony at The Wild Peak Summit! His brass shockwaves can shatter an unprepared party in seconds.',
+        choice: 'To battle!',
+      },
+    ];
+  }, [currentNodeId]);
 
   const handleNextDialogue = () => {
     if (dialogueStep + 1 < dialogues.length) {
@@ -741,27 +777,55 @@ export function ExpeditionOverworld({
                   onClick={() => {
                     setDialogueStep(0);
                     setShowDialogue(true);
-                    if (isMobile) setIsSidebarOpen(false); 
+                    if (isMobile) setIsSidebarOpen(false);
                   }}
                   className="w-full py-3 bg-[#facc15] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#ffdf3d] transition-all flex items-center justify-center gap-2 active:translate-y-[4px] active:translate-x-[4px] active:shadow-none"
                 >
                   <MessageSquare className="w-5 h-5 fill-current shrink-0 skew-x-6" />
-                  <span className="truncate skew-x-6">TALK TO ELDER CADENCE</span>
+                  <span className="truncate skew-x-6">TALK TO NPC</span>
                 </button>
 
+                {currentNodeId === 'cadence_town' && (
+                  <button
+                    onClick={() => {
+                      if (onOpenShop) onOpenShop();
+                      if (isMobile) setIsSidebarOpen(false);
+                    }}
+                    className="w-full py-2.5 sm:py-2 xl:py-2.5 bg-[#f97316] text-white border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-xs xl:text-sm uppercase -skew-x-6 hover:bg-[#fb923c] transition-all flex items-center justify-center gap-1.5 sm:gap-2 active:translate-y-0.5 active:shadow-none animate-pulse"
+                  >
+                    <span className="text-sm sm:text-base leading-none">🏪</span>
+                    <span className="truncate font-black tracking-wider">VISIT MARIA'S FINE GOODS</span>
+                  </button>
+                )}
+              </div>
+            ) : currentNode.completed ? (
+              <div className="flex flex-col gap-2 w-full">
+                {currentNodeId === 'crossroads' && (
+                  <button
+                    onClick={() => {
+                      setDialogueStep(0);
+                      setShowDialogue(true);
+                      if (isMobile) setIsSidebarOpen(false);
+                    }}
+                    className="w-full py-2.5 sm:py-2 xl:py-2.5 bg-[#facc15] text-[#0f0c0c] border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-xs xl:text-sm uppercase -skew-x-6 hover:bg-[#ffdf3d] transition-all flex items-center justify-center gap-1.5 sm:gap-2 active:translate-y-0.5 active:shadow-none"
+                  >
+                    <MessageSquare className="w-4 h-4 sm:w-3.5 sm:h-3.5 fill-current shrink-0" />
+                    <span className="truncate">TALK TO RESCUED NPC</span>
+                  </button>
+                )}
                 <button
-                  onClick={() => {
-                    if (onOpenShop) onOpenShop();
-                    if (isMobile) setIsSidebarOpen(false);
-                  }}
-                  className="w-full py-3 bg-[#da2d46] text-white border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#ff3b56] transition-all flex items-center justify-center gap-2 active:translate-y-[4px] active:translate-x-[4px] active:shadow-none"
+                  disabled
+                  className="w-full py-3 bg-gray-500 text-white border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 flex items-center justify-center gap-2 opacity-50 cursor-not-allowed"
                 >
-                  <span className="truncate font-black tracking-wider skew-x-6 drop-shadow-[2px_2px_0px_#0f0c0c]">SHOP</span>
+                  <span className="truncate skew-x-6 drop-shadow-[2px_2px_0px_#0f0c0c]">AREA CLEARED</span>
                 </button>
               </div>
             ) : (
               <button
-                onClick={() => currentNode.enemyId && onStartBattle(currentNode.enemyId)}
+                onClick={() => {
+                  if (currentNode.enemyIds) onStartBattle(currentNode.enemyIds[0], currentNode.enemyIds);
+                  else if (currentNode.enemyId) onStartBattle(currentNode.enemyId);
+                }}
                 className="w-full py-3 sm:py-4 bg-[#da2d46] text-white border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] font-orbitron font-black text-sm sm:text-base uppercase -skew-x-6 hover:bg-[#ff3b56] transition-all flex items-center justify-center gap-2 active:translate-y-[4px] active:translate-x-[4px] active:shadow-none"
               >
                 <Play className="w-5 h-5 fill-current shrink-0 skew-x-6" />

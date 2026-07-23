@@ -44,7 +44,7 @@ export function EquipmentModal({
         <div className="bg-[#151828] px-5 py-3 border-b-[3px] border-[#0f0c0c] flex flex-wrap items-center gap-3">
           {heroList.map(hero => {
             const isSelected = selectedHeroId === hero.id;
-            const inst = dex[hero.equippedId] || dex['solaris_strat']!;
+            const inst = dex[hero.equippedId] || dex['cebuano_gitara']!;
             return (
               <button
                 key={hero.id}
@@ -55,8 +55,8 @@ export function EquipmentModal({
               >
                 <span className="text-lg">{hero.avatar}</span>
                 <span>{hero.name}</span>
-                <span className="px-1.5 py-0.5 bg-[#0f0c0c] text-[#facc15] text-[10px] skew-x-6">
-                  {inst.icon}
+                <span className="px-1.5 py-0.5 bg-white text-[#facc15] text-[10px] skew-x-6 flex items-center justify-center overflow-hidden">
+                  <img src={`/assets/instruments/${inst.id}.png`} alt={inst.name} className="w-5 h-5 object-contain scale-110 mix-blend-multiply" />
                 </span>
               </button>
             );
@@ -106,7 +106,7 @@ export function EquipmentModal({
                 <div className="flex justify-between">
                   <span className="text-slate-400">EQUIPPED:</span>
                   <span className="text-[#facc15] font-black truncate max-w-[80px]">
-                    {(dex[activeHero.equippedId] || dex['solaris_strat']!).name}
+                    {(dex[activeHero.equippedId] || dex['cebuano_gitara']!).name}
                   </span>
                 </div>
               </div>
@@ -133,8 +133,8 @@ export function EquipmentModal({
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-3xl bg-[#0f0c0c] p-2 border border-[#0f0c0c]">
-                        {item.icon}
+                      <span className="bg-white border border-[#0f0c0c] flex items-center justify-center w-14 h-14 overflow-hidden shadow-[inset_0_0_8px_rgba(0,0,0,0.2)] p-1">
+                        <img src={`/assets/instruments/${item.id}.png`} alt={item.name} className="w-full h-full object-contain scale-110 mix-blend-multiply" />
                       </span>
                       <div className="flex flex-col">
                         <div className="flex items-center gap-2">

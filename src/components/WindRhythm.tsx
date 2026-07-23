@@ -178,10 +178,19 @@ export function WindRhythm({ profile, notes, gameState, onLaneHit, activeLanes }
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.repeat) return;
+      if (e.code === 'Space') {
+        setIsBlowing(true);
+        e.preventDefault();
+        return;
+      }
       const index = mapping.lanes.findIndex(l => l.keyBinding === e.key.toUpperCase() || l.keyBinding === e.key.toLowerCase());
       if (index !== -1) openHole(index); 
     };
     const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        setIsBlowing(false);
+        return;
+      }
       const index = mapping.lanes.findIndex(l => l.keyBinding === e.key.toUpperCase() || l.keyBinding === e.key.toLowerCase());
       if (index !== -1) closeHole(index);
     };
@@ -309,7 +318,7 @@ export function WindRhythm({ profile, notes, gameState, onLaneHit, activeLanes }
               : 'bg-[#e0e5ed] text-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c]'
           } ${useMic ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
         >
-          <span className="skew-x-6 block tracking-widest">{isBlowing ? 'BLOWING...' : 'HOLD TO BLOW'}</span>
+          <span className="skew-x-6 block tracking-widest">{isBlowing ? 'BLOWING...' : 'HOLD SPACE TO BLOW'}</span>
         </button>
 
         {/* Mic Toggle Tag */}

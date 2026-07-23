@@ -51,6 +51,7 @@ export function ExpeditionScreen({
   // Navigation & View state
   const [subView, setSubView] = useState<'overworld' | 'combat'>('overworld');
   const [activeEnemyId, setActiveEnemyId] = useState<string>('corrupted_violin');
+  const [activeEnemyGauntlet, setActiveEnemyGauntlet] = useState<string[] | undefined>();
   const [currentNodeId, setCurrentNodeId] = useState<string>('cadence_town');
   
   // Modal states
@@ -78,8 +79,9 @@ export function ExpeditionScreen({
   const capturedCount = Object.values(dex).filter(i => i.captured).length;
   const totalCount = Object.keys(dex).length;
 
-  const handleStartBattle = useCallback((enemyId: string) => {
+  const handleStartBattle = useCallback((enemyId: string, enemyGauntlet?: string[]) => {
     setActiveEnemyId(enemyId);
+    setActiveEnemyGauntlet(enemyGauntlet);
     setSubView('combat');
   }, []);
 
@@ -109,7 +111,7 @@ export function ExpeditionScreen({
           q2: { ...prev.q2!, status: 'completed' },
           q3: { ...prev.q3!, status: 'active' },
         }));
-      } else if (activeEnemyId === 'titan_brass' && quests['q3']?.status === 'active') {
+      } else if ((activeEnemyId === 'titan_brass' || activeEnemyId === 'bandit') && quests['q3']?.status === 'active') {
         setQuests(prev => ({
           ...prev,
           q3: { ...prev.q3!, status: 'completed' },
@@ -266,6 +268,7 @@ export function ExpeditionScreen({
           <ExpeditionCombat 
             party={party}
             enemyId={activeEnemyId}
+            enemyGauntlet={activeEnemyGauntlet}
             dex={dex}
             onCombatResult={handleCombatResult}
             onFlee={() => setSubView('overworld')}

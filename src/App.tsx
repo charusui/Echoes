@@ -30,7 +30,6 @@ import { MASTER_INSTRUMENTS, FALLBACK_PROFILES, KORLONG_INSTRUMENT } from './con
 function InnerApp() {
   const { client } = useGemini();
   const [view, setView] = useState<AppView>('title');
-  const [isCombatScreen, setIsCombatScreen] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   
   // Pipeline tracking
@@ -285,7 +284,6 @@ function InnerApp() {
           onOpenCollection={() => setView('collection')}
           onOpenBadges={() => setView('badges')}
           onOpenRanks={() => setView('ranks')}
-          onCombatStateChange={setIsCombatScreen}
         />
       )}
 

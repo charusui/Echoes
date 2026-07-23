@@ -39,8 +39,8 @@ export const MULTIPLIER_THRESHOLDS = [
 
 // ─── Gameplay ─────────────────────────────────────────────────────────────────
 
-export const SCROLL_SPEED = 300;        // pixels per second
-export const SPAWN_AHEAD_TIME = 2.5;    // seconds ahead to spawn notes
+export const SCROLL_SPEED = 600;        // pixels per second
+export const SPAWN_AHEAD_TIME = 1.2;    // seconds ahead to spawn notes
 export const HIT_ZONE_Y_RATIO = 0.85;  // hit zone is 85% down the canvas
 export const NOTE_RADIUS = 24;          // pixels
 export const SONG_DURATION = 60;        // seconds

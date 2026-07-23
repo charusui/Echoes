@@ -10,7 +10,7 @@ import {
   type TurnUnit
 } from '../../types/expedition';
 import { RhythmHighwayOverlay } from './RhythmHighwayOverlay';
-import { SpellCastingOverlay } from './SpellCastingOverlay';
+import { UltimateSequenceOverlay } from './UltimateSequenceOverlay';
 import { ParryQteOverlay } from './ParryQteOverlay';
 import { AttuneCaptureOverlay } from './AttuneCaptureOverlay';
 import { WingSlamCounterMinigame } from './WingSlamCounterMinigame';
@@ -23,6 +23,7 @@ export interface TurnUpdateInfo {
 interface ExpeditionCombatProps {
   party: Record<string, HeroProfile>;
   enemyId: string;
+  enemyGauntlet?: string[];
   dex: Record<string, HarmonydexEntry>;
   onCombatResult: (result: { victory: boolean; xpGained: number; capturedEntry?: HarmonydexEntry }) => void;
   onFlee: () => void;
@@ -43,30 +44,70 @@ interface DamagePopup {
 export function ExpeditionCombat({
   party,
   enemyId,
+  enemyGauntlet,
   dex,
   onCombatResult,
   onFlee,
   onUpdateParty,
   onTurnUpdate,
 }: ExpeditionCombatProps) {
-  const baseEnemyInst = EXPEDITION_INSTRUMENTS[enemyId] || EXPEDITION_INSTRUMENTS['corrupted_violin']!;
-  const isBoss = baseEnemyInst.id === 'lord_cacophony' || baseEnemyInst.id === 'corrupted_violin';
+  const [enemies, setEnemies] = useState<EnemyProfile[]>(() => {
+    const list = enemyGauntlet && enemyGauntlet.length > 0 ? enemyGauntlet : [enemyId];
+    return list.map((id, index) => {
+      const inst = EXPEDITION_INSTRUMENTS[id] || EXPEDITION_INSTRUMENTS['wakwak']!;
+      const isB = inst.id === 'lord_cacophony' || inst.id === 'wakwak';
+      return {
+        id: `${inst.id}_${index}`,
+        name: inst.name,
+        type: inst.type,
+        level: isB ? 10 : 3,
+        hp: isB ? 1200 : 500,
+        maxHp: isB ? 1200 : 500,
+        stagger: 0,
+        maxStagger: 100,
+        staggered: false,
+        baseDmg: isB ? 45 : 25, 
+        captured: inst.captured,
+        preset: inst.audioPreset,
+        isBoss: isB,
+      };
+    });
+  });
 
-  const [enemy, setEnemy] = useState<EnemyProfile>(() => ({
-    id: baseEnemyInst.id,
-    name: baseEnemyInst.name,
-    type: baseEnemyInst.type,
-    level: isBoss ? 10 : 3,
-    hp: isBoss ? 1200 : 500,
-    maxHp: isBoss ? 1200 : 500,
-    stagger: 0,
-    maxStagger: 100,
-    staggered: false,
-    baseDmg: isBoss ? 45 : 25, 
-    captured: baseEnemyInst.captured,
-    preset: baseEnemyInst.audioPreset,
-    isBoss,
-  }));
+  const [targetEnemyIndex, setTargetEnemyIndex] = useState(0);
+
+  useEffect(() => {
+    if (enemies[targetEnemyIndex]?.hp <= 0) {
+      const nextAlive = enemies.findIndex(e => e.hp > 0);
+      if (nextAlive !== -1 && nextAlive !== targetEnemyIndex) {
+        setTargetEnemyIndex(nextAlive);
+      }
+    }
+  }, [enemies, targetEnemyIndex]);
+
+  const isBoss = enemies[0]?.isBoss || false;
+  const isShrineBandit = enemies[0]?.id.startsWith('bandit') || enemies[0]?.id.startsWith('titan_brass');
+  const enemy = enemies[targetEnemyIndex] || enemies[0];
+  const baseEnemyInst = EXPEDITION_INSTRUMENTS[enemy.id.replace(/_\d+$/, '')] || EXPEDITION_INSTRUMENTS['corrupted_violin']!;
+
+  const setEnemy = useCallback((updater: EnemyProfile | ((prev: EnemyProfile) => EnemyProfile)) => {
+    setEnemies(prev => {
+      const newEnemies = [...prev];
+      const idx = newEnemies[targetEnemyIndex] ? targetEnemyIndex : 0;
+      if (newEnemies[idx]) {
+        if (typeof updater === 'function') {
+          newEnemies[idx] = updater(newEnemies[idx]);
+        } else {
+          newEnemies[idx] = updater;
+        }
+      }
+      return newEnemies;
+    });
+  }, [targetEnemyIndex]);
+
+  useEffect(() => {
+    setGhostHp(enemy?.hp || 0);
+  }, [targetEnemyIndex]);
 
   const [turnIndex, setTurnIndex] = useState(0);
   const [activeAction, setActiveAction] = useState<'none' | 'rhythm' | 'spell' | 'parry' | 'attune'>('none');
@@ -108,18 +149,25 @@ export function ExpeditionCombat({
 
   const partyList = useMemo(() => Object.values(party), [party]);
   const turnQueue: TurnUnit[] = useMemo(() => {
-    const p0 = partyList[0]!;
-    const p1 = partyList[1] || p0;
-    const p2 = partyList[2] || p0;
-    return [
-      { isHero: true, unit: p0 },
-      { isHero: false, unit: enemy },
-      { isHero: true, unit: p1 },
-      { isHero: false, unit: enemy },
-      { isHero: true, unit: p2 },
-      { isHero: false, unit: enemy },
-    ];
-  }, [partyList, enemy]);
+    const queue: TurnUnit[] = [];
+    const maxLen = Math.max(partyList.length, enemies.length);
+    for (let i = 0; i < maxLen; i++) {
+      // Hero turns
+      if (partyList[i]) {
+        queue.push({ isHero: true, unit: partyList[i]! });
+      } else if (partyList.length > 0) {
+        queue.push({ isHero: true, unit: partyList[i % partyList.length]! });
+      }
+      
+      // Enemy turns
+      if (enemies[i]) {
+        queue.push({ isHero: false, unit: enemies[i]! });
+      } else if (enemies.length > 0) {
+        queue.push({ isHero: false, unit: enemies[i % enemies.length]! });
+      }
+    }
+    return queue;
+  }, [partyList, enemies]);
 
   const currentTurnUnit = turnQueue[turnIndex % turnQueue.length] || turnQueue[0]!;
   const isHeroTurn = currentTurnUnit.isHero;
@@ -127,7 +175,6 @@ export function ExpeditionCombat({
     if (isHeroTurn) {
       return currentTurnUnit.unit as HeroProfile;
     } else {
-      // During enemy turn/slam, the target is the active hero whose turn just preceded this enemy attack
       const prevIdx = (turnIndex - 1 + turnQueue.length) % turnQueue.length;
       const prevUnit = turnQueue[prevIdx];
       if (prevUnit && prevUnit.isHero) {
@@ -136,6 +183,8 @@ export function ExpeditionCombat({
       return partyList[0]!;
     }
   }, [isHeroTurn, currentTurnUnit, turnIndex, turnQueue, partyList]);
+
+  const activeAttackingEnemy = !isHeroTurn ? (currentTurnUnit.unit as EnemyProfile) : enemy;
 
   useEffect(() => {
     if (onTurnUpdate) {
@@ -219,8 +268,14 @@ export function ExpeditionCombat({
     };
   }, []);
 
-  const checkPostTurnStates = useCallback((currentEnemyHp: number, currentParty: HeroProfile[]) => {
-    if (currentEnemyHp <= 0) {
+  const checkPostTurnStates = useCallback((targetHp: number | null, currentParty: HeroProfile[]) => {
+    const tempEnemies = [...enemies];
+    if (targetHp !== null && tempEnemies[targetEnemyIndex]) {
+      tempEnemies[targetEnemyIndex] = { ...tempEnemies[targetEnemyIndex], hp: targetHp };
+    }
+    const allEnemiesDead = tempEnemies.every(e => e.hp <= 0);
+    
+    if (allEnemiesDead) {
       setIsEndingBattle(true);
       
       audioEngine.playHitSFX('sick');
@@ -250,13 +305,24 @@ export function ExpeditionCombat({
     }
 
     return false;
-  }, [isBoss, onCombatResult, triggerDamagePopup]);
+  }, [isBoss, onCombatResult, triggerDamagePopup, enemies, targetEnemyIndex]);
 
-  const advanceTurn = useCallback(() => {
+  const advanceTurn = useCallback((overrideIndex?: number) => {
     if (finishedRef.current || isEndingBattle) return;
-    const nextIdx = (turnIndex + 1) % turnQueue.length;
-    const nextUnit = turnQueue[nextIdx]!;
+    
+    let nextIdx = overrideIndex !== undefined ? overrideIndex : (turnIndex + 1) % turnQueue.length;
+    let nextUnit = turnQueue[nextIdx]!;
+    
+    // Skip dead units
+    let loopCount = 0;
+    while ((nextUnit.unit.hp <= 0 || (nextUnit.isHero && partyList.every(h => h.hp <= 0))) && loopCount < turnQueue.length) {
+      nextIdx = (nextIdx + 1) % turnQueue.length;
+      nextUnit = turnQueue[nextIdx]!;
+      loopCount++;
+    }
+    
     setTurnIndex(nextIdx);
+    
     if (!nextUnit.isHero) {
       setTimeout(() => {
         if (!finishedRef.current && !isEndingBattle) {
@@ -267,7 +333,7 @@ export function ExpeditionCombat({
         }
       }, 800);
     }
-  }, [turnIndex, turnQueue, isEndingBattle, isBoss]);
+  }, [turnIndex, turnQueue, isEndingBattle, isBoss, partyList]);
 
   // Command handlers
   const handleCommandAttack = () => { if (!isHeroTurn || activeHero.ap < 1 || isEndingBattle) return; setActiveAction('rhythm'); };
@@ -315,7 +381,7 @@ export function ExpeditionCombat({
       }, 1500);
     } else {
       audioEngine.playHitSFX('miss');
-      setTimeout(() => checkPostTurnStates(enemy.hp, updatedPartyList) || advanceTurn(), 100);
+      setTimeout(() => checkPostTurnStates(null, updatedPartyList) || advanceTurn(), 100);
     }
   }, [activeHero.id, onUpdateParty, isBoss, baseEnemyInst, onCombatResult, advanceTurn, enemy.hp, checkPostTurnStates]);
 
@@ -339,7 +405,7 @@ export function ExpeditionCombat({
       return;
     }
 
-    const heroInst = dex[activeHero.equippedId] || dex['solaris_strat']!;
+    const heroInst = dex[activeHero.equippedId] || dex['cebuano_gitara']!;
     const mult = getTypeMultiplier(heroInst.type, enemy.type);
     const baseDmg = heroInst.baseDmg * (1 + stats.combo * 0.05);
     const totalDmg = Math.round(baseDmg * mult * (enemy.staggered ? 1.8 : 1.0));
@@ -376,11 +442,11 @@ export function ExpeditionCombat({
 
     if (!success || completedPoints < 10) {
       audioEngine.playHitSFX('miss');
-      setTimeout(() => checkPostTurnStates(enemy.hp, updatedPartyList) || advanceTurn(), 100);
+      setTimeout(() => checkPostTurnStates(null, updatedPartyList) || advanceTurn(), 100);
       return;
     }
 
-    const heroInst = dex[activeHero.equippedId] || dex['solaris_strat']!;
+    const heroInst = dex[activeHero.equippedId] || dex['cebuano_gitara']!;
     const mult = getTypeMultiplier(heroInst.type, enemy.type);
     const totalDmg = Math.round((heroInst.baseDmg * 1.2 + completedPoints * 3) * mult);
 
@@ -412,12 +478,19 @@ export function ExpeditionCombat({
     } else {
       setActiveAction('none');
     }
-    const rawDmg = Math.round(enemy.baseDmg * (enemy.staggered ? 0.5 : 1.0));
+    const rawDmg = Math.round(activeAttackingEnemy.baseDmg * (activeAttackingEnemy.staggered ? 0.5 : 1.0));
     const dmg = parried || parryStanceActive ? Math.round(rawDmg * 0.25) : rawDmg;
 
     if (parried) {
       audioEngine.playHitSFX('sick');
-      setEnemy(prev => ({ ...prev, stagger: Math.min(prev.maxStagger, prev.stagger + 25) }));
+      setEnemies(prev => {
+        const next = [...prev];
+        const idx = next.findIndex(e => e.id === activeAttackingEnemy.id);
+        if (idx !== -1) {
+          next[idx] = { ...next[idx], stagger: Math.min(next[idx].maxStagger, next[idx].stagger + 25) };
+        }
+        return next;
+      });
     } else {
       audioEngine.playHitSFX('miss');
     }
@@ -432,7 +505,7 @@ export function ExpeditionCombat({
       const updatedPartyMap = { ...prev, [target.id]: { ...target, shield: shieldLeft, hp: newHp } };
 
       setTimeout(() => {
-        checkPostTurnStates(enemy.hp, Object.values(updatedPartyMap));
+        checkPostTurnStates(null, Object.values(updatedPartyMap));
       }, 1000);
 
       return updatedPartyMap;
@@ -478,7 +551,7 @@ export function ExpeditionCombat({
     });
 
     if (updatedEnemyHp <= 0) {
-      checkPostTurnStates(0, partyList);
+      checkPostTurnStates(updatedEnemyHp, partyList);
     }
 
     setActiveAction('none');
@@ -493,7 +566,7 @@ export function ExpeditionCombat({
 
   return (
     <div 
-      className="flex-1 flex flex-col justify-between p-2 sm:p-4 lg:p-6 relative overflow-hidden bg-[#151828] bg-cover bg-center bg-no-repeat"
+      className="flex-1 flex flex-col justify-between p-2 sm:p-4 lg:p-6 relative overflow-hidden bg-[#151828] bg-cover bg-center bg-no-repeat select-none"
       style={{ backgroundImage: `linear-gradient(rgba(15, 12, 12, 0.35), rgba(15, 12, 12, 0.5)), url('/assets/expedition/battle_bg.png')` }}
     >
       {/* ─── UPGRADED VFX ANIMATIONS ─── */}
@@ -950,14 +1023,16 @@ export function ExpeditionCombat({
           <div className="flex flex-col gap-1.5 p-2 bg-[#151828]/95 backdrop-blur-md border-y-[3px] border-r-[3px] border-[#0f0c0c] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.4)] w-[220px] rounded-r-xl">
             {partyList.map((hero) => {
               const isTurn = isHeroTurn && activeHero.id === hero.id;
-              const inst = dex[hero.equippedId] || dex['solaris_strat']!;
+              const inst = dex[hero.equippedId] || dex['cebuano_gitara']!;
               return (
                 <div key={hero.id} className={`flex items-center gap-2 p-1.5 border-[2px] border-[#0f0c0c] transition-all -skew-x-3 ${isTurn ? 'bg-[#facc15] text-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c]' : 'bg-[#1e2238]/90 text-white opacity-90'}`}>
                   <div className="text-lg bg-[#0f0c0c] p-1 border-[2px] border-[#0f0c0c]">{hero.avatar}</div>
                   <div className="flex flex-col flex-1 overflow-hidden">
                     <div className="font-orbitron font-black text-[10px] flex items-center gap-1">
                       <span className="truncate">{hero.name}</span>
-                      <span className="text-[8px] shrink-0">{inst.icon}</span>
+                      <span className="text-[8px] shrink-0 flex items-center justify-center bg-[#0f0c0c] p-0.5 border border-[#0f0c0c]">
+                        <img src={`/assets/instruments/${inst.id}.png`} alt={inst.name} className="w-2.5 h-2.5 object-contain" />
+                      </span>
                     </div>
                     <div className="flex items-center gap-1.5 text-[8px] font-bold font-orbitron">
                       <span className="truncate">HP: {hero.hp}/{hero.maxHp}</span>
@@ -985,29 +1060,93 @@ export function ExpeditionCombat({
           </button>
         </div>
 
+        {/* Left (Center-Left on Mobile): Hero Squad (Gustave, Maelle in middle, Lune) against the Bandit */}
+        {isShrineBandit && !isBoss ? (
+          <div className="absolute bottom-[18%] left-0 sm:left-2 flex items-end justify-center -space-x-28 sm:-space-x-32 z-20 pointer-events-none transition-all duration-300 -translate-y-6 sm:-translate-y-8">
+            <div className="flex flex-col items-center gap-0">
+              <div className="relative origin-bottom flex items-center justify-center">
+                <img src="/boy1_idle.gif" alt="Gustave" className="w-64 h-64 sm:w-72 sm:h-72 object-contain drop-shadow-[0px_8px_16px_rgba(0,0,0,0.8)]" />
+              </div>
+              <span className="relative z-30 -mt-12 sm:-mt-14 font-orbitron font-black text-[9px] sm:text-[10px] uppercase tracking-wider text-[#facc15] bg-[#0f0c0c] px-2.5 py-0.5 border-[2px] border-[#facc15] shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 truncate text-center">
+                Gustave
+              </span>
+            </div>
+            <div className="flex flex-col items-center gap-0 z-10">
+              <div className="relative origin-bottom flex items-center justify-center">
+                <img src="/girl_idle.gif" alt="Maelle" className="w-60 h-60 sm:w-68 sm:h-68 object-contain drop-shadow-[0px_8px_16px_rgba(0,0,0,0.8)]" />
+              </div>
+              <span className="relative z-30 -mt-12 sm:-mt-14 font-orbitron font-black text-[9px] sm:text-[10px] uppercase tracking-wider text-[#facc15] bg-[#0f0c0c] px-3 py-0.5 border-[2px] border-[#facc15] shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 truncate text-center">
+                Maelle
+              </span>
+            </div>
+            <div className="flex flex-col items-center gap-0">
+              <div className="relative origin-bottom flex items-center justify-center">
+                <img src="/boy2_idle.gif" alt="Lune" className="w-64 h-64 sm:w-72 sm:h-72 object-contain drop-shadow-[0px_8px_16px_rgba(0,0,0,0.8)]" />
+              </div>
+              <span className="relative z-30 -mt-12 sm:-mt-14 font-orbitron font-black text-[9px] sm:text-[10px] uppercase tracking-wider text-[#facc15] bg-[#0f0c0c] px-2.5 py-0.5 border-[2px] border-[#facc15] shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 truncate text-center">
+                Lune
+              </span>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Right (Center-Right on Mobile): Enemy Sprite Frame Planted on Ground */}
         {/* Right (Center-Right on Mobile): Enemy Sprite Frame Planted on Ground */}
         {!isBoss ? (
-          <div className="absolute bottom-[18%] right-4 flex flex-col items-center gap-1 z-20 pointer-events-none">
-            <div 
-              className={`relative origin-bottom flex items-center justify-center ${
-                enemy.hp <= 0 ? 'animate-[bossDeath_2s_ease-in_forwards]' : enemy.staggered ? 'animate-bounce' : 'transition-all duration-300'
-              }`}
-            >
-              <img src={`/assets/expedition/enemy_frame_${enemyFrame}.png`} alt={enemy.name} className="w-36 h-36 sm:w-40 sm:h-40 object-contain drop-shadow-[0px_8px_16px_rgba(0,0,0,0.8)] scale-x-[-1]" onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }} />
-              {enemy.hp <= 0 && <div className="absolute inset-0 bg-red-600/50 mix-blend-color-burn rounded-full animate-[ping_0.5s_cubic-bezier(0,0,0.2,1)_infinite]" />}
-              {enemy.staggered && enemy.hp > 0 && (
-                <div className="absolute inset-x-0 -top-6 z-20 flex items-center justify-center pointer-events-none">
-                  <div className="relative w-28 h-8 flex items-center justify-around animate-[spin_3s_linear_infinite] drop-shadow-[0_0_8px_#facc15]">
-                    <span className="text-xl animate-bounce">⭐</span>
-                    <span className="text-sm text-[#facc15] animate-pulse">✨</span>
-                    <span className="text-xl animate-bounce" style={{ animationDelay: '300ms' }}>⭐</span>
+          <div className="absolute bottom-[18%] right-4 flex items-end gap-2 sm:gap-4 z-20">
+            {enemies.length > 1 ? (
+              enemies.map((e, idx) => {
+                if (e.hp <= 0 && isEndingBattle) return null;
+                const isCurrent = idx === targetEnemyIndex;
+                const isAttacking = currentTurnUnit && !currentTurnUnit.isHero && currentTurnUnit.unit.id === e.id;
+                
+                return (
+                  <div 
+                    key={e.id} 
+                    className="flex flex-col items-center gap-1 cursor-pointer transition-all"
+                    onClick={() => e.hp > 0 && setTargetEnemyIndex(idx)}
+                  >
+                    <div className="w-16 h-1.5 bg-[#0f0c0c]/80 border border-white/50 flex mb-1">
+                      <div className="bg-[#da2d46] h-full transition-all" style={{ width: `${Math.max(0, (e.hp / e.maxHp) * 100)}%` }} />
+                    </div>
+                    <div className={`relative origin-bottom flex items-center justify-center ${e.hp <= 0 ? 'animate-[bossDeath_2s_ease-in_forwards]' : e.staggered ? 'animate-bounce' : isAttacking ? 'animate-pulse scale-110' : 'transition-all duration-300'}`}>
+                      <img src={`/assets/expedition/enemy_frame_${isAttacking ? enemyFrame : 0}.png`} alt={e.name} className={`w-24 h-24 sm:w-28 sm:h-28 object-contain scale-x-[-1] transition-all duration-300 ${isCurrent ? 'drop-shadow-[0px_0px_8px_rgba(250,204,21,1)]' : 'drop-shadow-[0px_8px_16px_rgba(0,0,0,0.8)]'}`} onError={(ev) => { (ev.currentTarget as HTMLElement).style.display = 'none'; }} />
+                      {e.hp <= 0 && <div className="absolute inset-0 bg-red-600/50 mix-blend-color-burn rounded-full animate-[ping_0.5s_cubic-bezier(0,0,0.2,1)_infinite]" />}
+                      {e.staggered && e.hp > 0 && (
+                        <div className="absolute inset-x-0 -top-6 z-20 flex items-center justify-center pointer-events-none">
+                          <div className="relative w-16 h-6 flex items-center justify-around animate-[spin_3s_linear_infinite] drop-shadow-[0_0_8px_#facc15]">
+                            <span className="text-sm animate-bounce">⭐</span>
+                            <span className="text-xs text-[#facc15] animate-pulse">✨</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <span className={`font-orbitron font-black text-[8px] uppercase tracking-wider text-[#da2d46] bg-[#0f0c0c] px-2 py-0.5 border-[2px] border-[#da2d46] shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 truncate max-w-[100px] text-center ${!isCurrent ? 'opacity-80' : ''}`}>
+                      {e.name}
+                    </span>
                   </div>
+                );
+              })
+            ) : (
+              <div className="flex flex-col items-center gap-1">
+                <div className={`relative origin-bottom flex items-center justify-center ${enemy.hp <= 0 ? 'animate-[bossDeath_2s_ease-in_forwards]' : enemy.staggered ? 'animate-bounce' : 'transition-all duration-300'}`}>
+                  <img src={`/assets/expedition/enemy_frame_${enemyFrame}.png`} alt={enemy.name} className="w-36 h-36 sm:w-40 sm:h-40 object-contain drop-shadow-[0px_8px_16px_rgba(0,0,0,0.8)] scale-x-[-1]" onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }} />
+                  {enemy.hp <= 0 && <div className="absolute inset-0 bg-red-600/50 mix-blend-color-burn rounded-full animate-[ping_0.5s_cubic-bezier(0,0,0.2,1)_infinite]" />}
+                  {enemy.staggered && enemy.hp > 0 && (
+                    <div className="absolute inset-x-0 -top-6 z-20 flex items-center justify-center pointer-events-none">
+                      <div className="relative w-28 h-8 flex items-center justify-around animate-[spin_3s_linear_infinite] drop-shadow-[0_0_8px_#facc15]">
+                        <span className="text-xl animate-bounce">⭐</span>
+                        <span className="text-sm text-[#facc15] animate-pulse">✨</span>
+                        <span className="text-xl animate-bounce" style={{ animationDelay: '300ms' }}>⭐</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            <span className="font-orbitron font-black text-[10px] uppercase tracking-wider text-[#da2d46] bg-[#0f0c0c] px-3 py-0.5 border-[2px] border-[#da2d46] shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 truncate max-w-[150px] text-center">
-              {enemy.name}
-            </span>
+                <span className="font-orbitron font-black text-[10px] uppercase tracking-wider text-[#da2d46] bg-[#0f0c0c] px-3 py-0.5 border-[2px] border-[#da2d46] shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 truncate max-w-[150px] text-center">
+                  {enemy.name}
+                </span>
+              </div>
+            )}
           </div>
         ) : null}
       </div>
@@ -1018,7 +1157,7 @@ export function ExpeditionCombat({
         <div className="flex flex-col gap-4 z-30">
           {partyList.map((hero) => {
             const isTurn = isHeroTurn && activeHero.id === hero.id;
-            const inst = dex[hero.equippedId] || dex['solaris_strat']!;
+            const inst = dex[hero.equippedId] || dex['cebuano_gitara']!;
             return (
               <div 
                 key={hero.id}
@@ -1032,7 +1171,9 @@ export function ExpeditionCombat({
                 <div className="flex flex-col">
                   <div className="font-orbitron font-black text-sm flex items-center gap-2">
                     <span>{hero.name}</span>
-                    <span className="text-xs">{inst.icon}</span>
+                    <span className="text-xs bg-white border border-[#0f0c0c] w-5 h-5 flex items-center justify-center overflow-hidden">
+                      <img src={`/assets/instruments/${inst.id}.png`} alt={inst.name} className="w-full h-full object-contain scale-110 mix-blend-multiply" />
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 text-2xs font-bold font-orbitron">
                     <span>HP: {hero.hp}/{hero.maxHp}</span>
@@ -1054,34 +1195,94 @@ export function ExpeditionCombat({
           })}
         </div>
 
+        {/* Left-Center: Hero Squad (Gustave, Maelle in middle, Lune) facing the Bandit on Desktop */}
+        {isShrineBandit && !isBoss ? (
+          <div className="flex items-end justify-center -space-x-60 lg:-space-x-64 -translate-x-4 -translate-y-12 lg:-translate-y-16 z-20 pointer-events-none">
+            <div className="flex flex-col items-center gap-0">
+              <div className="relative origin-bottom transition-transform flex items-center justify-center">
+                <img src="/boy1_idle.gif" alt="Gustave" className="w-[475px] h-[475px] object-contain drop-shadow-[0px_12px_24px_rgba(0,0,0,0.8)]" />
+              </div>
+              <span className="relative z-30 -mt-24 lg:-mt-28 font-orbitron font-black text-xs uppercase tracking-wider text-[#facc15] bg-[#0f0c0c] px-4 py-1 border-[2px] border-[#facc15] shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6 text-center">
+                Gustave
+              </span>
+            </div>
+            <div className="flex flex-col items-center gap-0 z-10">
+              <div className="relative origin-bottom transition-transform flex items-center justify-center">
+                <img src="/girl_idle.gif" alt="Maelle" className="w-[470px] h-[470px] object-contain drop-shadow-[0px_12px_24px_rgba(0,0,0,0.8)]" />
+              </div>
+              <span className="relative z-30 -mt-24 lg:-mt-28 font-orbitron font-black text-xs uppercase tracking-wider text-[#facc15] bg-[#0f0c0c] px-4 py-1 border-[2px] border-[#facc15] shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6 text-center">
+                Maelle
+              </span>
+            </div>
+            <div className="flex flex-col items-center gap-0">
+              <div className="relative origin-bottom transition-transform flex items-center justify-center">
+                <img src="/boy2_idle.gif" alt="Lune" className="w-[475px] h-[475px] object-contain drop-shadow-[0px_12px_24px_rgba(0,0,0,0.8)]" />
+              </div>
+              <span className="relative z-30 -mt-24 lg:-mt-28 font-orbitron font-black text-xs uppercase tracking-wider text-[#facc15] bg-[#0f0c0c] px-4 py-1 border-[2px] border-[#facc15] shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6 text-center">
+                Lune
+              </span>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Right: Enemy Sprite Frame (Exact 89df9fb style) */}
         {/* Right: Enemy Sprite Frame (Exact 89df9fb style) */}
         {!isBoss ? (
-          <div className="flex flex-col items-center gap-3 -translate-x-20 z-10">
-            <div className={`relative transition-transform flex items-center justify-center ${
-              enemy.staggered ? 'animate-bounce' : ''
-            }`}>
-              <img 
-                src={`/assets/expedition/enemy_frame_${enemyFrame}.png`}
-                alt={enemy.name}
-                className="w-72 h-72 object-contain drop-shadow-[0px_12px_24px_rgba(0,0,0,0.8)] scale-x-[-1]"
-                onError={(e) => {
-                  (e.currentTarget as HTMLElement).style.display = 'none';
-                }}
-              />
-              {enemy.hp <= 0 && <div className="absolute inset-0 bg-red-600/50 mix-blend-color-burn rounded-full animate-[ping_0.5s_cubic-bezier(0,0,0.2,1)_infinite]" />}
-              {enemy.staggered && enemy.hp > 0 && (
-                <div className="absolute inset-x-0 -top-8 z-20 flex items-center justify-center pointer-events-none">
-                  <div className="relative w-36 h-10 flex items-center justify-around animate-[spin_3s_linear_infinite] drop-shadow-[0_0_10px_#facc15]">
-                    <span className="text-2xl animate-bounce">⭐</span>
-                    <span className="text-base text-[#facc15] animate-pulse">✨</span>
-                    <span className="text-2xl animate-bounce" style={{ animationDelay: '300ms' }}>⭐</span>
+          <div className="flex items-end justify-center gap-4 -translate-x-10 z-10">
+            {enemies.length > 1 ? (
+              enemies.map((e, idx) => {
+                if (e.hp <= 0 && isEndingBattle) return null;
+                const isCurrent = idx === targetEnemyIndex;
+                const isAttacking = currentTurnUnit && !currentTurnUnit.isHero && currentTurnUnit.unit.id === e.id;
+                
+                return (
+                  <div 
+                    key={e.id} 
+                    className="flex flex-col items-center gap-3 cursor-pointer transition-all"
+                    onClick={() => e.hp > 0 && setTargetEnemyIndex(idx)}
+                  >
+                    <div className="w-24 h-2 bg-[#0f0c0c]/80 border-2 border-white/50 flex mb-2 shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6">
+                      <div className="bg-[#da2d46] h-full transition-all" style={{ width: `${Math.max(0, (e.hp / e.maxHp) * 100)}%` }} />
+                    </div>
+                    <div className={`relative transition-transform flex items-center justify-center ${e.staggered ? 'animate-bounce' : isAttacking ? 'animate-pulse scale-110' : ''}`}>
+                      <img src={`/assets/expedition/enemy_frame_${isAttacking ? enemyFrame : 0}.png`} alt={e.name} className={`w-56 h-56 object-contain scale-x-[-1] transition-all duration-300 ${isCurrent ? 'drop-shadow-[0px_0px_12px_rgba(250,204,21,1)]' : 'drop-shadow-[0px_12px_24px_rgba(0,0,0,0.8)]'}`} onError={(ev) => { (ev.currentTarget as HTMLElement).style.display = 'none'; }} />
+                      {e.hp <= 0 && <div className="absolute inset-0 bg-red-600/50 mix-blend-color-burn rounded-full animate-[ping_0.5s_cubic-bezier(0,0,0.2,1)_infinite]" />}
+                      {e.staggered && e.hp > 0 && (
+                        <div className="absolute inset-x-0 -top-8 z-20 flex items-center justify-center pointer-events-none">
+                          <div className="relative w-36 h-10 flex items-center justify-around animate-[spin_3s_linear_infinite] drop-shadow-[0_0_10px_#facc15]">
+                            <span className="text-2xl animate-bounce">⭐</span>
+                            <span className="text-base text-[#facc15] animate-pulse">✨</span>
+                            <span className="text-2xl animate-bounce" style={{ animationDelay: '300ms' }}>⭐</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <span className={`font-orbitron font-black text-sm uppercase tracking-wider text-[#da2d46] bg-[#0f0c0c] px-4 py-1 border-[2px] border-[#da2d46] shadow-[3px_3px_0px_0px_#0f0c0c] -skew-x-6 ${!isCurrent ? 'opacity-80' : ''}`}>
+                      {e.name}
+                    </span>
                   </div>
+                );
+              })
+            ) : (
+              <div className="flex flex-col items-center gap-3 -translate-x-20 z-10">
+                <div className={`relative transition-transform flex items-center justify-center ${enemy.staggered ? 'animate-bounce' : ''}`}>
+                  <img src={`/assets/expedition/enemy_frame_${enemyFrame}.png`} alt={enemy.name} className="w-72 h-72 object-contain drop-shadow-[0px_12px_24px_rgba(0,0,0,0.8)] scale-x-[-1]" onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }} />
+                  {enemy.hp <= 0 && <div className="absolute inset-0 bg-red-600/50 mix-blend-color-burn rounded-full animate-[ping_0.5s_cubic-bezier(0,0,0.2,1)_infinite]" />}
+                  {enemy.staggered && enemy.hp > 0 && (
+                    <div className="absolute inset-x-0 -top-8 z-20 flex items-center justify-center pointer-events-none">
+                      <div className="relative w-36 h-10 flex items-center justify-around animate-[spin_3s_linear_infinite] drop-shadow-[0_0_10px_#facc15]">
+                        <span className="text-2xl animate-bounce">⭐</span>
+                        <span className="text-base text-[#facc15] animate-pulse">✨</span>
+                        <span className="text-2xl animate-bounce" style={{ animationDelay: '300ms' }}>⭐</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            <span className="font-orbitron font-black text-sm uppercase tracking-wider text-[#da2d46] bg-[#0f0c0c] px-4 py-1 border-[2px] border-[#da2d46] shadow-[3px_3px_0px_0px_#0f0c0c] -skew-x-6">
-              {enemy.name}
-            </span>
+                <span className="font-orbitron font-black text-sm uppercase tracking-wider text-[#da2d46] bg-[#0f0c0c] px-4 py-1 border-[2px] border-[#da2d46] shadow-[3px_3px_0px_0px_#0f0c0c] -skew-x-6">
+                  {enemy.name}
+                </span>
+              </div>
+            )}
           </div>
         ) : null}
       </div>
@@ -1222,9 +1423,9 @@ export function ExpeditionCombat({
             />
           )}
           {activeAction === 'spell' && (
-            <SpellCastingOverlay 
+            <UltimateSequenceOverlay 
               hero={activeHero}
-              instrument={dex[activeHero.equippedId] || dex['solaris_strat']!}
+              instrument={dex[activeHero.equippedId] || dex['cebuano_gitara']!}
               onComplete={handleSpellComplete}
             />
           )}
