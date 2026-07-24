@@ -29,7 +29,7 @@ export function EquipmentModal({
           <div className="flex items-center gap-2">
             <Settings className="w-5 h-5 text-[#4ade80]" />
             <h2 className="font-orbitron font-black text-lg sm:text-xl text-[#4ade80] tracking-wider uppercase">
-              ⚙️ HERO EQUIPMENT &amp; ATTUNEMENT LOADOUT
+              HERO EQUIPMENT &amp; ATTUNEMENT LOADOUT
             </h2>
           </div>
           <button

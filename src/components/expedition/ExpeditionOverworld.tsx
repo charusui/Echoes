@@ -62,12 +62,14 @@ export function ExpeditionOverworld({
   const currentNode = nodes[currentNodeId] || nodes['cadence_town']!;
   const LINEAR_NODES = ['cadence_town', 'crossroads', 'echo_woods', 'whispering_path', 'harmonic_shrine', 'silent_peak'];
 
-  // ─── HELPER: ADJUST WATER NODES ONTO LANDMARKS ───
+  // ─── RESTORED ORIGINAL COORDINATES (WITH FIXED ECHO WOODS & PEAK) ───
   const getDisplayCoords = useCallback((nodeId: string, originalX: number, originalY: number) => {
-    if (nodeId === 'cadence_town') return { x: 300, y: 380 };
-    if (nodeId === 'crossroads') return { x: 382, y: 355 };
-    if (nodeId === 'whispering_path') return { x: 611, y: 380 };
-    if (nodeId === 'harmonic_shrine') return { x: 750, y: 430 };
+    if (nodeId === 'cadence_town') return { x: 300, y: 250 };
+    if (nodeId === 'crossroads') return { x: 420, y: 355 };
+    if (nodeId === 'echo_woods') return { x: 340, y: 560 };
+    if (nodeId === 'whispering_path') return { x: 540, y: 380 };
+    if (nodeId === 'harmonic_shrine') return { x: 640, y: 490 };
+    if (nodeId === 'silent_peak') return { x: 780, y: 220 };
     return { x: originalX, y: originalY };
   }, []);
 
@@ -396,7 +398,7 @@ export function ExpeditionOverworld({
               />
             )}
 
-            {/* Comic Node Base - KEPT UNTOUCHED AS REQUESTED */}
+            {/* Comic Node Base */}
             <circle r="36" fill="#f8fafc" stroke="#0f0c0c" strokeWidth="6" />
             <circle
               r="30"
@@ -548,8 +550,9 @@ export function ExpeditionOverworld({
               viewBox="0 0 1000 650"
               preserveAspectRatio="xMidYMid slice"
             >
+              {/* ─── NEW PATH ALIGNED TO YOUR EXACT COORDINATES ─── */}
               <path 
-                d="M 260,270 C 245,420 295,555 330,550 C 440,520 530,510 630,480 C 700,460 795,340 780,220"
+                d="M 300,250 C 340,290 380,320 420,355 C 440,380 380,480 340,560 C 380,580 480,440 540,380 C 570,350 610,450 640,490 C 680,530 750,320 780,220"
                 fill="none" 
                 stroke="#0f0c0c" 
                 strokeWidth={path1Width + 4} 
@@ -557,7 +560,7 @@ export function ExpeditionOverworld({
                 className="opacity-50"
               />
               <path 
-                d="M 260,270 C 245,420 295,555 330,550 C 440,520 530,510 630,480 C 700,460 795,340 780,220"
+                d="M 300,250 C 340,290 380,320 420,355 C 440,380 380,480 340,560 C 380,580 480,440 540,380 C 570,350 610,450 640,490 C 680,530 750,320 780,220"
                 fill="none" 
                 stroke="#ffffff" 
                 strokeWidth={path1Width} 
@@ -793,8 +796,7 @@ export function ExpeditionOverworld({
                     }}
                     className="w-full py-2.5 sm:py-2 xl:py-2.5 bg-[#f97316] text-white border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-xs xl:text-sm uppercase -skew-x-6 hover:bg-[#fb923c] transition-all flex items-center justify-center gap-1.5 sm:gap-2 active:translate-y-0.5 active:shadow-none animate-pulse"
                   >
-                    <span className="text-sm sm:text-base leading-none">🏪</span>
-                    <span className="truncate font-black tracking-wider">VISIT MARIA'S FINE GOODS</span>
+                    <span className="truncate font-black tracking-wider">SHOP</span>
                   </button>
                 )}
               </div>
