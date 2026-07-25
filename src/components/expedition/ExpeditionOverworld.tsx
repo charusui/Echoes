@@ -3,6 +3,7 @@ import { Play, MessageSquare, Compass, ShieldAlert, Camera, Map, Flame, X, Chevr
 import { type MapNode, type ExpeditionQuest } from '../../types/expedition';
 import visayasMap from '../../assets/png/visayas_map.png';
 import { DevMenu } from '../DevMenu'; 
+import { audioEngine } from '../../services/audioSynth';
 
 interface ExpeditionOverworldProps {
   nodes: Record<string, MapNode>;
@@ -46,6 +47,17 @@ export function ExpeditionOverworld({
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  // ─── SFX HELPER FUNCTION ───
+  const playSound = (soundType: string) => {
+    try {
+      if (audioEngine && typeof audioEngine.playHitSFX === 'function') {
+        audioEngine.playHitSFX(soundType);
+      }
+    } catch (e) {
+      console.warn("SFX Error:", e);
+    }
+  };
+
   // ─── DRAWER DRAG STATE ───
   const [dragOffset, setDragOffset] = useState(0);
   const [isDraggingDrawer, setIsDraggingDrawer] = useState(false);
@@ -74,6 +86,7 @@ export function ExpeditionOverworld({
   }, []);
 
   const handleNodeClick = (targetId: string) => {
+    playSound('node_select');
     if (isTraveling || targetId === currentNodeId) {
       setIsSidebarOpen(true); 
       return;
@@ -184,6 +197,7 @@ export function ExpeditionOverworld({
   }, [currentNodeId]);
 
   const handleNextDialogue = () => {
+    playSound('dialogue_next');
     if (dialogueStep + 1 < dialogues.length) {
       setDialogueStep(dialogueStep + 1);
     } else {
@@ -334,8 +348,10 @@ export function ExpeditionOverworld({
     setIsDraggingDrawer(false);
     
     if (dragDeltaY.current > 60) {
+      playSound('ui_back');
       setIsSidebarOpen(false); // Slid far enough to close
     } else if (Math.abs(dragDeltaY.current) < 5) {
+      playSound('ui_back');
       setIsSidebarOpen(false); // Treat as a tap to close
     }
     
@@ -474,7 +490,7 @@ export function ExpeditionOverworld({
       {isSidebarOpen && (
         <div 
           className="md:hidden fixed inset-0 bg-[#0f0c0c]/80 z-40 animate-in fade-in duration-300"
-          onClick={() => setIsSidebarOpen(false)}
+          onClick={() => { playSound('ui_back'); setIsSidebarOpen(false); }}
         />
       )}
 
@@ -646,21 +662,21 @@ export function ExpeditionOverworld({
             <div className="flex gap-1.5 sm:gap-2 pointer-events-auto w-full justify-end mt-1">
               {/* HUD Buttons CHANGED TO DARK BLUE (bg-[#2a2d43] text-white) */}
               <button
-                onClick={onOpenLocationServices}
+                onClick={() => { playSound('ui_click'); onOpenLocationServices?.(); }}
                 className="flex-1 py-1.5 sm:py-2 bg-[#2a2d43] border-[3px] border-[#0f0c0c] flex flex-col items-center justify-center gap-1 shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6 hover:bg-[#38bdf8] hover:text-[#0f0c0c] transition-all group active:translate-y-1 active:translate-x-1 active:shadow-none text-white"
               >
                 <Map size={isMobile ? 12 : 16} className="skew-x-6 text-white group-hover:text-[#0f0c0c]" />
                 <span className="font-space-mono uppercase font-black text-[6px] sm:text-[8px] md:text-[9px] skew-x-6 text-white group-hover:text-[#0f0c0c]">Radar</span>
               </button>
               <button
-                onClick={onOpenBadges}
+                onClick={() => { playSound('ui_click'); onOpenBadges?.(); }}
                 className="flex-1 py-1.5 sm:py-2 bg-[#2a2d43] border-[3px] border-[#0f0c0c] flex flex-col items-center justify-center gap-1 shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6 hover:bg-[#da2d46] hover:text-white transition-all group active:translate-y-1 active:translate-x-1 active:shadow-none text-white"
               >
                 <ShieldAlert size={isMobile ? 12 : 16} className="skew-x-6 text-white group-hover:text-white" />
                 <span className="font-space-mono uppercase font-black text-[6px] sm:text-[8px] md:text-[9px] skew-x-6 text-white group-hover:text-white">Badges</span>
               </button>
               <button
-                onClick={onOpenRanks}
+                onClick={() => { playSound('ui_click'); onOpenRanks?.(); }}
                 className="flex-1 py-1.5 sm:py-2 bg-[#2a2d43] border-[3px] border-[#0f0c0c] flex flex-col items-center justify-center gap-1 shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6 hover:bg-[#facc15] hover:text-[#0f0c0c] transition-all group active:translate-y-1 active:translate-x-1 active:shadow-none text-white"
               >
                 <Flame size={isMobile ? 12 : 16} className="skew-x-6 text-white group-hover:text-[#0f0c0c]" />
@@ -672,7 +688,7 @@ export function ExpeditionOverworld({
           {/* ─── ANIMATED SCAN BUTTON ─── */}
           <div className={`absolute bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 z-30 w-[85%] max-w-[240px] sm:max-w-[320px] px-2 sm:px-4 pointer-events-none transition-all duration-500 ease-out delay-300 transform ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'}`}>
             <button
-              onClick={onOpenScanner}
+              onClick={() => { playSound('scan_init'); onOpenScanner?.(); }}
               className="w-full flex items-center justify-center gap-2 sm:gap-3 py-2 sm:py-3.5 md:py-4 bg-[#da2d46] border-[4px] sm:border-[5px] border-[#0f0c0c] text-white shadow-[6px_6px_0px_0px_#0f0c0c] sm:shadow-[8px_8px_0px_0px_#0f0c0c] hover:bg-[#ff3b56] active:translate-y-[4px] active:translate-x-[4px] active:shadow-none transition-all -skew-x-6 pointer-events-auto group"
             >
               <Camera className="skew-x-6 font-black w-4 h-4 sm:w-6 sm:h-6 fill-current" />
@@ -683,7 +699,7 @@ export function ExpeditionOverworld({
           </div>
 
           <button
-            onClick={() => setIsSidebarOpen(true)}
+            onClick={() => { playSound('drawer_open'); setIsSidebarOpen(true); }}
             className={`
               md:hidden absolute right-0 bottom-20 z-30
               bg-[#facc15] text-[#0f0c0c] py-2 px-2.5 pl-3.5 rounded-l-none border-y-[4px] border-l-[4px] border-[#0f0c0c] shadow-[-6px_6px_0px_0px_#0f0c0c]
@@ -737,7 +753,7 @@ export function ExpeditionOverworld({
         </div>
 
         <button 
-          onClick={() => setIsSidebarOpen(false)}
+          onClick={() => { playSound('ui_back'); setIsSidebarOpen(false); }}
           className="md:hidden absolute top-4 right-4 text-white hover:text-[#da2d46] transition-colors z-10"
         >
           <X size={28} className="font-black" />
@@ -778,6 +794,7 @@ export function ExpeditionOverworld({
               <div className="flex flex-col gap-3 w-full">
                 <button
                   onClick={() => {
+                    playSound('npc_talk');
                     setDialogueStep(0);
                     setShowDialogue(true);
                     if (isMobile) setIsSidebarOpen(false);
@@ -791,6 +808,7 @@ export function ExpeditionOverworld({
                 {currentNodeId === 'cadence_town' && (
                   <button
                     onClick={() => {
+                      playSound('shop_open');
                       if (onOpenShop) onOpenShop();
                       if (isMobile) setIsSidebarOpen(false);
                     }}
@@ -805,6 +823,7 @@ export function ExpeditionOverworld({
                 {currentNodeId === 'crossroads' && (
                   <button
                     onClick={() => {
+                      playSound('npc_talk');
                       setDialogueStep(0);
                       setShowDialogue(true);
                       if (isMobile) setIsSidebarOpen(false);
@@ -825,6 +844,7 @@ export function ExpeditionOverworld({
             ) : (
               <button
                 onClick={() => {
+                  playSound('battle_start');
                   if (currentNode.enemyIds) onStartBattle(currentNode.enemyIds[0], currentNode.enemyIds);
                   else if (currentNode.enemyId) onStartBattle(currentNode.enemyId);
                 }}
@@ -836,7 +856,7 @@ export function ExpeditionOverworld({
             )}
 
             <button
-              onClick={onOpenQuests}
+              onClick={() => { playSound('journal_open'); onOpenQuests(); }}
               className="w-full py-2.5 bg-[#38bdf8] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#7dd3fc] transition-all flex items-center justify-center gap-2 active:translate-y-[4px] active:translate-x-[4px] active:shadow-none mt-1"
             >
               <Compass className="w-4 h-4 shrink-0 skew-x-6" />
