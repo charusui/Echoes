@@ -325,6 +325,21 @@ export const EXPEDITION_INSTRUMENTS: Record<string, HarmonydexEntry> = {
     skillCost: 1,
     skillDesc: 'A fast attack that ignores a portion of enemy defense.',
   },
+  bakunawa: {
+    id: 'bakunawa',
+    name: 'Bakunawa',
+    type: 'percussion',
+    baseDmg: 55,
+    icon: '🐉',
+    desc: 'The mythical moon-eating sea dragon.',
+    captured: false,
+    audioPreset: 'sub-percussion',
+    rhythmSpeed: 1.4,
+    lore: 'A gigantic sea dragon from Philippine mythology, believed to cause eclipses.',
+    skillName: 'Lunar Devour',
+    skillCost: 2,
+    skillDesc: 'A devastating attack that consumes the light.',
+  },
 };
 
 export const DEFAULT_HEROES: Record<string, HeroProfile> = {
@@ -338,7 +353,7 @@ export const DEFAULT_HEROES: Record<string, HeroProfile> = {
     maxAp: 6,
     shield: 0,
     equippedId: 'cebuano_gitara',
-    avatar: '🧑‍🎤',
+    avatar: '/assets/expedition/gustave_avatar.png',
     bio: 'Lead guitarist and expedition commander. Specialist in String overdrive.',
   },
   maelle: {
@@ -351,7 +366,7 @@ export const DEFAULT_HEROES: Record<string, HeroProfile> = {
     maxAp: 6,
     shield: 0,
     equippedId: 'tulali',
-    avatar: '👩‍🎤',
+    avatar: '/assets/expedition/maelle_avatar.png',
     bio: 'Wind prodigy capable of manipulating sonic frequency shields.',
   },
   lune: {
@@ -364,7 +379,7 @@ export const DEFAULT_HEROES: Record<string, HeroProfile> = {
     maxAp: 6,
     shield: 0,
     equippedId: 'tultugan',
-    avatar: '🧚',
+    avatar: '/assets/expedition/lune_avatar.png',
     bio: 'Healer who channeled ancestral rhythms into healing magic.',
   },
 };
@@ -401,9 +416,9 @@ export const EXPEDITION_NODES: Record<string, MapNode> = {
     x: 800,
     y: 500,
     unlocked: true,
-    desc: 'An ancient temple where the Harmonic Bandit rests, guarding the sacred Titan Brass.',
-    enemyId: 'pasiyak',
-    rewards: '250 XP & Harmonic Bandit Capture Opportunity',
+    desc: 'An ancient temple where the legendary Bakunawa rests, guarding the sacred waters.',
+    enemyId: 'bakunawa',
+    rewards: '750 XP & Epic Boss Fight',
   },
   silent_peak: {
     id: 'silent_peak',

@@ -174,3 +174,17 @@ canvas {
 .animate-vibrate-x {
   animation: vibrate-x 0.12s linear infinite;
 }
+
+@keyframes sprite-play {
+  from { background-position: 0 0; }
+  to { background-position: -900% 0; }
+}
+.animate-sprite {
+  animation: sprite-play 1s steps(9) infinite;
+}
+
+@keyframes sprite-100 {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+

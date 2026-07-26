@@ -6,6 +6,7 @@ import { useGemini } from './context/GeminiProvider';
 import { ProgressProvider, useProgress } from './context/ProgressProvider';
 
 import { TitleScreen } from './components/TitleScreen';
+import { IntroCutscene } from './components/IntroCutscene';
 import { OnboardingScreen } from './components/OnboardingScreen';
 import { ExpeditionScreen } from './components/MapScreen';
 import { LocationServicesScreen } from './components/LocationServicesScreen';
@@ -49,9 +50,26 @@ function InnerApp() {
   }, [updateStreak]);
 
   const handleStartTitle = useCallback(() => {
+    // FORCE CUTSCENE FOR TESTING
+    // const hasSeenIntro = localStorage.getItem('filinstruments_has_seen_intro');
+    const hasSeenIntro = false;
+    if (!hasSeenIntro) {
+      setView('intro');
+    } else {
+      const hasSeenOnboarding = localStorage.getItem('filinstruments_has_seen_onboarding');
+      if (hasSeenOnboarding) {
+        setView('expedition');
+      } else {
+        setView('onboarding');
+      }
+    }
+  }, []);
+
+  const handleIntroComplete = useCallback(() => {
+    localStorage.setItem('filinstruments_has_seen_intro', 'true');
     const hasSeenOnboarding = localStorage.getItem('filinstruments_has_seen_onboarding');
     if (hasSeenOnboarding) {
-      setView('expedition'); // Directly to expedition
+      setView('expedition');
     } else {
       setView('onboarding');
     }
@@ -268,6 +286,10 @@ function InnerApp() {
       
       {view === 'title' && (
         <TitleScreen onStart={handleStartTitle} />
+      )}
+
+      {view === 'intro' && (
+        <IntroCutscene onComplete={handleIntroComplete} />
       )}
 
       {view === 'onboarding' && (

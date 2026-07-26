@@ -136,7 +136,7 @@ export interface PipelineStatus {
 
 // ─── App Views ────────────────────────────────────────────────────────────────
 
-export type AppView = 'title' | 'onboarding' | 'map' | 'locationServices' | 'setup' | 'pipeline' | 'discoveryCard' | 'gameplay' | 'quiz' | 'story' | 'results' | 'teachMode' | 'collection' | 'scanner' | 'scanVerification' | 'korlongHunt' | 'teachableStudent' | 'badges' | 'ranks' | 'expedition';
+export type AppView = 'title' | 'intro' | 'onboarding' | 'map' | 'locationServices' | 'setup' | 'pipeline' | 'discoveryCard' | 'gameplay' | 'quiz' | 'story' | 'results' | 'teachMode' | 'collection' | 'scanner' | 'scanVerification' | 'korlongHunt' | 'teachableStudent' | 'badges' | 'ranks' | 'expedition';
 
 // ─── User Progress & Persistence ──────────────────────────────────────────────
 

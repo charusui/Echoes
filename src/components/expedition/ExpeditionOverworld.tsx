@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Play, MessageSquare, Compass, ShieldAlert, Camera, Map, Flame, X, ChevronUp } from 'lucide-react';
 import { type MapNode, type ExpeditionQuest } from '../../types/expedition';
 import visayasMap from '../../assets/png/visayas_map.png';
+import corruptedVisayasMap from '../../assets/png/corrupted_visayas_map.png';
 import { DevMenu } from '../DevMenu'; 
 import { audioEngine } from '../../services/audioSynth';
 
@@ -478,6 +479,31 @@ export function ExpeditionOverworld({
     });
   }, [nodes, currentNodeId, dynamicPinScale, getDisplayCoords]);
 
+  // ─── DYNAMIC FOG OF WAR MASK ───
+  const dynamicMask = useMemo(() => {
+    // If all battle/boss/shrine nodes are completed, remove the mask to reveal the full clean map
+    const allBattlesCompleted = Object.values(nodes).every(n => n.type === 'town' || n.completed);
+    if (allBattlesCompleted) {
+      return 'none';
+    }
+
+    // Only use completed nodes (or the starting town) to reveal the map!
+    const unlockedNodes = Object.values(nodes).filter(n => n.completed || n.id === 'cadence_town');
+    if (unlockedNodes.length === 0) {
+      return 'radial-gradient(circle 350px at 30% 50%, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 80%)';
+    }
+    
+    return unlockedNodes.map(node => {
+      // Use getDisplayCoords to align the mask exactly with where the node is rendered
+      const { x, y } = getDisplayCoords(node.id, node.x, node.y);
+      const xPct = (x / 1000) * 100;
+      const yPct = (y / 650) * 100;
+      // Boss nodes reveal a larger area
+      const radius = node.type === 'boss' ? '500px' : '350px';
+      return `radial-gradient(circle ${radius} at ${xPct}% ${yPct}%, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 80%)`;
+    }).join(', ');
+  }, [nodes, getDisplayCoords]);
+
   return (
     <div className="flex-1 flex flex-col md:flex-row overflow-hidden w-full h-full relative font-orbitron">
       
@@ -547,12 +573,25 @@ export function ExpeditionOverworld({
           >
             <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden will-change-transform">
               <img
-                src={visayasMap}
-                alt="Visayas Map Background"
-                className="w-full h-full object-cover"
+                src={corruptedVisayasMap}
+                alt="Corrupted Visayas Map Background"
+                className="absolute inset-0 w-full h-full object-cover"
                 style={{
                   opacity: 0.95,
                   mixBlendMode: 'normal',
+                }}
+              />
+              <img
+                src={visayasMap}
+                alt="Visayas Map Background"
+                className="absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out"
+                style={{
+                  opacity: 0.95,
+                  mixBlendMode: 'normal',
+                  WebkitMaskImage: dynamicMask,
+                  maskImage: dynamicMask,
+                  WebkitMaskComposite: 'add',
+                  maskComposite: 'add'
                 }}
               />
               <div 
