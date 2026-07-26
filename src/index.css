@@ -131,6 +131,16 @@ body {
   animation: boss-breathe 3.6s ease-in-out infinite;
 }
 
+@keyframes parry-arc {
+  0% { transform: scale(0.5); opacity: 0; }
+  20% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+.animate-parry-arc {
+  animation: parry-arc 0.25s ease-out forwards;
+}
+
 /* ─── Scrollbar ──────────────────────────────────────────────────────────────── */
 
 ::-webkit-scrollbar       { width: 4px; }

@@ -15,6 +15,7 @@ import {
 } from '../types/expedition';
 import { ExpeditionOverworld } from './expedition/ExpeditionOverworld';
 import { ExpeditionCombat, type TurnUpdateInfo } from './expedition/ExpeditionCombat';
+import { HarmonyStage } from './expedition/HarmonyStage';
 import { HarmonydexModal } from './expedition/HarmonydexModal';
 import { EquipmentModal } from './expedition/EquipmentModal';
 import { QuestsModal } from './expedition/QuestsModal';
@@ -263,6 +264,17 @@ export function ExpeditionScreen({
             onOpenBadges={onOpenBadges}
             onOpenRanks={onOpenRanks}
             onOpenShop={() => setActiveModal('shop')}
+          />
+        ) : activeEnemyId.startsWith('bakunawa') ? (
+          <HarmonyStage 
+            party={party}
+            enemyId={activeEnemyId}
+            enemyGauntlet={activeEnemyGauntlet}
+            dex={dex}
+            onCombatResult={handleCombatResult}
+            onFlee={() => setSubView('overworld')}
+            onUpdateParty={setParty}
+            onTurnUpdate={setTurnInfo}
           />
         ) : (
           <ExpeditionCombat 

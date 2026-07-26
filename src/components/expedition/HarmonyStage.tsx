@@ -20,7 +20,19 @@ export interface TurnUpdateInfo {
   index: number;
 }
 
-interface ExpeditionCombatProps {
+export type Projectile = {
+  id: number;
+  type: 'blue' | 'gold';
+  x: number;
+  y: number;
+  speed: number;
+  chargeElapsed: number; // ms elapsed since spawn (charge-up phase)
+};
+
+const CHARGE_DURATION = 900; // ms orb charges at mouth before shooting
+
+
+interface HarmonyStageProps {
   party: Record<string, HeroProfile>;
   enemyId: string;
   enemyGauntlet?: string[];
@@ -39,9 +51,11 @@ interface DamagePopup {
   effectType?: 'slash' | 'magic' | 'block';
   offsetX: number;
   offsetY: number;
+  customX?: string;
+  customY?: string;
 }
 
-export function ExpeditionCombat({
+export function HarmonyStage({
   party,
   enemyId,
   enemyGauntlet,
@@ -50,12 +64,12 @@ export function ExpeditionCombat({
   onFlee,
   onUpdateParty,
   onTurnUpdate,
-}: ExpeditionCombatProps) {
+}: HarmonyStageProps) {
   const [enemies, setEnemies] = useState<EnemyProfile[]>(() => {
     const list = enemyGauntlet && enemyGauntlet.length > 0 ? enemyGauntlet : [enemyId];
     return list.map((id, index) => {
       const inst = EXPEDITION_INSTRUMENTS[id] || EXPEDITION_INSTRUMENTS['wakwak']!;
-      const isB = inst.id === 'lord_cacophony' || inst.id === 'wakwak';
+      const isB = inst.id === 'lord_cacophony' || inst.id === 'wakwak' || inst.id === 'bakunawa';
       return {
         id: `${inst.id}_${index}`,
         name: inst.name,
@@ -86,7 +100,7 @@ export function ExpeditionCombat({
   }, [enemies, targetEnemyIndex]);
 
   const isBoss = enemies[0]?.isBoss || false;
-  const isShrineBandit = enemies[0]?.id.startsWith('bandit') || enemies[0]?.id.startsWith('titan_brass');
+  const isShrineBandit = enemies[0]?.id.startsWith('bandit') || enemies[0]?.id.startsWith('titan_brass') || enemies[0]?.id.startsWith('bakunawa');
   const enemy = enemies[targetEnemyIndex] || enemies[0];
   const baseEnemyInst = EXPEDITION_INSTRUMENTS[enemy.id.replace(/_\d+$/, '')] || EXPEDITION_INSTRUMENTS['corrupted_violin']!;
 
@@ -109,56 +123,19 @@ export function ExpeditionCombat({
     setGhostHp(enemy?.hp || 0);
   }, [targetEnemyIndex]);
 
-  const [turnIndex, setTurnIndex] = useState(0);
-  const [activeAction, setActiveAction] = useState<'none' | 'rhythm' | 'spell' | 'parry' | 'attune'>('none');
-  const [parryStanceActive, setParryStanceActive] = useState(false);
-  const [enemyFrame, setEnemyFrame] = useState(0);
-  const [isPartyDrawerOpen, setIsPartyDrawerOpen] = useState(false);
-  
-  const [damagePopups, setDamagePopups] = useState<DamagePopup[]>([]);
-  const [isEndingBattle, setIsEndingBattle] = useState(false);
-
-  const [ghostHp, setGhostHp] = useState(enemy.hp);
-  const [hpShaking, setHpShaking] = useState(false);
-
-  const [bossAttackVariation, setBossAttackVariation] = useState<'dual_slam' | 'right_sweep'>('dual_slam');
-  const [bossAttackPhase, setBossAttackPhase] = useState<'idle' | 'rise' | 'down' | 'slam' | 'sweep_prep'>('idle');
-  const [canCounterAttack, setCanCounterAttack] = useState(false);
-  const [parryResolved, setParryResolved] = useState(false);
-
-  const getHeroSprite = (name: string) => {
-    const n = name.toLowerCase();
-    if (n.includes('gustave')) return '/boy1_idle.gif';
-    if (n.includes('maelle')) return '/girl_idle.gif';
-    return '/boy2_idle.gif'; 
-  };
-
-  useEffect(() => {
-    if (enemy.hp < ghostHp) {
-      setHpShaking(true);
-      const shakeTimer = setTimeout(() => setHpShaking(false), 400);
-      const ghostTimer = setTimeout(() => setGhostHp(enemy.hp), 800);
-      
-      return () => {
-        clearTimeout(shakeTimer);
-        clearTimeout(ghostTimer);
-      };
-    } else if (enemy.hp > ghostHp) {
-      setGhostHp(enemy.hp);
-    }
-  }, [enemy.hp, ghostHp]);
-
   const partyList = useMemo(() => Object.values(party), [party]);
   const turnQueue: TurnUnit[] = useMemo(() => {
     const queue: TurnUnit[] = [];
     const maxLen = Math.max(partyList.length, enemies.length);
     for (let i = 0; i < maxLen; i++) {
+      // Hero turns
       if (partyList[i]) {
         queue.push({ isHero: true, unit: partyList[i]! });
       } else if (partyList.length > 0) {
         queue.push({ isHero: true, unit: partyList[i % partyList.length]! });
       }
       
+      // Enemy turns
       if (enemies[i]) {
         queue.push({ isHero: false, unit: enemies[i]! });
       } else if (enemies.length > 0) {
@@ -167,6 +144,152 @@ export function ExpeditionCombat({
     }
     return queue;
   }, [partyList, enemies]);
+
+  const [turnIndex, setTurnIndex] = useState(enemy.id.startsWith('bakunawa') ? 1 : 0);
+  const [activeAction, setActiveAction] = useState<'none' | 'rhythm' | 'spell' | 'parry' | 'attune'>('none');
+  const [parryStanceActive, setParryStanceActive] = useState(false);
+  const [enemyFrame, setEnemyFrame] = useState(0);
+  const [isPartyDrawerOpen, setIsPartyDrawerOpen] = useState(false);
+
+  // ─── Bakunawa Intro Sequence State ───
+  const [introStep, setIntroStep] = useState<'dialogue' | 'transition' | 'hint' | 'combat'>(
+    enemy.id.startsWith('bakunawa') ? 'dialogue' : 'combat'
+  );
+  
+
+  const [dialogueIndex, setDialogueIndex] = useState(0);
+  const introDialogue = useMemo(() => [
+    { name: "Maelle", avatar: party['maelle']?.avatar || "👩🏽", text: "Is that the Bakunawa?! Wow, it's absolutely massive! This is going to be so epic, let's go!" },
+    { name: "Lune", avatar: party['lune']?.avatar || "👶🏽", text: "We have to protect the shrine and everyone in it! Let's work together and stay safe, okay?" },
+    { name: "Gustave", avatar: party['gustave']?.avatar || "🧑🏽", text: "Stay sharp, both of you. One wrong move and we're fish food. Wait for the perfect moment to parry." }
+  ], [party]);
+
+  // ─── UPGRADED: Shrine Board Joystick State ───
+  const [boardY, setBoardY] = useState(0);
+  const boardYRef = useRef(0); // always-current boardY for use inside rAF loop
+  const [isMovingUp, setIsMovingUp] = useState(false);
+  const previousBoardY = useRef(0);
+  const keys = useRef({ w: false, s: false });
+  const [parryFlashes, setParryFlashes] = useState<{ id: number }[]>([]);
+  const [projectiles, setProjectiles] = useState<Projectile[]>([]);
+  const projectilesRef = useRef<Projectile[]>([]);
+  const [bakunawaY, setBakunawaY] = useState(0);
+  const previousBakunawaY = useRef(0);
+  // Refs to measure actual mouth position from the DOM
+  const bakunawaDesktopImgRef = useRef<HTMLImageElement>(null);
+  const bakunawaMobileImgRef = useRef<HTMLImageElement>(null);
+  const bakunawaMouthBottomPxRef = useRef(300); // px from COMBAT CONTAINER bottom
+  const bakunawaMouthXPercentRef = useRef(85);  // % from combat left
+  const combatContainerRef = useRef<HTMLDivElement>(null); // to convert viewport-relative rects
+  const partyBoardImgRef = useRef<HTMLImageElement>(null); // to read actual board DOM rect
+  // Tracks board's actual rect relative to combat container (updated every rAF frame)
+  const partyBoardRectRef = useRef({ left: 0, bottom: 0, width: 0, height: 0, leftPct: 0, rightPct: 0 });
+
+  const triggerDamagePopup = useCallback((text: string, isEnemy: boolean, color: string, effectType?: 'slash' | 'magic' | 'block', customX?: string, customY?: string) => {
+    const id = Date.now() + Math.random();
+    const offsetX = (Math.random() - 0.5) * 80; 
+    const offsetY = (Math.random() - 0.5) * 60;
+    
+    setDamagePopups(prev => [...prev, { id, text, isEnemy, color, effectType, offsetX, offsetY, customX, customY }]);
+    setTimeout(() => {
+      setDamagePopups(prev => prev.filter(p => p.id !== id));
+    }, 1200); 
+  }, []);
+
+  const handleProjectileHit = useCallback((dmg: number) => {
+    audioEngine.playHitSFX('miss');
+    const br = partyBoardRectRef.current;
+    const combatW = combatContainerRef.current?.clientWidth || 1000;
+    const combatH = combatContainerRef.current?.clientHeight || 600;
+    const hitX = `${br.leftPct + (br.width / combatW * 100) * 0.5}%`;
+    const hitTop = `${((combatH - br.bottom - br.height * 0.5) / combatH) * 100}%`;
+    triggerDamagePopup(`-${dmg}`, false, '#da2d46', 'magic', hitX, hitTop);
+    onUpdateParty(prev => {
+      const active = Object.values(prev).find(h => h.hp > 0) || Object.values(prev)[0]!;
+      const shieldLeft = Math.max(0, active.shield - dmg);
+      const overflow = Math.max(0, dmg - active.shield);
+      const newHp = Math.max(0, active.hp - overflow);
+      return { ...prev, [active.id]: { ...active, shield: shieldLeft, hp: newHp } };
+    });
+  }, [onUpdateParty, triggerDamagePopup]);
+
+  const handleProjectileHitRef = useRef(handleProjectileHit);
+  useEffect(() => { handleProjectileHitRef.current = handleProjectileHit; }, [handleProjectileHit]);
+
+  const tryParry = useCallback(() => {
+    const flashId = Date.now();
+    setParryFlashes(prev => [...prev, { id: flashId }]);
+    setTimeout(() => {
+      setParryFlashes(prev => prev.filter(f => f.id !== flashId));
+    }, 250);
+
+    // Use the actual measured board rect — parry window extends 0.5x the board width to the right
+    const br = partyBoardRectRef.current;
+    const boardBottom = br.bottom;
+    const boardTop = br.bottom + br.height;
+    const parryRightPct = br.rightPct + (br.width / (combatContainerRef.current?.clientWidth ?? window.innerWidth) * 100) * 0.5;
+    
+    const goldOrbIdx = projectilesRef.current.findIndex(p => 
+      p.type === 'gold' && 
+      p.x < parryRightPct && p.x > br.leftPct && 
+      p.y > boardBottom - 10 && p.y < boardTop + 20
+    );
+    if (goldOrbIdx !== -1) {
+      if (enemy.id.startsWith('bakunawa')) {
+        audioEngine.playHitSFX('sick');
+        triggerDamagePopup('PARRIED!', true, '#4ade80');
+        setEnemy(prev => ({ ...prev, stagger: prev.maxStagger, staggered: true }));
+        projectilesRef.current = [];
+        setProjectiles([]);
+        setTimeout(() => {
+          setTurnIndex(prev => (prev + 1) % turnQueue.length);
+        }, 1200);
+      } else {
+        projectilesRef.current.splice(goldOrbIdx, 1);
+        setProjectiles([...projectilesRef.current]);
+        audioEngine.playHitSFX('good');
+        setActiveAction('parry');
+      }
+    }
+  }, [enemy.id, turnQueue.length, triggerDamagePopup, setEnemy]);
+
+  const tryParryRef = useRef(tryParry);
+  useEffect(() => { tryParryRef.current = tryParry; }, [tryParry]);
+
+  
+  const [damagePopups, setDamagePopups] = useState<DamagePopup[]>([]);
+  const [isEndingBattle, setIsEndingBattle] = useState(false);
+
+  // ─── UPGRADED: Health Bar Animation States ───
+  const [ghostHp, setGhostHp] = useState(enemy.hp);
+  const [hpShaking, setHpShaking] = useState(false);
+
+  const [bossAttackVariation, setBossAttackVariation] = useState<'dual_slam' | 'right_sweep'>('dual_slam');
+  const [bossAttackPhase, setBossAttackPhase] = useState<'idle' | 'rise' | 'down' | 'slam' | 'sweep_prep'>('idle');
+  const [canCounterAttack, setCanCounterAttack] = useState(false);
+  const [parryResolved, setParryResolved] = useState(false);
+
+  // ─── UPGRADED: Combo Ghost Trail & Shake Logic ───
+  useEffect(() => {
+    if (enemy.hp < ghostHp) {
+      // Trigger the shake animation immediately
+      setHpShaking(true);
+      const shakeTimer = setTimeout(() => setHpShaking(false), 400);
+      
+      // Delay the ghost trail drop. (If hit again, this timer clears and resets!)
+      const ghostTimer = setTimeout(() => setGhostHp(enemy.hp), 800);
+      
+      return () => {
+        clearTimeout(shakeTimer);
+        clearTimeout(ghostTimer);
+      };
+    } else if (enemy.hp > ghostHp) {
+      // If healed, instantly snap the ghost trail
+      setGhostHp(enemy.hp);
+    }
+  }, [enemy.hp, ghostHp]);
+
+
 
   const currentTurnUnit = turnQueue[turnIndex % turnQueue.length] || turnQueue[0]!;
   const isHeroTurn = currentTurnUnit.isHero;
@@ -182,6 +305,145 @@ export function ExpeditionCombat({
       return partyList[0]!;
     }
   }, [isHeroTurn, currentTurnUnit, turnIndex, turnQueue, partyList]);
+
+  useEffect(() => {
+    if (!isShrineBandit) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'w' || e.key === 'W') { keys.current.w = true; setIsMovingUp(true); }
+      if (e.key === 's' || e.key === 'S') { keys.current.s = true; setIsMovingUp(false); }
+      if (e.key === ' ' && !isHeroTurn && enemy.id.startsWith('bakunawa') && activeAction === 'none') {
+        e.preventDefault();
+        tryParryRef.current();
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'w' || e.key === 'W') { keys.current.w = false; if (!keys.current.s) setIsMovingUp(false); }
+      if (e.key === 's' || e.key === 'S') { keys.current.s = false; }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    
+    let frameId: number;
+    let lastTime = performance.now();
+    let lastSpawnTime = performance.now();
+    
+    const loop = (time: number) => {
+      const dt = time - lastTime;
+      lastTime = time;
+      
+      if ((keys.current.w || keys.current.s) && introStep === 'combat' && !isHeroTurn && !enemy.staggered) {
+        const speed = 0.15;
+        if (keys.current.w) boardYRef.current = Math.min(100, boardYRef.current + dt * speed);
+        else if (keys.current.s) boardYRef.current = Math.max(0, boardYRef.current - dt * speed);
+        setBoardY(boardYRef.current);
+      }
+      
+      // Bakunawa lazily follows boardY with a slight delay
+      let currentBakunawaY = previousBakunawaY.current;
+      if (enemy.id.startsWith('bakunawa')) {
+        currentBakunawaY += (boardYRef.current - currentBakunawaY) * 0.04;
+      }
+      if (Math.abs(previousBakunawaY.current - currentBakunawaY) > 0.05) {
+        previousBakunawaY.current = currentBakunawaY;
+        setBakunawaY(currentBakunawaY);
+      }
+
+      // Measure Bakunawa mouth actual pixel position — relative to the COMBAT CONTAINER
+      const combatEl = combatContainerRef.current;
+      const imgEl = bakunawaDesktopImgRef.current?.offsetWidth
+        ? bakunawaDesktopImgRef.current
+        : bakunawaMobileImgRef.current;
+      if (combatEl && imgEl && imgEl.offsetWidth > 0) {
+        const combatRect = combatEl.getBoundingClientRect();
+        const imgRect = imgEl.getBoundingClientRect();
+        const combatH = combatEl.clientHeight;
+        const combatW = combatEl.clientWidth;
+        // Y: Bakunawa head faces left — mouth at ~65% from image top
+        const mouthFromCombatTop = (imgRect.top - combatRect.top) + imgRect.height * 0.65;
+        bakunawaMouthBottomPxRef.current = combatH - mouthFromCombatTop;
+        // X: mouth is at the LEFT edge of the sprite (head faces left), ~5% inward
+        const mouthFromCombatLeft = (imgRect.left - combatRect.left) + imgRect.width * 0.05;
+        bakunawaMouthXPercentRef.current = Math.min(98, Math.max(50, (mouthFromCombatLeft / combatW) * 100));
+      }
+
+      // Measure party board's actual pixel position — relative to the COMBAT CONTAINER
+      if (combatContainerRef.current && partyBoardImgRef.current && partyBoardImgRef.current.offsetWidth > 0) {
+        const combatRect = combatContainerRef.current.getBoundingClientRect();
+        const combatH = combatContainerRef.current.clientHeight;
+        const combatW = combatContainerRef.current.clientWidth;
+        const bRect = partyBoardImgRef.current.getBoundingClientRect();
+        partyBoardRectRef.current = {
+          left: bRect.left - combatRect.left,
+          bottom: combatH - (bRect.bottom - combatRect.top),
+          width: bRect.width,
+          height: bRect.height,
+          leftPct: ((bRect.left - combatRect.left) / combatW) * 100,
+          rightPct: ((bRect.right - combatRect.left) / combatW) * 100,
+        };
+      }
+
+      if (!isHeroTurn && enemy.id.startsWith('bakunawa') && activeAction === 'none' && introStep === 'combat') {
+        let hitAny = false;
+        
+        // Move orbs that have finished charging; charge the rest in place
+        projectilesRef.current = projectilesRef.current.map(p => {
+          if (p.chargeElapsed < CHARGE_DURATION) {
+            return { ...p, chargeElapsed: p.chargeElapsed + dt };
+          }
+          return { ...p, x: p.x - dt * p.speed };
+        });
+        
+        // Use the actual measured board rect for collision
+        const br = partyBoardRectRef.current;
+        const boardBottom = br.bottom;
+        const boardTop = br.bottom + br.height;
+        
+        projectilesRef.current = projectilesRef.current.filter(p => {
+          if (p.x < -10) return false;
+          // Collision: orb is horizontally at the board (left edge), vertically overlapping the board sprite
+          if (p.x < br.rightPct && p.x > br.leftPct && p.y > boardBottom - 10 && p.y < boardTop + 20) {
+            hitAny = true;
+            return false;
+          }
+          return true;
+        });
+
+        if (hitAny) {
+          handleProjectileHitRef.current(20);
+        }
+
+        if (time - lastSpawnTime > 1800) {
+          lastSpawnTime = time;
+          const type = Math.random() > 0.75 ? 'gold' : 'blue';
+          projectilesRef.current.push({
+            id: time,
+            type,
+            x: bakunawaMouthXPercentRef.current,
+            y: bakunawaMouthBottomPxRef.current,
+            speed: 0.02 + Math.random() * 0.01,
+            chargeElapsed: 0, // start charging
+          });
+        }
+        
+        setProjectiles([...projectilesRef.current]);
+      } else if (projectilesRef.current.length > 0) {
+         // Clear projectiles when turn ends or action starts
+         projectilesRef.current = [];
+         setProjectiles([]);
+      }
+
+      frameId = requestAnimationFrame(loop);
+    };
+    frameId = requestAnimationFrame(loop);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      cancelAnimationFrame(frameId);
+    };
+  }, [isShrineBandit, isHeroTurn, enemy.id, activeAction, introStep]);
 
   const activeAttackingEnemy = !isHeroTurn ? (currentTurnUnit.unit as EnemyProfile) : enemy;
 
@@ -203,16 +465,7 @@ export function ExpeditionCombat({
     };
   }, [onTurnUpdate]);
 
-  const triggerDamagePopup = useCallback((text: string, isEnemy: boolean, color: string, effectType?: 'slash' | 'magic' | 'block') => {
-    const id = Date.now() + Math.random();
-    const offsetX = (Math.random() - 0.5) * 80; 
-    const offsetY = (Math.random() - 0.5) * 60;
-    
-    setDamagePopups(prev => [...prev, { id, text, isEnemy, color, effectType, offsetX, offsetY }]);
-    setTimeout(() => {
-      setDamagePopups(prev => prev.filter(p => p.id !== id));
-    }, 1200); 
-  }, []);
+
 
   useEffect(() => {
     if (activeAction === 'parry' && !isEndingBattle) {
@@ -229,6 +482,7 @@ export function ExpeditionCombat({
     }
   }, [activeAction, isEndingBattle]);
 
+  // Boss specific attack sequence: dual slam or alternating right sweep
   useEffect(() => {
     if (activeAction === 'parry' && isBoss) {
       setCanCounterAttack(false);
@@ -253,6 +507,7 @@ export function ExpeditionCombat({
     }
   }, [activeAction, isBoss, bossAttackVariation]);
 
+  // Play looping battle background music during combat
   useEffect(() => {
     const bgm = new Audio('/assets/expedition/battle_bg_music.mp3');
     bgm.loop = true;
@@ -310,6 +565,7 @@ export function ExpeditionCombat({
     let nextIdx = overrideIndex !== undefined ? overrideIndex : (turnIndex + 1) % turnQueue.length;
     let nextUnit = turnQueue[nextIdx]!;
     
+    // Skip dead units
     let loopCount = 0;
     while ((nextUnit.unit.hp <= 0 || (nextUnit.isHero && partyList.every(h => h.hp <= 0))) && loopCount < turnQueue.length) {
       nextIdx = (nextIdx + 1) % turnQueue.length;
@@ -320,17 +576,22 @@ export function ExpeditionCombat({
     setTurnIndex(nextIdx);
     
     if (!nextUnit.isHero) {
-      setTimeout(() => {
-        if (!finishedRef.current && !isEndingBattle) {
-          if (isBoss) {
-            setBossAttackVariation(v => v === 'dual_slam' ? 'right_sweep' : 'dual_slam');
+      if (enemies[0]?.id.startsWith('bakunawa')) {
+        // Bullet hell phase starts, do not automatically set parry action
+      } else {
+        setTimeout(() => {
+          if (!finishedRef.current && !isEndingBattle) {
+            if (isBoss) {
+              setBossAttackVariation(v => v === 'dual_slam' ? 'right_sweep' : 'dual_slam');
+            }
+            setActiveAction('parry');
           }
-          setActiveAction('parry');
-        }
-      }, 800);
+        }, 800);
+      }
     }
   }, [turnIndex, turnQueue, isEndingBattle, isBoss, partyList]);
 
+  // Command handlers
   const handleCommandAttack = () => { if (!isHeroTurn || activeHero.ap < 1 || isEndingBattle) return; setActiveAction('rhythm'); };
   const handleCommandSkill = () => { if (!isHeroTurn || activeHero.ap < 2 || isEndingBattle) return; setActiveAction('spell'); };
   
@@ -354,6 +615,7 @@ export function ExpeditionCombat({
     });
     setParryStanceActive(true);
     audioEngine.playHitSFX('good');
+    setEnemy(prev => ({ ...prev, staggered: false }));
     advanceTurn();
   };
 
@@ -376,6 +638,7 @@ export function ExpeditionCombat({
       }, 1500);
     } else {
       audioEngine.playHitSFX('miss');
+      setEnemy(prev => ({ ...prev, staggered: false }));
       setTimeout(() => checkPostTurnStates(null, updatedPartyList) || advanceTurn(), 100);
     }
   }, [activeHero.id, onUpdateParty, isBoss, baseEnemyInst, onCombatResult, advanceTurn, enemy.hp, checkPostTurnStates]);
@@ -414,7 +677,7 @@ export function ExpeditionCombat({
       targetHp = nextHp;
       const nextStagger = Math.min(prev.maxStagger, prev.stagger + staggerGain);
       const isStaggered = nextStagger >= prev.maxStagger;
-      return { ...prev, hp: nextHp, stagger: isStaggered ? 0 : nextStagger, staggered: isStaggered || prev.staggered };
+      return { ...prev, hp: nextHp, stagger: isStaggered ? 0 : nextStagger, staggered: isStaggered };
     });
 
     setTimeout(() => {
@@ -451,7 +714,7 @@ export function ExpeditionCombat({
     setEnemy(prev => {
       const nextHp = Math.max(0, prev.hp - totalDmg);
       targetHp = nextHp;
-      return { ...prev, hp: nextHp, stagger: prev.maxStagger, staggered: true };
+      return { ...prev, hp: nextHp, stagger: 0, staggered: false };
     });
 
     setTimeout(() => {
@@ -507,28 +770,41 @@ export function ExpeditionCombat({
     });
 
     setParryStanceActive(false);
-    if (isBoss && !parried) {
-      setTimeout(() => {
-        setActiveAction('none');
-        setBossAttackPhase('idle');
-        setCanCounterAttack(false);
+    if (isBoss) {
+      if (enemy.id.startsWith('bakunawa')) {
+        if (parried) {
+          setEnemy(prev => ({ ...prev, stagger: prev.maxStagger, staggered: true }));
+        }
         setTimeout(() => {
+          setActiveAction('none');
           if (enemy.hp > 0 && !isEndingBattle) advanceTurn();
-        }, 400);
-      }, 1100);
-    } else if (!isBoss) {
+        }, 800);
+      } else if (!parried) {
+        setTimeout(() => {
+          setActiveAction('none');
+          setBossAttackPhase('idle');
+          setCanCounterAttack(false);
+          setTimeout(() => {
+            if (enemy.hp > 0 && !isEndingBattle) advanceTurn();
+          }, 400);
+        }, 1100);
+      }
+    } else {
       setTimeout(() => {
         if (enemy.hp > 0 && !isEndingBattle) advanceTurn();
       }, 600);
     }
+    // When isBoss && parried is true, canCounterAttack === true renders WingSlamCounterMinigame which triggers handleWingSlamCounterComplete
   }, [enemy, parryStanceActive, activeHero, onUpdateParty, partyList, checkPostTurnStates, advanceTurn, triggerDamagePopup, isEndingBattle, isBoss]);
 
   const finishedRef = useRef(false);
   const hpPct = Math.max(0, Math.min(100, (enemy.hp / enemy.maxHp) * 100));
   
+  // ─── UPGRADED: Calculate ghost percentage independently ───
   const ghostPct = Math.max(0, Math.min(100, (ghostHp / enemy.maxHp) * 100));
   const staggerPct = Math.max(0, Math.min(100, (enemy.stagger / enemy.maxStagger) * 100));
 
+  // Complete Wing Slam Counter-Attack Minigame
   const handleWingSlamCounterComplete = useCallback((totalDmg: number, totalStag: number) => {
     let updatedEnemyHp = enemy.hp;
     setEnemy(prev => {
@@ -557,10 +833,13 @@ export function ExpeditionCombat({
 
   return (
     <div 
+      ref={combatContainerRef}
       className="flex-1 flex flex-col justify-between p-2 sm:p-4 lg:p-6 relative overflow-hidden bg-[#151828] bg-cover bg-center bg-no-repeat select-none"
-      style={{ backgroundImage: `linear-gradient(rgba(15, 12, 12, 0.35), rgba(15, 12, 12, 0.5)), url('/assets/expedition/battle_bg.png')` }}
+      style={{ backgroundImage: `linear-gradient(rgba(15, 12, 12, 0.35), rgba(15, 12, 12, 0.5)), url('${isShrineBandit ? '/assets/expedition/shrine_bg.png' : '/assets/expedition/battle_bg.png'}')` }}
     >
+      {/* ─── UPGRADED VFX ANIMATIONS ─── */}
       <style>{`
+        /* Bouncing damage numbers */
         @keyframes damageNumberBounce {
           0% { opacity: 0; transform: scale(0.5) translateY(0); }
           15% { opacity: 1; transform: scale(1.6) translateY(-40px); }
@@ -569,20 +848,24 @@ export function ExpeditionCombat({
           75% { opacity: 1; transform: scale(1) translateY(-15px); }
           100% { opacity: 0; transform: scale(0.8) translateY(-20px); }
         }
+        /* Slashing Sword Hit */
         @keyframes slashFx {
           0% { transform: scale(0) rotate(-45deg); opacity: 1; filter: brightness(2); }
           50% { transform: scale(2.5, 0.15) rotate(-45deg); opacity: 1; filter: brightness(1.5); }
           100% { transform: scale(3.5, 0) rotate(-45deg); opacity: 0; }
         }
+        /* Expanding Magic Burst */
         @keyframes magicFx {
           0% { transform: scale(0.5) rotate(0deg); opacity: 1; filter: brightness(2); }
           50% { transform: scale(1.8) rotate(90deg); opacity: 1; }
           100% { transform: scale(2.5) rotate(180deg); opacity: 0; }
         }
+        /* Shield/Impact Shockwave */
         @keyframes blockFx {
           0% { transform: scale(0.5); opacity: 1; border-width: 12px; }
           100% { transform: scale(2.5); opacity: 0; border-width: 0px; }
         }
+        /* THE JRPG BOSS DEATH SEQUENCE */
         @keyframes bossDeath {
           0% { filter: brightness(1); transform: translateX(0); }
           10% { filter: brightness(2) sepia(1) hue-rotate(-50deg) saturate(5); transform: translateX(-15px); }
@@ -593,11 +876,13 @@ export function ExpeditionCombat({
           60% { opacity: 1; transform: scale(1.2) translateY(-30px); filter: brightness(3); }
           100% { opacity: 0; transform: scale(0.1) translateY(100px); filter: grayscale(1) brightness(0); }
         }
+        /* White Flash on Death */
         @keyframes flashWhite {
           0% { opacity: 0; }
           10% { opacity: 1; }
           100% { opacity: 0; }
         }
+        /* Health Bar Impact Shake */
         @keyframes hpShake {
           0% { transform: translateX(0); filter: brightness(1); }
           20% { transform: translateX(-4px); filter: brightness(2); }
@@ -608,44 +893,55 @@ export function ExpeditionCombat({
         }
       `}</style>
 
+      {/* Screen Death Flash Overlay */}
       {enemy.hp <= 0 && (
         <div className="absolute inset-0 bg-white z-50 pointer-events-none animate-[flashWhite_2s_ease-out_forwards]" />
       )}
 
+      {/* ── ECHO VILLAGE & SUMMIT BOSS: 3rd Image (Boss Body) behind the floor (z-10) but on top of background (z-0) — SLOW BREATHING LOOP ── */}
+      {/* ── ECHO VILLAGE & SUMMIT BOSS: Desktop PC Background Layers (Boss Body) (z-[1]) ── */}
       {isBoss && (
         <div className="hidden lg:flex absolute inset-0 z-[1] pointer-events-none items-center justify-center overflow-visible">
-          <div className="animate-boss-breathe w-full h-full flex flex-col items-center justify-center relative">
-            {enemy.staggered && enemy.hp > 0 && (
-              <div className="absolute -translate-y-40 sm:-translate-y-52 z-20 flex flex-col items-center justify-center pointer-events-none animate-fadeIn">
-                <div className="relative w-48 h-16 flex items-center justify-center">
-                  <div className="absolute inset-0 flex items-center justify-around animate-[spin_3s_linear_infinite] drop-shadow-[0_0_12px_#facc15]">
-                    <span className="text-3xl animate-bounce">⭐</span>
-                    <span className="text-xl text-[#facc15] animate-pulse">✨</span>
-                    <span className="text-3xl animate-bounce" style={{ animationDelay: '200ms' }}>⭐</span>
-                    <span className="text-xl text-[#facc15] animate-pulse" style={{ animationDelay: '400ms' }}>✨</span>
-                    <span className="text-3xl animate-bounce" style={{ animationDelay: '600ms' }}>⭐</span>
-                  </div>
-                  <div className="absolute inset-0 flex items-center justify-around animate-[spin_2s_linear_infinite_reverse] drop-shadow-[0_0_8px_#ff8000] scale-75 opacity-90">
-                    <span className="text-2xl">💫</span>
-                    <span className="text-2xl">💫</span>
-                    <span className="text-2xl">💫</span>
+          <div className={`animate-boss-breathe w-full h-full flex flex-col items-center justify-center relative ${enemy.id.startsWith('bakunawa') ? 'translate-x-[40%]' : ''}`}>
+            <div 
+              className={`w-full h-full flex flex-col items-center transition-transform duration-75 ${enemy.id.startsWith('bakunawa') ? 'justify-end pb-16' : 'justify-center'}`}
+              style={enemy.id.startsWith('bakunawa') ? { transform: `translateY(-${bakunawaY * 4}px)` } : {}}
+            >
+              {enemy.staggered && enemy.hp > 0 && (
+                <div className="absolute -translate-y-40 sm:-translate-y-52 z-20 flex flex-col items-center justify-center pointer-events-none animate-fadeIn">
+                  <div className="relative w-48 h-16 flex items-center justify-center">
+                    <div className="absolute inset-0 flex items-center justify-around animate-[spin_3s_linear_infinite] drop-shadow-[0_0_12px_#facc15]">
+                      <span className="text-3xl animate-bounce">⭐</span>
+                      <span className="text-xl text-[#facc15] animate-pulse">✨</span>
+                      <span className="text-3xl animate-bounce" style={{ animationDelay: '200ms' }}>⭐</span>
+                      <span className="text-xl text-[#facc15] animate-pulse" style={{ animationDelay: '400ms' }}>✨</span>
+                      <span className="text-3xl animate-bounce" style={{ animationDelay: '600ms' }}>⭐</span>
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-around animate-[spin_2s_linear_infinite_reverse] drop-shadow-[0_0_8px_#ff8000] scale-75 opacity-90">
+                      <span className="text-2xl">💫</span>
+                      <span className="text-2xl">💫</span>
+                      <span className="text-2xl">💫</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-            <img
-              src="/assets/expedition/echo_boss_body.png"
-              alt="Echo Boss"
-              className="w-auto h-[50%] sm:h-[55%] max-w-none object-contain -translate-y-14 sm:-translate-y-20"
-            />
+              )}
+              <img
+                ref={bakunawaDesktopImgRef}
+                src={enemy.id.startsWith('bakunawa') ? (bossAttackPhase !== 'idle' ? "/assets/expedition/bakunawa_mouth_open_transparent.png" : "/assets/expedition/bakunawa_normal_transparent.png") : "/assets/expedition/echo_boss_body.png"}
+                alt={enemy.name}
+                className={`w-auto ${enemy.id.startsWith('bakunawa') ? 'h-[75%] sm:h-[85%]' : 'h-[50%] sm:h-[55%]'} max-w-none object-contain transition-transform ${introStep === 'dialogue' ? '-translate-y-12 sm:-translate-y-16 duration-[1500ms] ease-in-out' : 'translate-y-[150px] sm:translate-y-[170px] duration-300'} ${bossAttackPhase !== 'idle' ? 'scale-110 drop-shadow-[0_0_20px_rgba(218,45,70,0.8)]' : 'scale-100'}`}
+              />
+            </div>
           </div>
         </div>
       )}
 
-      {isBoss && (
+      {/* ── ECHO VILLAGE & SUMMIT BOSS WINGS: Desktop PC (BEHIND FLOOR: z-[2]) ── */}
+      {isBoss && !enemy.id.startsWith('bakunawa') && (
         <div className="hidden lg:flex absolute inset-0 pointer-events-none items-center justify-center overflow-visible z-[2]">
           <div className="animate-boss-breathe w-full h-full flex items-center justify-center">
             {isRightSweepAttack ? (
+              /* Left wing stays behind floor in base form next to boss body */
               <div className="flex items-center justify-center w-full h-full">
                 <div className="w-1/2 flex justify-end items-center h-full">
                   <img
@@ -657,6 +953,7 @@ export function ExpeditionCombat({
                 <div className="w-1/2" />
               </div>
             ) : !(bossAttackPhase === 'slam' || (activeAction === 'parry' && enemyFrame >= 4 && !isBoss)) && (
+              /* Left & Right Strike Wings side-by-side behind floor */
               <div
                 className={`flex items-center justify-center transition-all ${
                   bossAttackPhase === 'rise'
@@ -682,10 +979,12 @@ export function ExpeditionCombat({
         </div>
       )}
 
-      {isBoss && (
+      {/* ── ECHO VILLAGE & SUMMIT BOSS WINGS: Desktop PC (ABOVE FLOOR: z-15) ── */}
+      {isBoss && !enemy.id.startsWith('bakunawa') && (
         <div className="hidden lg:flex absolute inset-0 pointer-events-none items-center justify-center overflow-visible z-15">
           <div className="animate-boss-breathe w-full h-full flex items-center justify-center">
             {isRightSweepAttack ? (
+              /* Right wing only turns into slam version and sweeps across top of floor */
               <div className="flex items-center justify-center w-full h-full">
                 <div className="w-1/2" />
                 <div className="w-1/2 flex justify-start items-center h-full overflow-visible">
@@ -701,6 +1000,7 @@ export function ExpeditionCombat({
                 </div>
               </div>
             ) : (bossAttackPhase === 'slam' || (activeAction === 'parry' && enemyFrame >= 4 && !isBoss)) && (
+              /* Left & Right Slam Wings side-by-side above floor (Dual Slam) */
               <div className="flex items-center justify-center transition-all duration-200 scale-130 translate-y-20 sm:translate-y-28 drop-shadow-[0_0_40px_rgba(218,45,70,1)]">
                 <img
                   src="/assets/expedition/echo_boss_wings_slam_left.png"
@@ -718,18 +1018,20 @@ export function ExpeditionCombat({
         </div>
       )}
 
+      {/* 2D Flat Ground Floor stretching edge-to-edge from absolute left/right to absolute bottom for Desktop PC (z-10) */}
       <div 
-        className="hidden lg:block absolute inset-x-0 bottom-0 top-[48%] sm:top-[54%] bg-repeat-x bg-bottom pointer-events-none z-10 opacity-95 drop-shadow-[0_-8px_16px_rgba(0,0,0,0.95)]"
+        className={`hidden lg:block absolute inset-x-0 bottom-0 top-[48%] sm:top-[54%] bg-repeat-x bg-bottom pointer-events-none z-10 opacity-95 drop-shadow-[0_-8px_16px_rgba(0,0,0,0.95)] transition-transform duration-[1500ms] ease-in-out ${introStep === 'dialogue' ? 'translate-y-0' : 'translate-y-[200%]'}`}
         style={{
-          backgroundImage: `url('/assets/expedition/battle_ground.png')`,
+          backgroundImage: `url('${isShrineBandit ? '/assets/expedition/shrine_ground.png' : '/assets/expedition/battle_ground.png'}')`,
           backgroundSize: 'auto 100%',
         }}
       />
 
+      {/* FLOATING VFX & DAMAGE RENDER NODE */}
       <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
         {damagePopups.map(p => {
-          const baseX = p.isEnemy ? '75%' : '25%';
-          const baseY = p.isEnemy ? '50%' : '65%';
+          const baseX = p.customX || (p.isEnemy ? '75%' : '30%');
+          const baseY = p.customY || (p.isEnemy ? '50%' : '45%');
 
           return (
             <div 
@@ -737,6 +1039,8 @@ export function ExpeditionCombat({
               className="absolute flex items-center justify-center pointer-events-none"
               style={{ left: baseX, top: baseY, transform: `translate(calc(-50% + ${p.offsetX}px), calc(-50% + ${p.offsetY}px))` }}
             >
+              
+              {/* VFX Animation Layer */}
               <div className="absolute inset-0 flex items-center justify-center">
                 {p.effectType === 'slash' && (
                   <div className="w-32 h-4 bg-white rounded-full shadow-[0_0_20px_#facc15,0_0_40px_#facc15]" style={{ animation: 'slashFx 0.4s ease-out forwards' }} />
@@ -749,6 +1053,7 @@ export function ExpeditionCombat({
                 )}
               </div>
 
+              {/* Bouncing Damage Number Layer */}
               <div
                 className="font-orbitron font-black tracking-widest text-4xl sm:text-6xl text-white relative z-10"
                 style={{
@@ -760,13 +1065,15 @@ export function ExpeditionCombat({
               >
                 {p.text}
               </div>
+
             </div>
           );
         })}
       </div>
 
+      {/* ── Top Combat HUD: Mobile / Tablet Only (New UI) ── */}
       <div className="lg:hidden relative w-full flex flex-col items-center justify-center pt-2 z-20 gap-2">
-        <div className="w-full max-w-xl mx-auto flex flex-col gap-1 px-2 sm:px-4 pointer-events-auto">
+        <div className={`w-full max-w-xl mx-auto flex flex-col gap-1 px-2 sm:px-4 pointer-events-auto transition-opacity duration-1000 ${introStep === 'dialogue' ? 'opacity-0' : 'opacity-100'}`}>
           <div className="flex flex-col sm:flex-row items-center sm:items-baseline justify-between font-orbitron tracking-wide px-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] gap-0.5 sm:gap-0">
             <span className="font-black text-sm sm:text-base text-white uppercase tracking-wider text-center sm:text-left leading-tight">
               {enemy.name}
@@ -801,8 +1108,9 @@ export function ExpeditionCombat({
         </div>
       </div>
 
+      {/* ── Top Combat HUD: Desktop PC Only (Exact 89df9fb UI) ── */}
       <div className="hidden lg:flex relative w-full justify-center pt-2 z-20">
-        <div className="w-full max-w-xl flex flex-col gap-1 px-4">
+        <div className={`w-full max-w-xl flex flex-col gap-1 px-4 transition-opacity duration-1000 ${introStep === 'dialogue' ? 'opacity-0' : 'opacity-100'}`}>
           <div className="flex items-baseline justify-between font-orbitron tracking-wide px-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
             <span className="font-black text-base text-white uppercase tracking-wider">
               {enemy.name}
@@ -839,74 +1147,87 @@ export function ExpeditionCombat({
           </div>
         </div>
 
-        <div className="absolute right-4 top-2 flex items-center gap-2 bg-[#1e2238]/90 border-[3px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] px-3 py-1.5 -skew-x-2 backdrop-blur-sm">
-          <span className="font-orbitron font-black text-2xs text-[#facc15] uppercase border-r border-slate-600 pr-2">
-            TURN
-          </span>
-          <div className="flex items-center gap-1.5">
-            {turnQueue.map((unit, idx) => {
-              const isCurrent = idx === turnIndex % turnQueue.length;
-              return (
-                <div 
-                  key={idx}
-                  className={`px-2 py-0.5 border border-[#0f0c0c] font-orbitron font-bold text-2xs flex items-center gap-1 transition-all ${
-                    isCurrent 
-                      ? 'bg-[#facc15] text-[#0f0c0c] scale-105 shadow-[1px_1px_0px_0px_#0f0c0c]' 
-                      : unit.isHero ? 'bg-[#2a2d43] text-white' : 'bg-[#da2d46] text-white'
-                  }`}
-                >
-                  {unit.isHero ? (
-                    <img src={(unit.unit as HeroProfile).avatar} alt="Hero" className="w-5 h-5 object-cover" />
-                  ) : (
-                    <span className="text-xs">👹</span>
-                  )}
-                </div>
-              );
-            })}
+        {/* Turn Order Queue (Floating Top-Right exact 89df9fb style) */}
+        {!isShrineBandit && (
+          <div className="absolute right-4 top-2 flex items-center gap-2 bg-[#1e2238]/90 border-[3px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] px-3 py-1.5 -skew-x-2 backdrop-blur-sm">
+            <span className="font-orbitron font-black text-2xs text-[#facc15] uppercase border-r border-slate-600 pr-2">
+              TURN
+            </span>
+            <div className="flex items-center gap-1.5">
+              {turnQueue.map((unit, idx) => {
+                const isCurrent = idx === turnIndex % turnQueue.length;
+                return (
+                  <div 
+                    key={idx}
+                    className={`px-1 py-0.5 border border-[#0f0c0c] font-orbitron font-bold text-2xs flex items-center gap-1 transition-all ${
+                      isCurrent 
+                        ? 'bg-[#facc15] text-[#0f0c0c] scale-105 shadow-[1px_1px_0px_0px_#0f0c0c]' 
+                        : unit.isHero ? 'bg-[#2a2d43] text-white' : 'bg-[#da2d46] text-white'
+                    }`}
+                  >
+                    {unit.isHero ? (
+                      <img src={(unit.unit as HeroProfile).avatar} alt="Hero" className="w-5 h-5 object-cover" />
+                    ) : (
+                      <span className="text-xs">👹</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
+      {/* ── Center Stage Arena: Mobile / Tablet Only (New UI with Ground & Boss rendered above bottom buttons) ── */}
       <div className="lg:hidden flex-1 w-full relative z-10 flex items-center justify-center overflow-hidden">
+        {/* Mobile Battle Ground Floor sitting cleanly at the bottom of the Center Stage Arena right above Bottom Combat HUD */}
         <div 
-          className="absolute inset-x-0 bottom-0 h-24 sm:h-36 bg-repeat-x bg-bottom pointer-events-none z-10 opacity-95 drop-shadow-[0_-6px_12px_rgba(0,0,0,0.95)]"
+          className={`absolute inset-x-0 bottom-0 h-24 sm:h-36 bg-repeat-x bg-bottom pointer-events-none z-10 opacity-95 drop-shadow-[0_-6px_12px_rgba(0,0,0,0.95)] transition-transform duration-[1500ms] ease-in-out ${introStep === 'dialogue' ? 'translate-y-0' : 'translate-y-[200%]'}`}
           style={{
-            backgroundImage: `url('/assets/expedition/battle_ground.png')`,
+            backgroundImage: `url('${isShrineBandit ? '/assets/expedition/shrine_ground.png' : '/assets/expedition/battle_ground.png'}')`,
             backgroundSize: 'auto 100%',
           }}
         />
 
+        {/* Mobile Boss Body (z-[1]) */}
         {isBoss && (
           <div className="absolute inset-0 z-[1] pointer-events-none flex items-center justify-center overflow-visible">
-            <div className="animate-boss-breathe w-full h-full flex flex-col items-center justify-center relative">
-              {enemy.staggered && enemy.hp > 0 && (
-                <div className="absolute -translate-y-28 sm:-translate-y-36 z-20 flex flex-col items-center justify-center pointer-events-none animate-fadeIn">
-                  <div className="relative w-36 h-12 flex items-center justify-center">
-                    <div className="absolute inset-0 flex items-center justify-around animate-[spin_3s_linear_infinite] drop-shadow-[0_0_10px_#facc15]">
-                      <span className="text-2xl animate-bounce">⭐</span>
-                      <span className="text-base text-[#facc15] animate-pulse">✨</span>
-                      <span className="text-2xl animate-bounce" style={{ animationDelay: '200ms' }}>⭐</span>
-                      <span className="text-base text-[#facc15] animate-pulse" style={{ animationDelay: '400ms' }}>✨</span>
-                      <span className="text-2xl animate-bounce" style={{ animationDelay: '600ms' }}>⭐</span>
-                    </div>
-                    <div className="absolute inset-0 flex items-center justify-around animate-[spin_2s_linear_infinite_reverse] drop-shadow-[0_0_6px_#ff8000] scale-75 opacity-90">
-                      <span className="text-lg">💫</span>
-                      <span className="text-lg">💫</span>
-                      <span className="text-lg">💫</span>
+            <div className={`animate-boss-breathe w-full h-full flex flex-col items-center justify-center relative ${enemy.id.startsWith('bakunawa') ? 'translate-x-[35%]' : ''}`}>
+              <div 
+                className={`w-full h-full flex flex-col items-center transition-transform duration-75 ${enemy.id.startsWith('bakunawa') ? 'justify-end pb-[20%]' : 'justify-center'}`}
+                style={enemy.id.startsWith('bakunawa') ? { transform: `translateY(-${bakunawaY * 2}px)` } : {}}
+              >
+                {enemy.staggered && enemy.hp > 0 && (
+                  <div className="absolute -translate-y-28 sm:-translate-y-36 z-20 flex flex-col items-center justify-center pointer-events-none animate-fadeIn">
+                    <div className="relative w-36 h-12 flex items-center justify-center">
+                      <div className="absolute inset-0 flex items-center justify-around animate-[spin_3s_linear_infinite] drop-shadow-[0_0_10px_#facc15]">
+                        <span className="text-2xl animate-bounce">⭐</span>
+                        <span className="text-base text-[#facc15] animate-pulse">✨</span>
+                        <span className="text-2xl animate-bounce" style={{ animationDelay: '200ms' }}>⭐</span>
+                        <span className="text-base text-[#facc15] animate-pulse" style={{ animationDelay: '400ms' }}>✨</span>
+                        <span className="text-2xl animate-bounce" style={{ animationDelay: '600ms' }}>⭐</span>
+                      </div>
+                      <div className="absolute inset-0 flex items-center justify-around animate-[spin_2s_linear_infinite_reverse] drop-shadow-[0_0_6px_#ff8000] scale-75 opacity-90">
+                        <span className="text-lg">💫</span>
+                        <span className="text-lg">💫</span>
+                        <span className="text-lg">💫</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-              <img
-                src="/assets/expedition/echo_boss_body.png"
-                alt="Echo Boss"
-                className="w-auto h-[60%] sm:h-[70%] max-w-none object-contain -translate-y-6 sm:-translate-y-10"
-              />
+                )}
+                <img
+                  ref={bakunawaMobileImgRef}
+                  src={enemy.id.startsWith('bakunawa') ? (bossAttackPhase !== 'idle' ? "/assets/expedition/bakunawa_mouth_open_transparent.png" : "/assets/expedition/bakunawa_normal_transparent.png") : "/assets/expedition/echo_boss_body.png"}
+                  alt={enemy.name}
+                  className={`w-auto ${enemy.id.startsWith('bakunawa') ? 'h-[80%] sm:h-[90%]' : 'h-[60%] sm:h-[70%]'} max-w-none object-contain transition-transform ${introStep === 'dialogue' ? '-translate-y-12 sm:-translate-y-16 duration-[1500ms] ease-in-out' : 'translate-y-[70px] sm:translate-y-[90px] duration-300'} ${bossAttackPhase !== 'idle' ? 'scale-110 drop-shadow-[0_0_20px_rgba(218,45,70,0.8)]' : 'scale-100'}`}
+                />
+              </div>
             </div>
           </div>
         )}
 
-        {isBoss && (
+        {/* Mobile Boss Wings Behind Floor (z-[2]) */}
+        {isBoss && !enemy.id.startsWith('bakunawa') && (
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-visible z-[2]">
             <div className="animate-boss-breathe w-full h-full flex items-center justify-center">
               {isRightSweepAttack ? (
@@ -946,7 +1267,8 @@ export function ExpeditionCombat({
           </div>
         )}
 
-        {isBoss && (
+        {/* Mobile Boss Wings Above Floor (z-15) */}
+        {isBoss && !enemy.id.startsWith('bakunawa') && (
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-visible z-15">
             <div className="animate-boss-breathe w-full h-full flex items-center justify-center">
               {isRightSweepAttack ? (
@@ -982,24 +1304,14 @@ export function ExpeditionCombat({
           </div>
         )}
 
-        <div className={`absolute top-1/4 left-0 z-40 flex items-center transition-transform duration-300 ease-in-out ${isPartyDrawerOpen ? 'translate-x-0' : '-translate-x-[calc(100%-2.5rem)]'}`}>
+        {/* LEFT SIDE: Party List Drawer */}
+        <div className={`absolute top-1/4 left-0 z-40 flex items-center transition-all duration-300 ease-in-out ${introStep === 'dialogue' ? 'opacity-0 pointer-events-none' : 'opacity-100'} ${isPartyDrawerOpen ? 'translate-x-0' : '-translate-x-[calc(100%-2.5rem)]'}`}>
           <div className="flex flex-col gap-1.5 p-2 bg-[#151828]/95 backdrop-blur-md border-y-[3px] border-r-[3px] border-[#0f0c0c] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.4)] w-[220px] rounded-r-xl">
             {partyList.map((hero) => {
               const isTurn = isHeroTurn && activeHero.id === hero.id;
               const inst = dex[hero.equippedId] || dex['cebuano_gitara']!;
               return (
-                <div 
-                  key={hero.id}
-                  onClick={() => {
-                    if (isHeroTurn && activeAction === 'none' && !isEndingBattle && hero.hp > 0) {
-                      const idx = turnQueue.findIndex(u => u.isHero && u.unit.id === hero.id);
-                      if (idx !== -1) setTurnIndex(idx);
-                    }
-                  }}
-                  className={`flex items-center gap-2 p-1.5 border-[2px] border-[#0f0c0c] transition-all -skew-x-3 cursor-pointer ${
-                    isTurn ? 'bg-[#facc15] text-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c]' : 'bg-[#1e2238]/90 text-white opacity-90 hover:opacity-100 hover:shadow-[2px_2px_0px_0px_#0f0c0c]'
-                  }`}
-                >
+                <div key={hero.id} className={`flex items-center gap-2 p-1.5 border-[2px] border-[#0f0c0c] transition-all -skew-x-3 ${isTurn ? 'bg-[#facc15] text-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c]' : 'bg-[#1e2238]/90 text-white opacity-90'}`}>
                   <img src={hero.avatar} alt={hero.name} className="w-8 h-8 object-cover" />
                   <div className="flex flex-col flex-1 overflow-hidden">
                     <div className="font-orbitron font-black text-[10px] flex items-center gap-1">
@@ -1034,20 +1346,62 @@ export function ExpeditionCombat({
           </button>
         </div>
 
-        {/* ── ACTIVE CHARACTER FOCUS (Mobile) ── */}
-        {isShrineBandit && !isBoss ? (
-          <div className="absolute bottom-[18%] left-8 sm:left-12 flex items-end justify-center z-20 pointer-events-none transition-all duration-300">
-            <div key={activeHero.id} className="flex flex-col items-center gap-0 z-30 animate-in fade-in slide-in-from-left-4 duration-300">
-              <div className="relative origin-bottom flex items-center justify-center">
-                <img src={getHeroSprite(activeHero.name)} alt={activeHero.name} className="w-64 h-64 sm:w-72 sm:h-72 object-contain drop-shadow-[0px_8px_16px_rgba(0,0,0,0.8)]" />
+        {/* Left (Center-Left on Mobile): Shrine Board Joystick & Hero Squad */}
+        {isShrineBandit ? (
+          <>
+            {introStep === 'combat' && (
+              <div className="absolute left-2 sm:left-4 top-[40%] bottom-[30%] w-12 z-50 flex flex-col items-center pointer-events-auto">
+                <div className="text-white font-orbitron font-bold text-[8px] mb-2 drop-shadow-md">UP</div>
+                <input 
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={boardY}
+                  disabled={isHeroTurn || enemy.staggered}
+                  onChange={(e) => {
+                    if (isHeroTurn || enemy.staggered) return;
+                    const val = Number(e.target.value);
+                    setIsMovingUp(val > boardYRef.current);
+                    boardYRef.current = val;
+                    previousBoardY.current = val;
+                    setBoardY(val);
+                  }}
+                  onPointerUp={() => setIsMovingUp(false)}
+                  onTouchEnd={() => setIsMovingUp(false)}
+                  className="flex-1 appearance-none bg-black/50 border-2 border-[#facc15] rounded-full w-4"
+                  style={{ writingMode: 'vertical-lr', direction: 'rtl' }}
+                />
+                <div className="text-white font-orbitron font-bold text-[8px] mt-2 drop-shadow-md">DOWN</div>
               </div>
-              <span className="relative z-30 -mt-16 sm:-mt-20 font-orbitron font-black text-[9px] sm:text-[10px] uppercase tracking-wider text-[#facc15] bg-[#0f0c0c] px-3 py-0.5 border-[2px] border-[#facc15] shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 truncate text-center">
-                {activeHero.name}
-              </span>
+            )}
+
+            <div 
+              className="absolute bottom-[15%] left-24 sm:left-32 flex items-end justify-start z-20 pointer-events-none transition-all duration-75"
+              style={{ transform: `translateY(-${boardY * 2}px)` }}
+            >
+              {introStep === 'dialogue' ? (
+                <div className="flex items-end justify-center gap-1 mb-6 translate-x-8">
+                  <img src="/assets/expedition/boy1_idle.gif" alt="Hero 1" className="w-24 h-24 object-contain" />
+                  <img src="/assets/expedition/girl_idle.gif" alt="Hero 2" className="w-24 h-24 object-contain" />
+                  <img src="/assets/expedition/boy2_idle.gif" alt="Hero 3" className="w-24 h-24 object-contain" />
+                </div>
+              ) : (
+                <img 
+                  src={isMovingUp ? "/assets/expedition/party_board_normal.png" : "/assets/expedition/party_board_falling.png"} 
+                  alt="Party Board" 
+                  className="w-[140px] sm:w-[180px] object-contain drop-shadow-2xl relative z-10"
+                />
+              )}
+              {parryFlashes.map(flash => (
+                <svg key={flash.id} viewBox="0 0 100 200" className="absolute -right-8 top-1/2 -translate-y-1/2 w-12 h-24 sm:w-16 sm:h-32 drop-shadow-[0_0_8px_rgba(255,255,255,0.9)] animate-parry-arc pointer-events-none z-30">
+                  <path d="M 0 0 C 100 50, 100 150, 0 200 C 50 150, 50 50, 0 0 Z" fill="white" />
+                </svg>
+              ))}
             </div>
-          </div>
+          </>
         ) : null}
 
+        {/* Right (Center-Right on Mobile): Enemy Sprite Frame Planted on Ground */}
         {!isBoss ? (
           <div className="absolute bottom-[18%] right-4 flex items-end gap-2 sm:gap-4 z-20">
             {enemies.length > 1 ? (
@@ -1056,15 +1410,13 @@ export function ExpeditionCombat({
                 const isCurrent = idx === targetEnemyIndex;
                 const isAttacking = currentTurnUnit && !currentTurnUnit.isHero && currentTurnUnit.unit.id === e.id;
                 
-                const zIndex = idx % 3 === 0 ? 'z-30' : idx % 3 === 1 ? 'z-20' : 'z-10';
-                
                 return (
                   <div 
                     key={e.id} 
-                    className={`flex flex-col items-center gap-0.5 cursor-pointer transition-all ${zIndex}`}
+                    className="flex flex-col items-center gap-1 cursor-pointer transition-all"
                     onClick={() => e.hp > 0 && setTargetEnemyIndex(idx)}
                   >
-                    <div className="w-16 h-1.5 bg-[#0f0c0c]/80 border border-white/50 flex">
+                    <div className="w-16 h-1.5 bg-[#0f0c0c]/80 border border-white/50 flex mb-1">
                       <div className="bg-[#da2d46] h-full transition-all" style={{ width: `${Math.max(0, (e.hp / e.maxHp) * 100)}%` }} />
                     </div>
                     <div className={`relative origin-bottom flex items-center justify-center ${e.hp <= 0 ? 'animate-[bossDeath_2s_ease-in_forwards]' : e.staggered ? 'animate-bounce' : isAttacking ? 'animate-pulse scale-110' : 'transition-all duration-300'}`}>
@@ -1086,10 +1438,7 @@ export function ExpeditionCombat({
                 );
               })
             ) : (
-              <div className="flex flex-col items-center gap-0.5">
-                <div className="w-20 h-1.5 bg-[#0f0c0c]/80 border border-white/50 flex shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6">
-                  <div className="bg-[#da2d46] h-full transition-all" style={{ width: `${Math.max(0, (enemy.hp / enemy.maxHp) * 100)}%` }} />
-                </div>
+              <div className="flex flex-col items-center gap-1">
                 <div className={`relative origin-bottom flex items-center justify-center ${enemy.hp <= 0 ? 'animate-[bossDeath_2s_ease-in_forwards]' : enemy.staggered ? 'animate-bounce' : 'transition-all duration-300'}`}>
                   <img src={`/assets/expedition/enemy_frame_${enemyFrame}.png`} alt={enemy.name} className="w-36 h-36 sm:w-40 sm:h-40 object-contain drop-shadow-[0px_8px_16px_rgba(0,0,0,0.8)] scale-x-[-1]" onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }} />
                   {enemy.hp <= 0 && <div className="absolute inset-0 bg-red-600/50 mix-blend-color-burn rounded-full animate-[ping_0.5s_cubic-bezier(0,0,0.2,1)_infinite]" />}
@@ -1112,22 +1461,18 @@ export function ExpeditionCombat({
         ) : null}
       </div>
 
+      {/* ── Center Stage Arena: Desktop PC Only (Exact 89df9fb UI) ── */}
       <div className="hidden lg:flex flex-1 items-center justify-between px-12 py-8 relative z-20">
-        <div className="flex flex-col gap-4 z-40">
+        {/* Left: Active Party Avatars */}
+        <div className={`flex flex-col gap-4 z-30 transition-opacity duration-1000 ${introStep === 'dialogue' ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
           {partyList.map((hero) => {
             const isTurn = isHeroTurn && activeHero.id === hero.id;
             const inst = dex[hero.equippedId] || dex['cebuano_gitara']!;
             return (
               <div 
                 key={hero.id}
-                onClick={() => {
-                  if (isHeroTurn && activeAction === 'none' && !isEndingBattle && hero.hp > 0) {
-                    const idx = turnQueue.findIndex(u => u.isHero && u.unit.id === hero.id);
-                    if (idx !== -1) setTurnIndex(idx);
-                  }
-                }}
-                className={`flex items-center gap-3 p-3 border-[4px] border-[#0f0c0c] transition-all -skew-x-6 cursor-pointer hover:scale-[1.02] ${
-                  isTurn ? 'bg-[#facc15] text-[#0f0c0c] scale-105 shadow-[6px_6px_0px_0px_#0f0c0c]' : 'bg-[#1e2238] text-white opacity-80 hover:opacity-100 hover:shadow-[4px_4px_0px_0px_#0f0c0c]'
+                className={`flex items-center gap-3 p-3 border-[4px] border-[#0f0c0c] transition-all -skew-x-6 ${
+                  isTurn ? 'bg-[#facc15] text-[#0f0c0c] scale-105 shadow-[6px_6px_0px_0px_#0f0c0c]' : 'bg-[#1e2238] text-white opacity-80'
                 }`}
               >
                 <img src={hero.avatar} alt={hero.name} className="w-14 h-14 object-cover" />
@@ -1158,37 +1503,78 @@ export function ExpeditionCombat({
           })}
         </div>
 
-        {/* ── ACTIVE CHARACTER FOCUS (Desktop) ── */}
-        {isShrineBandit && !isBoss ? (
-          <div className="flex items-end justify-center translate-x-16 lg:translate-x-24 -translate-y-4 lg:-translate-y-8 z-20 pointer-events-none">
-            <div key={activeHero.id} className="flex flex-col items-center gap-0 z-30 animate-in fade-in slide-in-from-left-8 duration-300">
-              <div className="relative origin-bottom transition-transform flex items-center justify-center">
-                <img src={getHeroSprite(activeHero.name)} alt={activeHero.name} className="w-[470px] h-[470px] object-contain drop-shadow-[0px_12px_24px_rgba(0,0,0,0.8)]" />
+        {/* Left-Center: Shrine Board Joystick & Hero Squad on Desktop */}
+        {isShrineBandit ? (
+          <>
+            {introStep === 'combat' && (
+              <div className="hidden absolute left-8 xl:left-12 top-[30%] bottom-[30%] w-16 z-50 flex flex-col items-center pointer-events-auto">
+                <div className="text-white font-orbitron font-bold text-sm mb-2 drop-shadow-[0px_2px_4px_rgba(0,0,0,0.8)]">UP</div>
+                <input 
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={boardY}
+                  disabled={isHeroTurn || enemy.staggered}
+                  onChange={(e) => {
+                    if (isHeroTurn || enemy.staggered) return;
+                    const val = Number(e.target.value);
+                    setIsMovingUp(val > boardYRef.current);
+                    boardYRef.current = val;
+                    previousBoardY.current = val;
+                    setBoardY(val);
+                  }}
+                  onPointerUp={() => setIsMovingUp(false)}
+                  onMouseLeave={() => setIsMovingUp(false)}
+                  className="flex-1 appearance-none bg-[#0f0c0c]/80 border-4 border-[#facc15] rounded-full w-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.9)]"
+                  style={{ writingMode: 'vertical-lr', direction: 'rtl' }}
+                />
+                <div className="text-white font-orbitron font-bold text-sm mt-2 drop-shadow-[0px_2px_4px_rgba(0,0,0,0.8)]">DOWN</div>
               </div>
-              <span className="relative z-30 -mt-36 font-orbitron font-black text-xs uppercase tracking-wider text-[#facc15] bg-[#0f0c0c] px-6 py-1 border-[2px] border-[#facc15] shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6 text-center">
-                {activeHero.name}
-              </span>
+            )}
+            
+            <div 
+              className="absolute left-[400px] xl:left-[460px] bottom-[50px] xl:bottom-[60px] flex items-end justify-start z-20 pointer-events-none transition-all duration-75"
+              style={{ transform: `translateY(-${boardY * 4}px)` }}
+            >
+              {introStep === 'dialogue' ? (
+                <div className="flex items-end justify-center gap-4 mb-4 translate-x-12">
+                  <img src="/assets/expedition/boy1_idle.gif" alt="Hero 1" className="w-40 h-40 object-contain" />
+                  <img src="/assets/expedition/girl_idle.gif" alt="Hero 2" className="w-40 h-40 object-contain" />
+                  <img src="/assets/expedition/boy2_idle.gif" alt="Hero 3" className="w-40 h-40 object-contain" />
+                </div>
+              ) : (
+                <img 
+                  ref={partyBoardImgRef}
+                  src={isMovingUp ? "/assets/expedition/party_board_normal.png" : "/assets/expedition/party_board_falling.png"} 
+                  alt="Party Board" 
+                  className="w-[200px] lg:w-[250px] object-contain drop-shadow-[0_15px_15px_rgba(0,0,0,0.6)] relative z-10" 
+                />
+              )}
+              {parryFlashes.map(flash => (
+                <svg key={flash.id} viewBox="0 0 100 200" className="absolute -right-12 top-1/2 -translate-y-1/2 w-16 h-32 lg:w-20 lg:h-40 drop-shadow-[0_0_12px_rgba(255,255,255,0.9)] animate-parry-arc pointer-events-none z-30">
+                  <path d="M 0 0 C 100 50, 100 150, 0 200 C 50 150, 50 50, 0 0 Z" fill="white" />
+                </svg>
+              ))}
             </div>
-          </div>
+          </>
         ) : null}
 
+        {/* Right: Enemy Sprite Frame (Exact 89df9fb style) */}
         {!isBoss ? (
-          <div className="flex items-end justify-center gap-4 -translate-x-20 z-10">
+          <div className="flex items-end justify-center gap-4 -translate-x-10 z-10 pb-[100px] lg:pb-[120px]">
             {enemies.length > 1 ? (
               enemies.map((e, idx) => {
                 if (e.hp <= 0 && isEndingBattle) return null;
                 const isCurrent = idx === targetEnemyIndex;
                 const isAttacking = currentTurnUnit && !currentTurnUnit.isHero && currentTurnUnit.unit.id === e.id;
                 
-                const zIndex = idx % 3 === 0 ? 'z-30' : idx % 3 === 1 ? 'z-20' : 'z-10';
-                
                 return (
                   <div 
                     key={e.id} 
-                    className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${zIndex}`}
+                    className="flex flex-col items-center gap-3 cursor-pointer transition-all"
                     onClick={() => e.hp > 0 && setTargetEnemyIndex(idx)}
                   >
-                    <div className="w-24 h-2 bg-[#0f0c0c]/80 border-2 border-white/50 flex shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6">
+                    <div className="w-24 h-2 bg-[#0f0c0c]/80 border-2 border-white/50 flex mb-2 shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6">
                       <div className="bg-[#da2d46] h-full transition-all" style={{ width: `${Math.max(0, (e.hp / e.maxHp) * 100)}%` }} />
                     </div>
                     <div className={`relative transition-transform flex items-center justify-center ${e.staggered ? 'animate-bounce' : isAttacking ? 'animate-pulse scale-110' : ''}`}>
@@ -1211,10 +1597,7 @@ export function ExpeditionCombat({
                 );
               })
             ) : (
-              <div className="flex flex-col items-center gap-1 -translate-x-20 z-10">
-                <div className="w-32 h-2 bg-[#0f0c0c]/80 border-2 border-white/50 flex shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6">
-                  <div className="bg-[#da2d46] h-full transition-all" style={{ width: `${Math.max(0, (enemy.hp / enemy.maxHp) * 100)}%` }} />
-                </div>
+              <div className="flex flex-col items-center gap-3 -translate-x-20 z-10 pb-[100px] lg:pb-[120px]">
                 <div className={`relative transition-transform flex items-center justify-center ${enemy.staggered ? 'animate-bounce' : ''}`}>
                   <img src={`/assets/expedition/enemy_frame_${enemyFrame}.png`} alt={enemy.name} className="w-72 h-72 object-contain drop-shadow-[0px_12px_24px_rgba(0,0,0,0.8)] scale-x-[-1]" onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }} />
                   {enemy.hp <= 0 && <div className="absolute inset-0 bg-red-600/50 mix-blend-color-burn rounded-full animate-[ping_0.5s_cubic-bezier(0,0,0.2,1)_infinite]" />}
@@ -1237,12 +1620,42 @@ export function ExpeditionCombat({
         ) : null}
       </div>
 
-      <div className="lg:hidden relative z-40 flex flex-col items-center justify-between gap-1.5 sm:gap-3 bg-[#1e2238] border-[2px] sm:border-[4px] border-[#0f0c0c] shadow-[0px_-3px_0px_0px_#0f0c0c] p-2 sm:p-3">
+      {/* ── Bakunawa Intro Dialogue Overlay ── */}
+      {introStep === 'dialogue' && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none pb-[20%]">
+          <div 
+            className="pointer-events-auto flex items-center gap-3 sm:gap-6 bg-[#0f0c0c]/90 border-[4px] border-[#facc15] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)] p-4 sm:p-6 max-w-2xl w-[90%] -skew-x-3 cursor-pointer hover:bg-[#1a1515] transition-colors"
+            onClick={() => {
+              if (dialogueIndex < introDialogue.length - 1) {
+                setDialogueIndex(i => i + 1);
+              } else {
+                setIntroStep('hint');
+              }
+            }}
+          >
+            <img src={introDialogue[dialogueIndex].avatar} className="w-16 h-16 sm:w-20 sm:h-20 object-cover shrink-0" />
+            <div className="flex flex-col justify-center">
+              <span className="font-orbitron font-black text-[#facc15] text-lg sm:text-xl uppercase tracking-widest mb-1">{introDialogue[dialogueIndex].name}</span>
+              <span className="text-white font-medium text-sm sm:text-lg leading-snug font-sans">{introDialogue[dialogueIndex].text}</span>
+              <span className="text-slate-400 text-[10px] sm:text-xs font-bold mt-2 sm:mt-3 animate-pulse uppercase tracking-wider">Click anywhere to continue...</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Sliding Bottom Combat HUD Wrapper ── */}
+      <div 
+        className={`absolute bottom-0 left-0 w-full z-40 transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isHeroTurn && introStep !== 'dialogue' ? 'translate-y-0' : 'translate-y-[110%]'}`}
+      >
+        {/* Bottom Combat HUD: Action Command Panel (Mobile / Tablet - Compact & Clean Layout) */}
+        <div className="lg:hidden flex flex-col items-center justify-between gap-1.5 sm:gap-3 bg-[#1e2238] border-t-[2px] sm:border-t-[4px] border-[#0f0c0c] shadow-[0px_-3px_0px_0px_#0f0c0c] p-2 sm:p-3 pb-safe">
+        {/* Active Hero Status Badge */}
         <div className="w-full sm:w-auto flex items-center justify-center gap-1.5 sm:gap-3 px-2 py-1 sm:px-4 sm:py-2 bg-[#0f0c0c] text-[#facc15] border-[2px] sm:border-[3px] border-[#facc15] font-orbitron font-black text-[9px] sm:text-sm uppercase tracking-wider -skew-x-6">
           <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-[#da2d46] fill-current animate-pulse" />
           <span className="truncate">ACTIVE TURN: {isHeroTurn ? activeHero.name.toUpperCase() : "ENEMY ATTACK PHASE"}</span>
         </div>
 
+        {/* Command Grid: 2x2 on Mobile */}
         <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-stretch gap-1.5 sm:gap-3 w-full sm:w-auto">
           <button onClick={handleCommandAttack} disabled={!isHeroTurn || activeHero.ap < 1 || activeAction !== 'none' || isEndingBattle} className="col-span-1 px-1.5 py-1.5 sm:px-4 sm:py-3 bg-[#da2d46] text-white border-[2px] sm:border-[4px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-[8px] sm:text-sm uppercase -skew-x-6 hover:bg-[#ff3b56] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-1 sm:gap-2 active:translate-y-0.5 active:shadow-none">
             <Sword className="w-3 h-3 sm:w-4 sm:h-4 fill-current shrink-0 hidden xs:block" />
@@ -1286,12 +1699,15 @@ export function ExpeditionCombat({
         </div>
       </div>
 
-      <div className="hidden lg:flex relative z-40 items-center justify-between gap-4 bg-[#1e2238] border-[4px] border-[#0f0c0c] shadow-[0px_-4px_0px_0px_#0f0c0c] p-4">
+        {/* ── Bottom Combat HUD: Desktop PC (89df9fb UI) ── */}
+        <div className="hidden lg:flex items-center justify-between gap-4 bg-[#1e2238] border-t-[4px] border-[#0f0c0c] shadow-[0px_-4px_0px_0px_#0f0c0c] p-4">
+        {/* Active Hero Status Badge (Far Left) */}
         <div className="flex items-center gap-3 px-4 py-2 bg-[#0f0c0c] text-[#facc15] border-[3px] border-[#facc15] font-orbitron font-black text-sm uppercase tracking-wider -skew-x-6 shrink-0">
           <Zap className="w-4 h-4 text-[#da2d46] fill-current animate-pulse shrink-0" />
           <span>ACTIVE TURN: {isHeroTurn ? activeHero.name.toUpperCase() : "ENEMY ATTACK PHASE"}</span>
         </div>
 
+        {/* Command Buttons (Right Aligned, Full Two-Line Text from 89df9fb) */}
         <div className="flex flex-wrap items-center justify-end gap-3">
           <button
             onClick={handleCommandAttack}
@@ -1352,17 +1768,88 @@ export function ExpeditionCombat({
               <span className="text-2xs font-bold opacity-80">Flee Battle</span>
             </div>
           </button>
+          
+          <button
+            onClick={() => onCombatResult({ victory: true, xpGained: 150 * enemies.length })}
+            className="px-4 py-3 bg-[#eab308] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#facc15] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2 active:translate-y-0.5 active:shadow-none"
+          >
+            <div className="flex flex-col text-left">
+              <span>SKIP (TEST)</span>
+              <span className="text-2xs font-bold opacity-80">Auto Win</span>
+            </div>
+          </button>
         </div>
       </div>
+      </div>
 
+      {/* ── PROJECTILES & PARRY BUTTON OVERLAY ── */}
+      {isShrineBandit && (
+        <div className="absolute inset-0 z-30 pointer-events-none overflow-hidden">
+          
+          {/* VISUAL HITBOX DEBUGGING HIDDEN */}
+
+          {projectiles.map(p => {
+            const charging = p.chargeElapsed < CHARGE_DURATION;
+            const chargeProgress = Math.min(1, p.chargeElapsed / CHARGE_DURATION);
+            // Base size 64px. Grow from ~25px → 128px during charge, lock at 128px when fired.
+            const BASE = 64;
+            const FULL = BASE * 2; // 128px = final big size
+            const sizePx = charging ? BASE * (0.4 + chargeProgress * 1.6) : FULL;
+            const glowColor = p.type === 'blue' ? 'rgba(0,100,255,0.9)' : 'rgba(255,180,0,0.9)';
+            const glowSize = charging ? Math.round(chargeProgress * 30) : 30;
+            return (
+              <img 
+                key={p.id}
+                src={p.type === 'blue' ? "/assets/expedition/blue_orb.png" : "/assets/expedition/gold_orb.png"}
+                alt="Orb"
+                className="absolute object-contain animate-[spin_3s_linear_infinite]"
+                style={{ 
+                  width: `${sizePx}px`,
+                  height: `${sizePx}px`,
+                  left: `${p.x}%`,
+                  bottom: `${p.y}px`,
+                  transform: 'translateX(-50%)',
+                  filter: `drop-shadow(0 0 ${glowSize}px ${glowColor})`,
+                }}
+              />
+            );
+          })}
+          {introStep === 'hint' && enemy.id.startsWith('bakunawa') && (
+            <div className="absolute inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm pointer-events-auto transition-opacity animate-in fade-in duration-500">
+              <div className="flex flex-col items-center gap-6 bg-[#0f0c0c]/95 border-[4px] border-[#4ade80] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.8)] p-6 sm:p-8 max-w-2xl w-[90%] -skew-x-3 text-center">
+                <h2 className="font-orbitron font-black text-2xl sm:text-4xl text-[#4ade80] uppercase tracking-widest drop-shadow-md">Boss Battle Rules</h2>
+                
+                <div className="text-white font-sans text-base sm:text-xl leading-relaxed space-y-4">
+                  <p>
+                    <span className="text-[#facc15] font-bold">MOVE:</span> Use <strong className="text-[#38bdf8]">W / S keys</strong> (Desktop) or the <strong className="text-[#38bdf8]">Joystick</strong> (Mobile) to steer the party surfboard.
+                  </p>
+                  <div className="bg-[#1e2238] p-4 border-l-[4px] border-[#facc15] text-left flex flex-col gap-2">
+                    <p>⚠️ <strong className="text-white">DODGE</strong> the <span className="text-blue-400 font-bold">Blue Orbs</span>.</p>
+                    <p>⚔️ <strong className="text-white">PARRY</strong> the <span className="text-[#facc15] font-bold">Gold Orbs</span> back at the boss by pressing <strong className="text-[#da2d46]">SPACE</strong>!</p>
+                  </div>
+                </div>
+                
+                <button 
+                  onClick={() => setIntroStep('combat')}
+                  className="mt-4 px-8 sm:px-12 py-3 sm:py-4 bg-[#4ade80] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-lg sm:text-xl uppercase hover:bg-[#6bee9c] hover:-translate-y-1 transition-transform active:translate-y-0 active:shadow-none"
+                >
+                  OK, LET'S GO!
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── TOPMOST OVERLAYS CONTAINER (z-[60]): Minigames, QTEs, Spells always on top of floor, boss, and HUD ── */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[60]">
         <div className="pointer-events-auto w-full max-w-2xl flex items-center justify-center p-4">
           {activeAction === 'rhythm' && (
             <RhythmHighwayOverlay 
               mode="attack"
               preset={enemy.preset}
-              isCapture={enemy.hp <= enemy.maxHp * 0.35 || enemy.staggered}
-              onComplete={(stats) => handleRhythmComplete(stats, enemy.hp <= enemy.maxHp * 0.35 || enemy.staggered)}
+              isCapture={false}
+              onComplete={(stats) => handleRhythmComplete(stats, false)}
             />
           )}
           {activeAction === 'spell' && (
