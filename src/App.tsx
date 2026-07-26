@@ -13,6 +13,7 @@ import { LocationServicesScreen } from './components/LocationServicesScreen';
 import { Scanner } from './components/Scanner';
 import { PipelineConsole } from './components/PipelineConsole';
 import { DiscoveryCard } from './components/DiscoveryCard';
+import { FreestylePlayScreen } from './components/FreestylePlayScreen';
 import { GameBoard } from './components/GameBoard';
 import { QuizScreen } from './components/QuizScreen';
 import { StoryScreen } from './components/StoryScreen';
@@ -23,10 +24,21 @@ import { KorlongHuntScreen } from './components/KorlongHuntScreen';
 import { TeachableStudentScreen } from './components/TeachableStudentScreen';
 import { BadgesScreen } from './components/BadgesScreen';
 import { RanksScreen } from './components/RanksScreen';
+import { ScannerCombatScreen } from './components/ScannerCombatScreen';
 
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { initializeInstrumentPipeline } from './services/geminiPipeline';
 import { MASTER_INSTRUMENTS, FALLBACK_PROFILES, KORLONG_INSTRUMENT } from './constants';
+import { 
+  DEFAULT_HEROES, 
+  EXPEDITION_INSTRUMENTS, 
+  EXPEDITION_NODES, 
+  EXPEDITION_QUESTS,
+  type HeroProfile, 
+  type HarmonydexEntry,
+  type MapNode,
+  type ExpeditionQuest
+} from './types/expedition';
 
 function InnerApp() {
   const { client } = useGemini();
@@ -42,6 +54,20 @@ function InnerApp() {
   const [pipelineImage, setPipelineImage] = useState<{base64: string, mimeType: string} | null>(null);
   const [finalGameState, setFinalGameState] = useState<GameplayState | null>(null);
   const [pendingImageData, setPendingImageData] = useState<{base64: string; mimeType: string} | null>(null);
+
+  const [party, setParty] = useState<Record<string, HeroProfile>>({ ...DEFAULT_HEROES });
+  const [dex, setDex] = useState<Record<string, HarmonydexEntry>>({ ...EXPEDITION_INSTRUMENTS });
+  const [nodes, setNodes] = useState<Record<string, MapNode>>({ ...EXPEDITION_NODES });
+  const [quests, setQuests] = useState<Record<string, ExpeditionQuest>>({ ...EXPEDITION_QUESTS });
+  
+  const [isDiscoveryNew, setIsDiscoveryNew] = useState(false);
+
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = useCallback((msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  }, []);
 
   const { recordScan, updateStreak, addXP, progress, saveCustomProfile, addPendingReview } = useProgress();
 
@@ -116,13 +142,14 @@ function InnerApp() {
     
     setActiveProfile(profile);
     setInstrumentName(selectedInstrumentName);
-    setView('gameplay');
+    setView('expedition');
   }, []);
 
   const handleSelectCustomProfile = useCallback((profile: any) => {
     setActiveProfile(profile);
     setInstrumentName(profile.instrument.name);
-    setView('gameplay');
+    setIsDiscoveryNew(false);
+    setView('discoveryCard');
   }, []);
 
   const processImage = useCallback(async (base64: string, mimeType: string, verificationResult: VerificationResult) => {
@@ -153,35 +180,54 @@ function InnerApp() {
 
       if (verificationResult.method === 'community') {
         addPendingReview(verificationResult);
+        showToast(`Your ${profile.instrument.name} scan was submitted for community review!`);
+        setView('map');
+        setPipelineStatus({ phase: 'idle', label: '', detail: '', progress: 0 });
+        setPendingImageData(null);
+        return;
       }
+      
+      // Fuzzy match against master list to find exact ID if possible
+      const normalizedName = profile.instrument.name.toLowerCase().trim();
+      const matchedMaster = Object.values(MASTER_INSTRUMENTS).find(m => m.name.toLowerCase() === normalizedName);
+      const matchedExpedition = Object.values(EXPEDITION_INSTRUMENTS).find(e => e.name.toLowerCase() === normalizedName);
+      
+      if (matchedMaster || matchedExpedition) {
+        profile.instrument.name = matchedMaster?.name || matchedExpedition?.name || profile.instrument.name;
+        
+        // Use verified info as much as possible
+        if (matchedExpedition) {
+          profile.instrument.description = matchedExpedition.lore || profile.instrument.description;
+          profile.instrument.culturalPurpose = matchedExpedition.desc || profile.instrument.culturalPurpose;
+        } else if (matchedMaster) {
+          profile.instrument.description = matchedMaster.extendedInfo || profile.instrument.description;
+          profile.instrument.culturalPurpose = matchedMaster.hint || profile.instrument.culturalPurpose;
+        }
 
-      await new Promise(r => setTimeout(r, 1200));
-
-      const parsedName = profile.instrument.name;
-      const matchedMaster = MASTER_INSTRUMENTS.find(
-        inst => inst.name.toLowerCase() === parsedName.toLowerCase()
-      );
-
-      if (matchedMaster) {
-        profile.instrument.name = matchedMaster.name;
-        const isNew = recordScan(matchedMaster.name);
+        const isNew = recordScan(profile.instrument.name);
         if (isNew) {
           if (xpMultiplier > 0) addXP(Math.round(50 * xpMultiplier), 'discovery');
-          setView('discoveryCard');
+          setIsDiscoveryNew(true);
+          setView('scannerCombat');
         } else {
           if (xpMultiplier > 0) addXP(Math.round(10 * xpMultiplier), 'scan');
-          setView('gameplay');
+          showToast(`You already have ${profile.instrument.name}!`);
+          setIsDiscoveryNew(false);
+          setView('discoveryCard');
         }
       } else {
-        const profileId = parsedName || `Custom Instrument ${Date.now()}`;
+        const profileId = profile.instrument.name || `Custom Instrument ${Date.now()}`;
         const isNewCustom = !progress.customProfiles || !progress.customProfiles[profileId];
         saveCustomProfile(profileId, profile);
         if (isNewCustom) {
           if (xpMultiplier > 0) addXP(Math.round(20 * xpMultiplier), 'custom_discovery');
-          setView('discoveryCard');
+          setIsDiscoveryNew(true);
+          setView('scannerCombat');
         } else {
           if (xpMultiplier > 0) addXP(Math.round(5 * xpMultiplier), 'custom_scan');
-          setView('gameplay');
+          showToast(`You already have ${profile.instrument.name}!`);
+          setIsDiscoveryNew(false);
+          setView('discoveryCard');
         }
       }
     } catch (err) {
@@ -193,7 +239,7 @@ function InnerApp() {
         setActiveProfile(fallback);
         setInstrumentName(fallback.instrument.name);
       }
-      setView('gameplay');
+      setView('expedition');
     }
   }, [client, activeProfile, recordScan, addXP, saveCustomProfile, addPendingReview, progress.customProfiles]);
 
@@ -244,7 +290,7 @@ function InnerApp() {
           
           setActiveProfile(korlongProfile);
           setInstrumentName(KORLONG_INSTRUMENT.name);
-          
+          setIsDiscoveryNew(isNew);
           setView('discoveryCard');
 
           setTimeout(() => {
@@ -269,11 +315,16 @@ function InnerApp() {
 
   const handlePlayAgain = useCallback(() => {
     setFinalGameState(null);
-    setView('gameplay');
+    setView('expedition');
   }, []);
 
   return (
     <div className="min-h-screen bg-obsidian text-light-gray overflow-x-hidden relative">
+      {toastMessage && (
+        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[9999] bg-[#0f0c0c] border-[3px] border-[#facc15] text-[#facc15] px-6 py-3 font-orbitron font-black text-sm uppercase -skew-x-6 shadow-[6px_6px_0px_0px_#facc15] animate-[bounce_0.5s_infinite]">
+          {toastMessage}
+        </div>
+      )}
       
       <div 
         className="fixed inset-0 bg-[#2a2d43] pointer-events-none"
@@ -296,10 +347,13 @@ function InnerApp() {
         <OnboardingScreen onComplete={handleOnboardingComplete} />
       )}
 
-      {/* Replaced MapScreen with ExpeditionScreen as the main hub */}
       {view === 'expedition' && (
         <ExpeditionScreen 
           isRootMap={true}
+          party={party} setParty={setParty}
+          dex={dex} setDex={setDex}
+          nodes={nodes} setNodes={setNodes}
+          quests={quests} setQuests={setQuests}
           onBack={() => setView('title')}
           onOpenScanner={() => setView('scanner')}
           onOpenLocationServices={() => setView('locationServices')}
@@ -341,6 +395,23 @@ function InnerApp() {
         />
       )}
 
+      {view === 'scannerCombat' && activeProfile && (
+        <ScannerCombatScreen
+          profile={activeProfile}
+          party={party}
+          setParty={setParty}
+          dex={dex}
+          onCombatResult={(result) => {
+            if (result.victory) {
+              setView('discoveryCard');
+            } else {
+              setView('expedition');
+            }
+          }}
+          onFlee={() => setView('expedition')}
+        />
+      )}
+
       {view === 'scanVerification' && pendingImageData && (
         <ScanVerificationScreen
           imageBase64={pendingImageData.base64}
@@ -375,8 +446,16 @@ function InnerApp() {
       {view === 'discoveryCard' && activeProfile && (
         <DiscoveryCard 
           profile={activeProfile}
-          onContinue={() => setView('gameplay')}
+          isNew={isDiscoveryNew}
+          onContinue={() => setView('freestyle')}
           onBack={handleQuit}
+        />
+      )}
+
+      {view === 'freestyle' && activeProfile && (
+        <FreestylePlayScreen
+          profile={activeProfile}
+          onBack={() => setView('discoveryCard')}
         />
       )}
 

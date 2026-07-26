@@ -3,7 +3,7 @@ import { ShoppingBag, Sparkles, MessageCircle, ArrowLeft, Zap, Package, Shield, 
 import mariasShopBanner from '../../assets/images/market_bg.png';
 import mariaSprite from '../../assets/png/maria_sprite.png';
 import { audioEngine } from '../../services/audioSynth';
-import { type HeroProfile } from '../../types/expedition';
+import { type HeroProfile, type MapNode } from '../../types/expedition';
 
 //shop
 import fork from '../../assets/shop/fork.png';
@@ -15,6 +15,7 @@ import songbook from '../../assets/shop/songbook.png';
 
 interface MariaShopModalProps {
   party: Record<string, HeroProfile>;
+  nodes?: Record<string, MapNode>;
   onUpdateParty?: React.Dispatch<React.SetStateAction<Record<string, HeroProfile>>>;
   onClose: () => void;
   onAddXP?: (amount: number) => void;
@@ -101,8 +102,33 @@ const MARIA_DIALOGUES = [
   "Need to tune up your party before facing the anomalies? Try the Cadence Tuning Fork or our Polished Acoustic Rosin!",
 ];
 
-export function MariaShopModal({ party: _party, onUpdateParty, onClose, onAddXP }: MariaShopModalProps) {
-  const [items, setItems] = useState<ShopItem[]>(INITIAL_SHOP_ITEMS);
+export function MariaShopModal({ party: _party, nodes, onUpdateParty, onClose, onAddXP }: MariaShopModalProps) {
+  const [items, setItems] = useState<ShopItem[]>(() => {
+    const baseItems = [...INITIAL_SHOP_ITEMS];
+    if (nodes && nodes['crossroads']?.completed) {
+      baseItems.push({
+        id: 'mystery_key',
+        name: 'Mystery Key',
+        category: 'Special',
+        price: 0,
+        icon: spice,
+        description: 'A strange rusted key given by the merchant at the crossroads.',
+        effectText: 'Grants access to Echo Village.',
+        stock: 1,
+      });
+      baseItems.push({
+        id: 'reverse_potion',
+        name: 'Reverse Potion',
+        category: 'Tonic',
+        price: 50,
+        icon: tonic,
+        description: 'A mysterious potion that seems to invert your exhaustion.',
+        effectText: 'Fully restores HP and grants temporary max AP.',
+        stock: 'Infinite',
+      });
+    }
+    return baseItems;
+  });
   const [shards, setShards] = useState<number>(250);
   const [dialogueIndex, setDialogueIndex] = useState<number>(0);
   const [purchasedNotification, setPurchasedNotification] = useState<string | null>(null);

@@ -211,12 +211,14 @@ export function ScanVerificationScreen({
       return () => clearTimeout(t);
     }
     if (step === 'pending-review' && ticketId) {
+      // Do NOT call onVerified — community scans must not trigger Gemini or unlock instruments.
+      // Just close the verification screen after showing the confirmation.
       const t = setTimeout(() => {
-        onVerified(makeVerificationResult('community', null, ticketId));
-      }, 2000);
+        onCancel();
+      }, 2500);
       return () => clearTimeout(t);
     }
-  }, [step, venue, ticketId, onVerified]);
+  }, [step, venue, ticketId, onVerified, onCancel]);
 
   // ── Shared badge colors ────────────────────────────────────────────────────
 
@@ -417,7 +419,8 @@ export function ScanVerificationScreen({
                     <p className="font-space-mono text-xs text-[#da2d46] font-black skew-x-6">TICKET: {ticketId}</p>
                   </div>
                 )}
-                <p className="font-space-mono text-xs text-[#888ea1] mt-3">Proceeding with tentative XP...</p>
+                <p className="font-space-mono text-xs text-[#888ea1] mt-3">Returning to map. Admins will review your submission.</p>
+                <button onClick={onCancel} className="mt-4 text-[#da2d46] underline text-xs font-space-mono">Close</button>
               </div>
             </>
           )}
