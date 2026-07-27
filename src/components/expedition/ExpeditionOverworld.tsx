@@ -9,6 +9,11 @@ import { audioEngine } from '../../services/audioSynth';
 import bakunawa_prev from '../../assets/png/bakunawa_prev.png';
 import wakwak_prev from '../../assets/png/wakwak_prev.png';
 
+import cloud_one from '../../assets/png/cloud_one.png';
+import cloud_two from '../../assets/png/cloud_two.png';
+import cloud_three from '../../assets/png/cloud_three.png';
+import cloud_four from '../../assets/png/cloud_four.png';
+
 interface ExpeditionOverworldProps {
   nodes: Record<string, MapNode>;
   currentNodeId: string;
@@ -77,6 +82,20 @@ export function ExpeditionOverworld({
 
   const currentNode = nodes[currentNodeId] || nodes['cadence_town']!;
   const LINEAR_NODES = ['cadence_town', 'crossroads', 'echo_woods', 'whispering_path', 'harmonic_shrine', 'silent_peak'];
+
+  // ─── NEW: FOG OF WAR DISCOVERY LOGIC ───
+  // A node is discovered if the previous node in the linear path is completed,
+  // making it playable and clearing the fog. Town is always discovered.
+  const discoveredNodeIds = useMemo(() => {
+    const discovered = new Set<string>(['cadence_town']);
+    for (let i = 1; i < LINEAR_NODES.length; i++) {
+      const prevId = LINEAR_NODES[i - 1];
+      if (prevId === 'cadence_town' || nodes[prevId]?.completed) {
+        discovered.add(LINEAR_NODES[i]);
+      }
+    }
+    return discovered;
+  }, [nodes]);
 
   // ─── RESTORED ORIGINAL COORDINATES (WITH FIXED ECHO WOODS & PEAK) ───
   const getDisplayCoords = useCallback((nodeId: string, originalX: number, originalY: number) => {
@@ -490,8 +509,8 @@ export function ExpeditionOverworld({
       return 'none';
     }
 
-    // Only use completed nodes (or the starting town) to reveal the map!
-    const unlockedNodes = Object.values(nodes).filter(n => n.completed || n.id === 'cadence_town');
+    // Now correctly tied to the logical discovery chain instead of strictly completed state
+    const unlockedNodes = Object.values(nodes).filter(n => discoveredNodeIds.has(n.id));
     if (unlockedNodes.length === 0) {
       return 'radial-gradient(circle 350px at 30% 50%, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 80%)';
     }
@@ -505,7 +524,7 @@ export function ExpeditionOverworld({
       const radius = node.type === 'boss' ? '500px' : '350px';
       return `radial-gradient(circle ${radius} at ${xPct}% ${yPct}%, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 80%)`;
     }).join(', ');
-  }, [nodes, getDisplayCoords]);
+  }, [nodes, getDisplayCoords, discoveredNodeIds]);
 
   return (
     <div className="flex-1 flex flex-col md:flex-row overflow-hidden w-full h-full relative font-orbitron">
@@ -622,6 +641,34 @@ export function ExpeditionOverworld({
               />
 
               {memoizedNodes}
+
+              {/* ─── NEW: FOG OF WAR CLOUDS ─── */}
+              {LINEAR_NODES.map((nodeId, index) => {
+                // If it is discovered, don't render the fog cloud over it
+                if (discoveredNodeIds.has(nodeId)) return null;
+
+                const node = nodes[nodeId];
+                // Fallback 0 coordinates in case node prop is momentarily missing, getDisplayCoords handles mapping
+                const origX = node?.x || 0;
+                const origY = node?.y || 0;
+                const { x, y } = getDisplayCoords(nodeId, origX, origY);
+
+                // Rotate through the user's imported clouds
+                const cloudImages = [cloud_one, cloud_two, cloud_three, cloud_four];
+                const cloudImg = cloudImages[index % cloudImages.length];
+
+                return (
+                  <image
+                    key={`fog-cloud-${nodeId}`}
+                    href={cloudImg}
+                    x={x - 175}
+                    y={y - 125}
+                    width="350"
+                    height="250"
+                    className="opacity-75 pointer-events-none transition-opacity duration-1000 ease-in-out"
+                  />
+                );
+              })}
 
               {(() => {
                 const currentRenderCoords = getDisplayCoords(currentNode.id, currentNode.x, currentNode.y);
