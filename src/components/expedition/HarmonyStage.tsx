@@ -612,13 +612,18 @@ export function HarmonyStage({
 
   useEffect(() => {
     if (onTurnUpdate) {
-      onTurnUpdate({
-        queue: turnQueue.map(u => ({
-          isHero: u.isHero,
-          avatar: u.isHero ? (u.unit as HeroProfile).avatar : '👹'
-        })),
-        index: turnIndex
-      });
+      const isMobile = window.innerWidth < 1024;
+      if (isMobile) {
+        onTurnUpdate(null);
+      } else {
+        onTurnUpdate({
+          queue: turnQueue.map(u => ({
+            isHero: u.isHero,
+            avatar: u.isHero ? (u.unit as HeroProfile).avatar : '👹'
+          })),
+          index: turnIndex
+        });
+      }
     }
   }, [onTurnUpdate, turnQueue, turnIndex]);
 
@@ -1103,7 +1108,7 @@ export function HarmonyStage({
           
           <div className="lg:hidden absolute inset-0 z-[1] pointer-events-none flex items-center justify-center overflow-visible">
             <div className={`animate-boss-breathe w-full h-full flex flex-col items-center justify-center relative ${enemy.id.startsWith('bakunawa') ? 'translate-x-[25%]' : ''}`}>
-              <div className={`w-full h-full flex flex-col items-center transition-transform duration-75 ${enemy.id.startsWith('bakunawa') ? 'justify-end pb-[10%]' : 'justify-center'}`} style={enemy.id.startsWith('bakunawa') ? { transform: `translateY(-${bakunawaY}px)` } : {}}>
+              <div className={`w-full h-full flex flex-col items-center transition-transform duration-75 ${enemy.id.startsWith('bakunawa') ? 'justify-end pb-[10%]' : 'justify-center'}`} style={enemy.id.startsWith('bakunawa') ? { transform: `translateY(calc(26% - ${bakunawaY * 0.65}%))` } : {}}>
                 {enemy.staggered && enemy.hp > 0 && (
                   <div className={`absolute z-20 flex flex-col items-center justify-center pointer-events-none animate-fadeIn ${enemy.id.startsWith('bakunawa') ? 'top-[5%] left-[25%]' : '-translate-y-28 sm:-translate-y-36'}`}>
                     <div className="relative w-36 h-12 flex items-center justify-center">
@@ -1361,14 +1366,14 @@ export function HarmonyStage({
         </div>
 
         {!isShrineBandit && (
-          <div className="hidden lg:flex absolute right-4 top-0 items-center gap-2 bg-[#1e2238]/90 border-[3px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] px-3 py-1.5 -skew-x-2 backdrop-blur-sm pointer-events-auto">
-            <span className="font-orbitron font-black text-2xs text-[#facc15] uppercase border-r border-slate-600 pr-2">TURN</span>
-            <div className="flex items-center gap-1.5">
+          <div className="absolute right-2 sm:right-4 top-2 sm:top-4 flex items-center gap-1 sm:gap-2 bg-[#1e2238]/90 border-[2px] sm:border-[3px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] px-2 py-1 sm:px-3 sm:py-1.5 -skew-x-2 backdrop-blur-sm pointer-events-auto z-50">
+            <span className="font-orbitron font-black text-[8px] sm:text-2xs text-[#facc15] uppercase border-r border-slate-600 pr-1.5 sm:pr-2">TURN</span>
+            <div className="flex items-center gap-1 sm:gap-1.5">
               {turnQueue.map((unit, idx) => {
                 const isCurrent = idx === turnIndex % turnQueue.length;
                 return (
-                  <div key={idx} className={`px-1 py-0.5 border border-[#0f0c0c] font-orbitron font-bold text-2xs flex items-center gap-1 transition-all ${isCurrent ? 'bg-[#facc15] text-[#0f0c0c] scale-105 shadow-[1px_1px_0px_0px_#0f0c0c]' : unit.isHero ? 'bg-[#2a2d43] text-white' : 'bg-[#da2d46] text-white'}`}>
-                    {unit.isHero ? <img src={(unit.unit as HeroProfile).avatar} alt="Hero" className="w-5 h-5 object-cover" /> : <span className="text-xs">👹</span>}
+                  <div key={idx} className={`w-5 h-5 sm:w-auto sm:h-auto sm:px-1 sm:py-0.5 border border-[#0f0c0c] flex items-center justify-center transition-all ${isCurrent ? 'bg-[#facc15] text-[#0f0c0c] scale-110 sm:scale-105 shadow-[1px_1px_0px_0px_#0f0c0c] z-10' : unit.isHero ? 'bg-[#2a2d43] text-white opacity-90 sm:opacity-100' : 'bg-[#da2d46] text-white opacity-90 sm:opacity-100'}`}>
+                    {unit.isHero ? <img src={(unit.unit as HeroProfile).avatar} alt="Hero" className="w-full h-full sm:w-5 sm:h-5 object-cover" /> : <span className="text-[10px] sm:text-xs">👹</span>}
                   </div>
                 );
               })}
@@ -1377,49 +1382,50 @@ export function HarmonyStage({
         )}
       </div>
 
-      <div className="absolute inset-0 z-20 pointer-events-none flex flex-col justify-end">
-        
-        <div className={`lg:hidden absolute top-[25%] left-0 flex items-center pointer-events-auto transition-all duration-300 ease-in-out ${introStep === 'dialogue' ? 'opacity-0 pointer-events-none' : 'opacity-100'} ${isPartyDrawerOpen ? 'translate-x-0' : '-translate-x-[calc(100%-2.5rem)]'}`}>
-          <div className="flex flex-col gap-1.5 p-2 bg-[#151828]/95 backdrop-blur-md border-y-[3px] border-r-[3px] border-[#0f0c0c] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.4)] w-[220px] rounded-r-xl">
-            {partyList.map((hero) => {
-              const isTurn = isHeroTurn && activeHero.id === hero.id;
-              const inst = dex[hero.equippedId] || dex['cebuano_gitara']!;
-              return (
-                <div key={hero.id} className={`flex items-center gap-2 p-1.5 border-[2px] border-[#0f0c0c] transition-all -skew-x-3 ${isTurn ? 'bg-[#facc15] text-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c]' : 'bg-[#1e2238]/90 text-white opacity-90'}`}>
-                  <img src={hero.avatar} alt={hero.name} className="w-8 h-8 object-cover" />
-                  <div className="flex flex-col flex-1 overflow-hidden">
-                    <div className="font-orbitron font-black text-[10px] flex items-center gap-1">
-                      <span className="truncate">{hero.name}</span>
-                      <span className="text-[8px] shrink-0 flex items-center justify-center bg-[#0f0c0c] p-0.5 border border-[#0f0c0c]">
-                        <img src={`/assets/instruments/${inst.id}.png`} alt={inst.name} className="w-2.5 h-2.5 object-contain" />
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-[8px] font-bold font-orbitron">
-                      <span className="truncate">HP: {hero.hp}/{hero.maxHp}</span>
-                      <span className="truncate">AP: {hero.ap}/{hero.maxAp}</span>
-                    </div>
-                    <div className="flex gap-0.5 mt-0.5">
-                      {Array.from({ length: hero.maxAp }).map((_, i) => (
-                        <div key={i} className={`w-1.5 h-1.5 border border-[#0f0c0c] ${i < hero.ap ? (isTurn ? 'bg-[#da2d46]' : 'bg-[#38bdf8]') : 'bg-slate-700'}`} />
-                      ))}
-                    </div>
+      {/* MOVED: Party Drawer extracted from z-20 container and elevated to z-50 to sit above the mobile drag overlay */}
+      <div className={`lg:hidden absolute z-50 top-[25%] left-0 flex items-center pointer-events-auto transition-all duration-300 ease-in-out ${introStep === 'dialogue' ? 'opacity-0 pointer-events-none' : 'opacity-100'} ${isPartyDrawerOpen ? 'translate-x-0' : '-translate-x-[calc(100%-2.5rem)]'}`}>
+        <div className="flex flex-col gap-1.5 p-2 bg-[#151828]/95 backdrop-blur-md border-y-[3px] border-r-[3px] border-[#0f0c0c] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.4)] w-[220px] rounded-r-xl">
+          {partyList.map((hero) => {
+            const isTurn = isHeroTurn && activeHero.id === hero.id;
+            const inst = dex[hero.equippedId] || dex['cebuano_gitara']!;
+            return (
+              <div key={hero.id} className={`flex items-center gap-2 p-1.5 border-[2px] border-[#0f0c0c] transition-all -skew-x-3 ${isTurn ? 'bg-[#facc15] text-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c]' : 'bg-[#1e2238]/90 text-white opacity-90'}`}>
+                <img src={hero.avatar} alt={hero.name} className="w-8 h-8 object-cover" />
+                <div className="flex flex-col flex-1 overflow-hidden">
+                  <div className="font-orbitron font-black text-[10px] flex items-center gap-1">
+                    <span className="truncate">{hero.name}</span>
+                    <span className="text-[8px] shrink-0 flex items-center justify-center bg-[#0f0c0c] p-0.5 border border-[#0f0c0c]">
+                      <img src={`/assets/instruments/${inst.id}.png`} alt={inst.name} className="w-2.5 h-2.5 object-contain" />
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[8px] font-bold font-orbitron">
+                    <span className="truncate">HP: {hero.hp}/{hero.maxHp}</span>
+                    <span className="truncate">AP: {hero.ap}/{hero.maxAp}</span>
+                  </div>
+                  <div className="flex gap-0.5 mt-0.5">
+                    {Array.from({ length: hero.maxAp }).map((_, i) => (
+                      <div key={i} className={`w-1.5 h-1.5 border border-[#0f0c0c] ${i < hero.ap ? (isTurn ? 'bg-[#da2d46]' : 'bg-[#38bdf8]') : 'bg-slate-700'}`} />
+                    ))}
                   </div>
                 </div>
-              );
-            })}
-          </div>
-
-          <button
-            onClick={() => setIsPartyDrawerOpen(!isPartyDrawerOpen)}
-            className={`w-10 h-16 flex flex-col items-center justify-center border-y-[3px] border-r-[3px] border-[#0f0c0c] rounded-r-lg shadow-[4px_4px_0px_0px_#0f0c0c] transition-all
-              ${isPartyDrawerOpen ? 'bg-[#2a2d43] text-white hover:bg-[#383d5a]' : 'bg-[#facc15] text-[#0f0c0c] hover:bg-[#ffdf3d]'}
-              ${!isPartyDrawerOpen && isHeroTurn ? 'animate-pulse' : ''}
-            `}
-          >
-            {isPartyDrawerOpen ? <ChevronLeft className="w-5 h-5 font-black" /> : <div className="flex flex-col items-center gap-1"><Users className="w-4 h-4 fill-current" /><ChevronRight className="w-3 h-3 font-black" /></div>}
-          </button>
+              </div>
+            );
+          })}
         </div>
 
+        <button
+          onClick={() => setIsPartyDrawerOpen(!isPartyDrawerOpen)}
+          className={`w-10 h-16 flex flex-col items-center justify-center border-y-[3px] border-r-[3px] border-[#0f0c0c] rounded-r-lg shadow-[4px_4px_0px_0px_#0f0c0c] transition-all
+            ${isPartyDrawerOpen ? 'bg-[#2a2d43] text-white hover:bg-[#383d5a]' : 'bg-[#facc15] text-[#0f0c0c] hover:bg-[#ffdf3d]'}
+            ${!isPartyDrawerOpen && isHeroTurn ? 'animate-pulse' : ''}
+          `}
+        >
+          {isPartyDrawerOpen ? <ChevronLeft className="w-5 h-5 font-black" /> : <div className="flex flex-col items-center gap-1"><Users className="w-4 h-4 fill-current" /><ChevronRight className="w-3 h-3 font-black" /></div>}
+        </button>
+      </div>
+
+      <div className="absolute inset-0 z-20 pointer-events-none flex flex-col justify-end">
+        
         <div className={`hidden lg:flex absolute bottom-[100px] left-6 flex-row gap-3 z-40 transition-opacity duration-1000 ${introStep === 'dialogue' ? 'opacity-0 pointer-events-none' : 'opacity-100'} pointer-events-auto`}>
           {partyList.map((hero) => {
             const isTurn = isHeroTurn && activeHero.id === hero.id;
