@@ -2,9 +2,12 @@ import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Play, MessageSquare, Compass, ShieldAlert, Camera, Map, Flame, X, ChevronUp } from 'lucide-react';
 import { type MapNode, type ExpeditionQuest } from '../../types/expedition';
 import visayasMap from '../../assets/png/visayas_map.png';
-import corruptedVisayasMap from '../../assets/png/corrupted_visayas_map.png';
+import visayas_map from '../../assets/png/visayas_map.png';
 import { DevMenu } from '../DevMenu'; 
 import { audioEngine } from '../../services/audioSynth';
+
+import bakunawa_prev from '../../assets/png/bakunawa_prev.png';
+import wakwak_prev from '../../assets/png/wakwak_prev.png';
 
 interface ExpeditionOverworldProps {
   nodes: Record<string, MapNode>;
@@ -520,20 +523,16 @@ export function ExpeditionOverworld({
         />
       )}
 
-      {/* CHANGED FROM bg-white TO bg-[#151828] */}
       <div className="flex-1 flex flex-col bg-[#151828] border-b md:border-b-0 md:border-r-[4px] border-[#0f0c0c] overflow-hidden relative">
         
         {/* ─── COMIC STYLE HEADER (DARK) ─── */}
-        {/* CHANGED FROM bg-[#f8fafc] TO bg-[#1e2238] */}
         <div className={`bg-[#1e2238] px-3 py-2 sm:px-4 sm:py-3 border-b-[4px] border-[#0f0c0c] shadow-[0_4px_0_0_#0f0c0c] flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2 z-40 relative shrink-0 transition-all duration-500 ease-out transform ${mounted ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
           <div className="absolute inset-0 opacity-[0.2]" style={{ backgroundImage: 'radial-gradient(#0f0c0c 2px, transparent 2px)', backgroundSize: '12px 12px' }} />
           
           <div className="relative z-10">
-            {/* CHANGED text-[#0f0c0c] TO text-white */}
             <h2 className="font-orbitron font-black text-sm sm:text-xl text-white uppercase tracking-wider leading-none">
               MAP OF THE SILENT VALLEY
             </h2>
-            {/* CHANGED text-slate-700 TO text-slate-300 */}
             <p className="text-[9px] sm:text-xs text-slate-300 font-bold mt-1">
               Click nodes to travel, converse with NPCs, or trigger encounters
             </p>
@@ -573,7 +572,7 @@ export function ExpeditionOverworld({
           >
             <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden will-change-transform">
               <img
-                src={corruptedVisayasMap}
+                src={visayas_map}
                 alt="Corrupted Visayas Map Background"
                 className="absolute inset-0 w-full h-full object-cover"
                 style={{
@@ -605,7 +604,6 @@ export function ExpeditionOverworld({
               viewBox="0 0 1000 650"
               preserveAspectRatio="xMidYMid slice"
             >
-              {/* ─── NEW PATH ALIGNED TO YOUR EXACT COORDINATES ─── */}
               <path 
                 d="M 300,250 C 340,290 380,320 420,355 C 440,380 380,480 340,560 C 380,580 480,440 540,380 C 570,350 610,450 640,490 C 680,530 750,320 780,220"
                 fill="none" 
@@ -629,7 +627,6 @@ export function ExpeditionOverworld({
                 const currentRenderCoords = getDisplayCoords(currentNode.id, currentNode.x, currentNode.y);
                 const displayPos = avatarPos || { x: currentRenderCoords.x, y: currentRenderCoords.y };
                 
-                // ─── RESPONSIVE AVATAR TOOLTIP FIX ───
                 const labelText = isTraveling ? 'TRAVELING' : 'PARTY HERE';
                 const boxW = Math.max(50, (labelText.length * 5) + 8); 
 
@@ -662,13 +659,11 @@ export function ExpeditionOverworld({
 
           {/* ─── COMIC TOP RIGHT HUD (DARK) ─── */}
           <div className={`absolute top-2 right-2 sm:top-3 sm:right-3 z-30 p-1 sm:p-2 flex flex-col items-end gap-2 pointer-events-none w-full max-w-[150px] sm:max-w-[220px] md:max-w-[260px] transition-all duration-500 ease-out delay-200 transform ${mounted ? 'translate-x-0 opacity-100' : 'translate-x-12 opacity-0'}`}>
-            {/* CHANGED bg-white TO bg-[#1e2238] */}
             <div className="bg-[#1e2238] border-[3px] sm:border-[4px] border-[#0f0c0c] p-2 sm:p-3 shadow-[4px_4px_0px_0px_#0f0c0c] sm:shadow-[6px_6px_0px_0px_#0f0c0c] -skew-x-2 pointer-events-auto w-full relative overflow-hidden">
               <div className="absolute inset-0 opacity-[0.1]" style={{ backgroundImage: 'radial-gradient(#0f0c0c 2px, transparent 2px)', backgroundSize: '8px 8px' }} />
               
               <div className="flex items-start justify-between gap-1.5 sm:gap-2 skew-x-2 relative z-10">
                 <div className="text-left flex-1">
-                  {/* CHANGED text-[#0f0c0c] TO text-white */}
                   <h1 className="font-orbitron text-[10px] sm:text-sm md:text-lg font-black uppercase text-white leading-none drop-shadow-[2px_2px_0px_#0f0c0c]">
                     VISAYAS ARC
                   </h1>
@@ -686,12 +681,10 @@ export function ExpeditionOverworld({
                 </div>
               </div>
               <div className="mt-2 sm:mt-3 skew-x-2 relative z-10">
-                {/* CHANGED text-[#0f0c0c] TO text-white */}
                 <div className="flex justify-between mb-1 font-space-mono text-[6px] sm:text-[8px] md:text-[10px] font-black text-white uppercase drop-shadow-[1px_1px_0px_#0f0c0c]">
                   <span>LVL 1</span>
                   <span>0 / 100 XP</span>
                 </div>
-                {/* CHANGED bg-slate-200 TO bg-[#0f0c0c] */}
                 <div className="h-2 sm:h-2.5 md:h-3 w-full border-[2px] sm:border-[3px] border-[#0f0c0c] bg-[#0f0c0c] relative skew-x-6">
                   <div className="h-full bg-[#38bdf8] border-r-[2px] sm:border-r-[3px] border-[#0f0c0c] w-[15%]" />
                 </div>
@@ -699,7 +692,6 @@ export function ExpeditionOverworld({
             </div>
 
             <div className="flex gap-1.5 sm:gap-2 pointer-events-auto w-full justify-end mt-1">
-              {/* HUD Buttons CHANGED TO DARK BLUE (bg-[#2a2d43] text-white) */}
               <button
                 onClick={() => { playSound('ui_click'); onOpenLocationServices?.(); }}
                 className="flex-1 py-1.5 sm:py-2 bg-[#2a2d43] border-[3px] border-[#0f0c0c] flex flex-col items-center justify-center gap-1 shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6 hover:bg-[#38bdf8] hover:text-[#0f0c0c] transition-all group active:translate-y-1 active:translate-x-1 active:shadow-none text-white"
@@ -755,13 +747,13 @@ export function ExpeditionOverworld({
         </div>
       </div>
 
-      {/* ─── COMIC RIGHT SIDEBAR (DARK) ─── */}
+      {/* ─── COMIC RIGHT SIDEBAR (DARK - STRICTLY NO SCROLLBAR) ─── */}
       <aside 
         className={`
           fixed md:relative inset-x-0 bottom-0 md:bottom-auto z-50 md:z-0
-          w-full md:w-[340px] xl:w-[400px] max-h-[85vh] md:max-h-none
+          w-full md:w-[340px] xl:w-[400px] h-[85vh] md:h-full
           flex flex-col gap-3 bg-[#151828] p-4 md:p-5 border-t-[4px] md:border-t-0 md:border-l-[4px] border-[#0f0c0c]
-          overflow-y-auto md:overflow-hidden select-none shrink-0 md:shrink
+          overflow-hidden select-none shrink-0 md:shrink
           transition-all duration-500 ease-out shadow-[0px_-10px_20px_rgba(0,0,0,0.3)] md:shadow-none
           ${isMobile 
             ? (isSidebarOpen ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0') 
@@ -779,7 +771,7 @@ export function ExpeditionOverworld({
 
         {/* ─── DRAGGABLE HANDLE ─── */}
         <div 
-          className="md:hidden w-full flex items-center justify-center pb-4 pt-1 cursor-grab active:cursor-grabbing group relative z-10 touch-none" 
+          className="md:hidden w-full flex items-center justify-center pb-4 pt-1 cursor-grab active:cursor-grabbing group relative z-10 touch-none shrink-0" 
           onTouchStart={handleDrawerTouchStart}
           onTouchMove={handleDrawerTouchMove}
           onTouchEnd={handleDrawerTouchEnd}
@@ -798,68 +790,53 @@ export function ExpeditionOverworld({
           <X size={28} className="font-black" />
         </button>
 
-        {/* CHANGED bg-white TO bg-[#1e2238] */}
-        <div className="bg-[#1e2238] border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] p-4 flex flex-col gap-3 shrink-0 md:flex-1 md:justify-between md:min-h-0 md:overflow-hidden relative z-10">
-          <div className="pr-6 md:pr-0">
-            <div className="flex items-center justify-between mb-2">
-              <span className="px-2 py-1 bg-[#38bdf8] text-[#0f0c0c] border-[3px] border-[#0f0c0c] font-orbitron font-black text-[10px] sm:text-xs uppercase -skew-x-6 shadow-[3px_3px_0px_0px_#0f0c0c]">
-                {currentNode.type.toUpperCase()} NODE
-              </span>
-              <span className="text-2xl leading-none hidden md:block drop-shadow-[2px_2px_0px_#0f0c0c]">{currentNode.icon}</span>
-            </div>
+        {/* --- MAIN INFO PANEL (FLEXIBLE HEIGHT, NEVER SCROLLS) --- */}
+        <div className="flex-1 min-h-0 bg-[#1e2238] border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] p-3 sm:p-4 flex flex-col gap-2 relative z-10">
+          
+          <div className="shrink-0 flex items-center justify-between mb-1">
+            <span className="px-2 py-1 bg-[#38bdf8] text-[#0f0c0c] border-[3px] border-[#0f0c0c] font-orbitron font-black text-[10px] sm:text-xs uppercase -skew-x-6 shadow-[3px_3px_0px_0px_#0f0c0c]">
+              {currentNode.type.toUpperCase()} NODE
+            </span>
+            <span className="text-2xl leading-none hidden md:block drop-shadow-[2px_2px_0px_#0f0c0c]">{currentNode.icon}</span>
+          </div>
 
-            {/* CHANGED text-[#0f0c0c] TO text-white */}
-            <h3 className="font-orbitron font-black text-xl sm:text-xl xl:text-2xl text-white tracking-wider leading-tight line-clamp-2 mt-2">
-              {currentNode.name}
-            </h3>
-            {/* CHANGED text-slate-700 TO text-slate-300, border-[#0f0c0c] TO border-[#38bdf8] */}
-            <p className="text-xs sm:text-sm text-slate-300 font-bold mt-2 leading-relaxed line-clamp-3 border-l-[4px] border-[#38bdf8] pl-3">
+          <h3 className="shrink-0 font-orbitron font-black text-xl sm:text-xl xl:text-2xl text-white tracking-wider leading-tight line-clamp-2">
+            {currentNode.name}
+          </h3>
+
+          {/* --- FLUID HERO PREVIEW IMAGE --- */}
+          {(currentNodeId === 'echo_woods' || currentNodeId === 'echo_village' || currentNodeId === 'harmonic_shrine') && (
+            <div className="flex-1 min-h-[90px] sm:min-h-[120px] max-h-[180px] xl:max-h-[220px] w-full border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] bg-[#0f0c0c] mt-2 mb-1 overflow-hidden -skew-x-2 relative">
+              <div className="absolute skew-x-2">
+                <img
+                  src={currentNodeId === 'harmonic_shrine' ? bakunawa_prev : wakwak_prev}
+                  alt={`${currentNode.name} Boss Preview`}
+                  className="w-full h-full object-cover opacity-90 transition-opacity hover:opacity-100"
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="shrink-0 bg-[#0f0c0c]/40 p-2.5 sm:p-3 border-l-[4px] border-[#38bdf8] mt-1">
+            <p className="text-xs sm:text-sm text-slate-300 font-bold leading-relaxed whitespace-pre-wrap">
               {currentNode.desc}
             </p>
           </div>
 
-            {/* CHANGED bg-[#facc15] TO bg-[#0f0c0c] */}
-          <div className="bg-[#0f0c0c] p-3 border-[4px] border-[#0f0c0c] flex flex-col gap-1 shrink-0 my-2 md:my-0 shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-2">
-            <span className="text-[10px] sm:text-xs font-orbitron font-black uppercase text-[#facc15] tracking-wider skew-x-2">
-              📍 REGIONAL REWARDS
-            </span>
-            <span className="text-xs sm:text-sm text-white font-black truncate skew-x-2">
-              {currentNode.rewards}
-            </span>
-          </div>
+          {/* DASHED DIVIDER & LOCKED ACTION AREA */}
+          <div className="shrink-0 border-t-[2px] border-dashed border-[#0f0c0c]/30 mt-auto pt-2 flex flex-col gap-2">
+            <div className="bg-[#0f0c0c] px-3 py-2 border-[4px] border-[#0f0c0c] flex flex-col gap-1 shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-2">
+              <span className="text-[9px] sm:text-[10px] font-orbitron font-black uppercase text-[#facc15] tracking-wider skew-x-2 leading-none">
+                📍 REGIONAL REWARDS
+              </span>
+              <span className="text-[10px] sm:text-xs text-white font-black skew-x-2 leading-tight whitespace-normal">
+                {currentNode.rewards}
+              </span>
+            </div>
 
-          <div className="flex flex-col gap-3 pt-2 shrink-0">
-            {currentNode.type === 'town' ? (
-              <div className="flex flex-col gap-3 w-full">
-                <button
-                  onClick={() => {
-                    playSound('npc_talk');
-                    setDialogueStep(0);
-                    setShowDialogue(true);
-                    if (isMobile) setIsSidebarOpen(false);
-                  }}
-                  className="w-full py-3 bg-[#facc15] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#ffdf3d] transition-all flex items-center justify-center gap-2 active:translate-y-[4px] active:translate-x-[4px] active:shadow-none"
-                >
-                  <MessageSquare className="w-5 h-5 fill-current shrink-0 skew-x-6" />
-                  <span className="truncate skew-x-6">TALK TO NPC</span>
-                </button>
-
-                {currentNodeId === 'cadence_town' && (
-                  <button
-                    onClick={() => {
-                      playSound('shop_open');
-                      if (onOpenShop) onOpenShop();
-                      if (isMobile) setIsSidebarOpen(false);
-                    }}
-                    className="w-full py-2.5 sm:py-2 xl:py-2.5 bg-[#f97316] text-white border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-xs xl:text-sm uppercase -skew-x-6 hover:bg-[#fb923c] transition-all flex items-center justify-center gap-1.5 sm:gap-2 active:translate-y-0.5 active:shadow-none animate-pulse"
-                  >
-                    <span className="truncate font-black tracking-wider">SHOP</span>
-                  </button>
-                )}
-              </div>
-            ) : currentNode.completed ? (
-              <div className="flex flex-col gap-2 w-full">
-                {currentNodeId === 'crossroads' && (
+            <div className="flex flex-col gap-2 w-full mt-1">
+              {currentNode.type === 'town' ? (
+                <div className="flex flex-col gap-2 w-full">
                   <button
                     onClick={() => {
                       playSound('npc_talk');
@@ -867,45 +844,75 @@ export function ExpeditionOverworld({
                       setShowDialogue(true);
                       if (isMobile) setIsSidebarOpen(false);
                     }}
-                    className="w-full py-2.5 sm:py-2 xl:py-2.5 bg-[#facc15] text-[#0f0c0c] border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-xs xl:text-sm uppercase -skew-x-6 hover:bg-[#ffdf3d] transition-all flex items-center justify-center gap-1.5 sm:gap-2 active:translate-y-0.5 active:shadow-none"
+                    className="w-full py-2.5 sm:py-3 bg-[#facc15] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#ffdf3d] transition-all flex items-center justify-center gap-2 active:translate-y-[4px] active:translate-x-[4px] active:shadow-none"
                   >
-                    <MessageSquare className="w-4 h-4 sm:w-3.5 sm:h-3.5 fill-current shrink-0" />
-                    <span className="truncate">TALK TO RESCUED NPC</span>
+                    <MessageSquare className="w-5 h-5 fill-current shrink-0 skew-x-6" />
+                    <span className="truncate skew-x-6">TALK TO NPC</span>
                   </button>
-                )}
-                <button
-                  disabled
-                  className="w-full py-3 bg-gray-500 text-white border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 flex items-center justify-center gap-2 opacity-50 cursor-not-allowed"
-                >
-                  <span className="truncate skew-x-6 drop-shadow-[2px_2px_0px_#0f0c0c]">AREA CLEARED</span>
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => {
-                  playSound('battle_start');
-                  if (currentNode.enemyIds) onStartBattle(currentNode.enemyIds[0], currentNode.enemyIds);
-                  else if (currentNode.enemyId) onStartBattle(currentNode.enemyId);
-                }}
-                className="w-full py-3 sm:py-4 bg-[#da2d46] text-white border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] font-orbitron font-black text-sm sm:text-base uppercase -skew-x-6 hover:bg-[#ff3b56] transition-all flex items-center justify-center gap-2 active:translate-y-[4px] active:translate-x-[4px] active:shadow-none"
-              >
-                <Play className="w-5 h-5 fill-current shrink-0 skew-x-6" />
-                <span className="truncate skew-x-6 drop-shadow-[2px_2px_0px_#0f0c0c]">BATTLE {currentNode.name.split(' ')[0]}</span>
-              </button>
-            )}
 
-            <button
-              onClick={() => { playSound('journal_open'); onOpenQuests(); }}
-              className="w-full py-2.5 bg-[#38bdf8] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#7dd3fc] transition-all flex items-center justify-center gap-2 active:translate-y-[4px] active:translate-x-[4px] active:shadow-none mt-1"
-            >
-              <Compass className="w-4 h-4 shrink-0 skew-x-6" />
-              <span className="truncate skew-x-6">OPEN QUEST JOURNAL</span>
-            </button>
+                  {currentNodeId === 'cadence_town' && (
+                    <button
+                      onClick={() => {
+                        playSound('shop_open');
+                        if (onOpenShop) onOpenShop();
+                        if (isMobile) setIsSidebarOpen(false);
+                      }}
+                      className="w-full py-2 bg-[#f97316] text-white border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-[10px] sm:text-xs uppercase -skew-x-6 hover:bg-[#fb923c] transition-all flex items-center justify-center gap-1.5 active:translate-y-0.5 active:shadow-none animate-pulse"
+                    >
+                      <span className="truncate font-black tracking-wider skew-x-6">SHOP</span>
+                    </button>
+                  )}
+                </div>
+              ) : currentNode.completed ? (
+                <div className="flex flex-col gap-2 w-full">
+                  {currentNodeId === 'crossroads' && (
+                    <button
+                      onClick={() => {
+                        playSound('npc_talk');
+                        setDialogueStep(0);
+                        setShowDialogue(true);
+                        if (isMobile) setIsSidebarOpen(false);
+                      }}
+                      className="w-full py-2 sm:py-2.5 bg-[#facc15] text-[#0f0c0c] border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-[10px] sm:text-xs uppercase -skew-x-6 hover:bg-[#ffdf3d] transition-all flex items-center justify-center gap-1.5 active:translate-y-0.5 active:shadow-none"
+                    >
+                      <MessageSquare className="w-4 h-4 fill-current shrink-0 skew-x-6" />
+                      <span className="truncate skew-x-6">TALK TO RESCUED NPC</span>
+                    </button>
+                  )}
+                  <button
+                    disabled
+                    className="w-full py-2.5 sm:py-3 bg-gray-500 text-white border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 flex items-center justify-center gap-2 opacity-50 cursor-not-allowed"
+                  >
+                    <span className="truncate skew-x-6 drop-shadow-[2px_2px_0px_#0f0c0c]">AREA CLEARED</span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    playSound('battle_start');
+                    if (currentNode.enemyIds) onStartBattle(currentNode.enemyIds[0], currentNode.enemyIds);
+                    else if (currentNode.enemyId) onStartBattle(currentNode.enemyId);
+                  }}
+                  className="w-full py-2.5 sm:py-3 bg-[#da2d46] text-white border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#ff3b56] transition-all flex items-center justify-center gap-2 active:translate-y-[4px] active:translate-x-[4px] active:shadow-none"
+                >
+                  <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current shrink-0 skew-x-6" />
+                  <span className="truncate skew-x-6 drop-shadow-[2px_2px_0px_#0f0c0c]">BATTLE {currentNode.name.split(' ')[0]}</span>
+                </button>
+              )}
+
+              <button
+                onClick={() => { playSound('journal_open'); onOpenQuests(); }}
+                className="w-full py-2 sm:py-2.5 bg-[#38bdf8] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-[10px] sm:text-xs uppercase -skew-x-6 hover:bg-[#7dd3fc] transition-all flex items-center justify-center gap-2 active:translate-y-[4px] active:translate-x-[4px] active:shadow-none"
+              >
+                <Compass className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 skew-x-6" />
+                <span className="truncate skew-x-6">OPEN QUEST JOURNAL</span>
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* CHANGED bg-white TO bg-[#1e2238] */}
-        <div className="bg-[#1e2238] border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] p-4 flex flex-col gap-3 shrink-0 mb-4 md:mb-0 relative z-10">
+        {/* --- WEAKNESS MATRIX (LOCKED TO BOTTOM) --- */}
+        <div className="shrink-0 bg-[#1e2238] border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] p-4 flex flex-col gap-3 mb-4 md:mb-0 relative z-10">
           <div className="absolute -top-4 left-4 bg-[#facc15] px-3 py-1 border-[3px] border-[#0f0c0c] -skew-x-6 shadow-[3px_3px_0px_0px_#0f0c0c]">
              <h4 className="font-orbitron font-black text-[10px] sm:text-xs uppercase tracking-wider text-[#0f0c0c] skew-x-6 flex items-center gap-1.5">
                <ShieldAlert size={14} className="fill-[#0f0c0c] text-[#facc15]"/> WEAKNESS MATRIX
@@ -914,7 +921,6 @@ export function ExpeditionOverworld({
 
           <div className="flex flex-wrap items-center justify-center gap-1.5 text-[9px] sm:text-xs font-orbitron font-black pt-4 pb-1">
             <span className="px-2 py-1 bg-[#da2d46] text-white border-[2px] border-[#0f0c0c] -skew-x-6 shadow-[2px_2px_0px_0px_#0f0c0c]">STRING</span>
-            {/* CHANGED text-[#0f0c0c] TO text-white */}
             <span className="text-white font-black drop-shadow-[1px_1px_0px_#0f0c0c]">➔</span>
             <span className="px-2 py-1 bg-[#facc15] text-[#0f0c0c] border-[2px] border-[#0f0c0c] -skew-x-6 shadow-[2px_2px_0px_0px_#0f0c0c]">PERC</span>
             <span className="text-white font-black drop-shadow-[1px_1px_0px_#0f0c0c]">➔</span>
@@ -925,7 +931,6 @@ export function ExpeditionOverworld({
             <span className="px-2 py-1 bg-[#4ade80] text-[#0f0c0c] border-[2px] border-[#0f0c0c] -skew-x-6 shadow-[2px_2px_0px_0px_#0f0c0c]">WOOD</span>
           </div>
 
-          {/* CHANGED bg-slate-100 TO bg-[#0f0c0c], text-[#0f0c0c] TO text-slate-300 */}
           <p className="text-[10px] sm:text-xs text-slate-300 font-bold leading-tight bg-[#0f0c0c] p-2.5 border-[2px] border-[#0f0c0c]">
             Super Effective attacks deal <strong className="text-[#da2d46] font-black">2.0x Damage</strong> and double Stagger buildup!
           </p>
@@ -935,9 +940,7 @@ export function ExpeditionOverworld({
       {/* ─── COMIC DIALOGUE MODAL (DARK) ─── */}
       {showDialogue && (
         <div className="fixed inset-0 z-[60] bg-[#0f0c0c]/80 backdrop-blur-sm flex items-center justify-center p-4">
-          {/* CHANGED bg-white TO bg-[#1e2238] */}
           <div className="bg-[#1e2238] border-[5px] border-[#0f0c0c] shadow-[12px_12px_0px_0px_#0f0c0c] max-w-2xl w-full p-6 sm:p-8 flex flex-col sm:flex-row gap-5 items-center sm:items-start -skew-x-2 animate-in fade-in zoom-in-95 duration-200">
-            {/* CHANGED bg-[#f8fafc] TO bg-[#0f0c0c] */}
             <div className="text-5xl sm:text-6xl bg-[#0f0c0c] p-4 sm:p-5 border-[4px] border-[#facc15] shadow-[6px_6px_0px_0px_#facc15] flex items-center justify-center shrink-0">
               {dialogues[dialogueStep]?.avatar}
             </div>
@@ -952,7 +955,6 @@ export function ExpeditionOverworld({
                 </span>
               </div>
 
-              {/* CHANGED text-[#0f0c0c] TO text-white */}
               <p className="text-base sm:text-xl text-white font-black leading-relaxed my-2">
                 "{dialogues[dialogueStep]?.text}"
               </p>

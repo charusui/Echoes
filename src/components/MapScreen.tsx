@@ -158,8 +158,8 @@ export function ExpeditionScreen({
       <div className="absolute top-0 right-0 w-96 h-96 bg-[#da2d46]/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#38bdf8]/10 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Top Neo-Brutalist HUD Bar */}
-      <header className="relative z-20 bg-[#1e2238] border-b-[4px] border-[#0f0c0c] px-3 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-[0px_4px_0px_0px_#0f0c0c]">
+      {/* Top Neo-Brutalist HUD Bar - Hidden on mobile landscape */}
+      <header className="relative z-20 bg-[#1e2238] border-b-[4px] border-[#0f0c0c] px-3 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-[0px_4px_0px_0px_#0f0c0c] [@media(orientation:landscape)_and_(max-height:600px)]:hidden">
         {/* Left: Brand & Active Quest Pill */}
         <div className="flex items-center gap-3 flex-wrap">
           {!isRootMap && (
@@ -192,7 +192,7 @@ export function ExpeditionScreen({
           </div>
         </div>
 
-        {/* Right: Navigation Buttons & Mobile Turn Bar right next to mute sound button */}
+        {/* Right: Navigation Buttons */}
         <div className="flex items-center gap-1 sm:gap-2 flex-wrap justify-end">
           <button
             onClick={() => onOpenCollection ? onOpenCollection() : setActiveModal('harmonydex')}
@@ -222,34 +222,35 @@ export function ExpeditionScreen({
           >
             {isMuted ? <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
           </button>
-
-          {subView === 'combat' && turnInfo && (
-            <div className="lg:hidden flex items-center gap-0.5 bg-[#1e2238]/95 border-[2px] border-[#0f0c0c] shadow-[1px_1px_0px_0px_#0f0c0c] px-1.5 py-0.5 -skew-x-2 backdrop-blur-sm scale-[0.82] sm:scale-95 origin-left">
-              <span className="font-orbitron font-black text-[8px] text-[#facc15] uppercase border-r border-slate-600 pr-1">
-                TURN
-              </span>
-              <div className="flex items-center gap-0.5">
-                {turnInfo.queue.map((unit, idx) => {
-                  const isCurrent = idx === turnInfo.index % turnInfo.queue.length;
-                  return (
-                    <div 
-                      key={idx}
-                      className={`px-1 py-0.5 border border-[#0f0c0c] font-orbitron font-bold text-[8px] sm:text-[9px] flex items-center transition-all ${
-                        isCurrent ? 'bg-[#facc15] text-[#0f0c0c] scale-105 shadow-[1px_1px_0px_0px_#0f0c0c]' : unit.isHero ? 'bg-[#2a2d43] text-white' : 'bg-[#da2d46] text-white'
-                      }`}
-                    >
-                      <span>{unit.avatar}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
         </div>
       </header>
 
       {/* Main View Area */}
       <main className="relative z-10 flex-1 flex overflow-hidden">
+        {/* RELOCATED MOBILE TURN BAR */}
+        {subView === 'combat' && turnInfo && (
+          <div className="lg:hidden absolute top-2 right-2 z-50 flex items-center gap-0.5 bg-[#1e2238]/95 border-[2px] border-[#0f0c0c] shadow-[1px_1px_0px_0px_#0f0c0c] px-1.5 py-0.5 -skew-x-2 backdrop-blur-sm scale-[0.82] sm:scale-95 origin-right">
+            <span className="font-orbitron font-black text-[8px] text-[#facc15] uppercase border-r border-slate-600 pr-1">
+              TURN
+            </span>
+            <div className="flex items-center gap-0.5">
+              {turnInfo.queue.map((unit, idx) => {
+                const isCurrent = idx === turnInfo.index % turnInfo.queue.length;
+                return (
+                  <div 
+                    key={idx}
+                    className={`px-1 py-0.5 border border-[#0f0c0c] font-orbitron font-bold text-[8px] sm:text-[9px] flex items-center transition-all ${
+                      isCurrent ? 'bg-[#facc15] text-[#0f0c0c] scale-105 shadow-[1px_1px_0px_0px_#0f0c0c]' : unit.isHero ? 'bg-[#2a2d43] text-white' : 'bg-[#da2d46] text-white'
+                    }`}
+                  >
+                    <span>{unit.avatar}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {subView === 'overworld' ? (
           <ExpeditionOverworld 
             nodes={nodes}
