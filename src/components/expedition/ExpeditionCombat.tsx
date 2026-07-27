@@ -24,6 +24,7 @@ interface ExpeditionCombatProps {
   party: Record<string, HeroProfile>;
   enemyId: string;
   enemyGauntlet?: string[];
+  customEnemies?: EnemyProfile[];
   dex: Record<string, HarmonydexEntry>;
   onCombatResult: (result: { victory: boolean; xpGained: number; capturedEntry?: HarmonydexEntry }) => void;
   onFlee: () => void;
@@ -50,8 +51,10 @@ export function ExpeditionCombat({
   onFlee,
   onUpdateParty,
   onTurnUpdate,
+  customEnemies,
 }: ExpeditionCombatProps) {
   const [enemies, setEnemies] = useState<EnemyProfile[]>(() => {
+    if (customEnemies) return customEnemies;
     const list = enemyGauntlet && enemyGauntlet.length > 0 ? enemyGauntlet : [enemyId];
     return list.map((id, index) => {
       const inst = EXPEDITION_INSTRUMENTS[id] || EXPEDITION_INSTRUMENTS['wakwak']!;
@@ -1276,11 +1279,18 @@ export function ExpeditionCombat({
             </div>
           </button>
 
-          <button onClick={onFlee} disabled={isEndingBattle} className="col-span-2 sm:col-span-1 px-1.5 py-1.5 sm:px-4 sm:py-3 bg-[#2a2d43] text-white border-[2px] sm:border-[4px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-[8px] sm:text-sm uppercase -skew-x-6 hover:bg-[#383d5a] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center sm:justify-start gap-1 sm:gap-2 active:translate-y-0.5 active:shadow-none">
+          <button onClick={onFlee} disabled={isEndingBattle} className="col-span-1 sm:col-span-1 px-1.5 py-1.5 sm:px-4 sm:py-3 bg-[#2a2d43] text-white border-[2px] sm:border-[4px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-[8px] sm:text-sm uppercase -skew-x-6 hover:bg-[#383d5a] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center sm:justify-start gap-1 sm:gap-2 active:translate-y-0.5 active:shadow-none">
             <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
             <div className="flex flex-col text-left justify-center">
               <span className="leading-tight">RETREAT</span>
               <span className="text-[6px] sm:text-2xs font-bold opacity-80 leading-tight hidden sm:block">Flee Battle</span>
+            </div>
+          </button>
+
+          <button onClick={() => onCombatResult({ victory: true, xpGained: 150 * enemies.length })} disabled={isEndingBattle} className="col-span-1 sm:col-span-1 px-1.5 py-1.5 sm:px-4 sm:py-3 bg-[#eab308] text-[#0f0c0c] border-[2px] sm:border-[4px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-[8px] sm:text-sm uppercase -skew-x-6 hover:bg-[#facc15] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center sm:justify-start gap-1 sm:gap-2 active:translate-y-0.5 active:shadow-none">
+            <div className="flex flex-col text-left justify-center">
+              <span className="leading-tight">SKIP (TEST)</span>
+              <span className="text-[6px] sm:text-2xs font-bold opacity-80 leading-tight hidden sm:block">Auto Win</span>
             </div>
           </button>
         </div>
@@ -1350,6 +1360,17 @@ export function ExpeditionCombat({
             <div className="flex flex-col text-left">
               <span>RETREAT</span>
               <span className="text-2xs font-bold opacity-80">Flee Battle</span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => onCombatResult({ victory: true, xpGained: 150 * enemies.length })}
+            disabled={isEndingBattle}
+            className="px-4 py-3 bg-[#eab308] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#facc15] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2 active:translate-y-0.5 active:shadow-none"
+          >
+            <div className="flex flex-col text-left">
+              <span>SKIP (TEST)</span>
+              <span className="text-2xs font-bold opacity-80">Auto Win</span>
             </div>
           </button>
         </div>

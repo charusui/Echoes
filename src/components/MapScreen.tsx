@@ -4,14 +4,14 @@ import { useProgress } from '../context/ProgressProvider';
 import mapImg from '../assets/png/visayas_map.png';
 import { audioEngine } from '../services/audioSynth';
 import { 
-  DEFAULT_HEROES, 
-  EXPEDITION_INSTRUMENTS, 
-  EXPEDITION_NODES, 
-  EXPEDITION_QUESTS,
   type HeroProfile, 
   type HarmonydexEntry,
   type MapNode,
-  type ExpeditionQuest
+  type ExpeditionQuest,
+  DEFAULT_HEROES,
+  EXPEDITION_INSTRUMENTS,
+  EXPEDITION_NODES,
+  EXPEDITION_QUESTS
 } from '../types/expedition';
 import { ExpeditionOverworld } from './expedition/ExpeditionOverworld';
 import { ExpeditionCombat, type TurnUpdateInfo } from './expedition/ExpeditionCombat';
@@ -21,6 +21,7 @@ import { EquipmentModal } from './expedition/EquipmentModal';
 import { QuestsModal } from './expedition/QuestsModal';
 import { CombatResultModal } from './expedition/CombatResultModal';
 import { MariaShopModal } from './expedition/MariaShopModal';
+import { CrossroadsCutscene } from './expedition/CrossroadsCutscene';
 
 export interface ExpeditionScreenProps {
   onBack: () => void;
@@ -31,6 +32,14 @@ export interface ExpeditionScreenProps {
   onOpenRanks?: () => void;
   isRootMap?: boolean;
   onCombatStateChange?: (inCombat: boolean) => void;
+  party: Record<string, HeroProfile>;
+  setParty: React.Dispatch<React.SetStateAction<Record<string, HeroProfile>>>;
+  dex: Record<string, HarmonydexEntry>;
+  setDex: React.Dispatch<React.SetStateAction<Record<string, HarmonydexEntry>>>;
+  nodes: Record<string, MapNode>;
+  setNodes: React.Dispatch<React.SetStateAction<Record<string, MapNode>>>;
+  quests: Record<string, ExpeditionQuest>;
+  setQuests: React.Dispatch<React.SetStateAction<Record<string, ExpeditionQuest>>>;
 }
 
 export function ExpeditionScreen({
@@ -42,15 +51,17 @@ export function ExpeditionScreen({
   onOpenRanks,
   isRootMap,
   onCombatStateChange,
+  party,
+  setParty,
+  dex,
+  setDex,
+  nodes,
+  setNodes,
+  quests,
+  setQuests,
 }: ExpeditionScreenProps) {
-  // State for party, inventory, nodes, and quests
-  const [party, setParty] = useState<Record<string, HeroProfile>>({ ...DEFAULT_HEROES });
-  const [dex, setDex] = useState<Record<string, HarmonydexEntry>>({ ...EXPEDITION_INSTRUMENTS });
-  const [nodes, setNodes] = useState<Record<string, MapNode>>({ ...EXPEDITION_NODES });
-  const [quests, setQuests] = useState<Record<string, ExpeditionQuest>>({ ...EXPEDITION_QUESTS });
-  
   // Navigation & View state
-  const [subView, setSubView] = useState<'overworld' | 'combat'>('overworld');
+  const [subView, setSubView] = useState<'overworld' | 'combat' | 'crossroads_cutscene'>('overworld');
   const [activeEnemyId, setActiveEnemyId] = useState<string>('corrupted_violin');
   const [activeEnemyGauntlet, setActiveEnemyGauntlet] = useState<string[] | undefined>();
   const [currentNodeId, setCurrentNodeId] = useState<string>('cadence_town');
@@ -126,10 +137,14 @@ export function ExpeditionScreen({
       }
     }
 
-    setLastBattleResult(result);
-    setActiveModal('result');
-    setSubView('overworld');
-  }, [activeEnemyId, quests]);
+    if (result.victory && currentNodeId === 'crossroads') {
+      setSubView('crossroads_cutscene');
+    } else {
+      setLastBattleResult(result);
+      setActiveModal('result');
+      setSubView('overworld');
+    }
+  }, [activeEnemyId, quests, currentNodeId]);
 
   const handleEquipWeapon = useCallback((heroId: string, instrumentId: string) => {
     setParty(prev => {
@@ -266,6 +281,12 @@ export function ExpeditionScreen({
             onOpenRanks={onOpenRanks}
             onOpenShop={() => setActiveModal('shop')}
           />
+        ) : subView === 'crossroads_cutscene' ? (
+          <CrossroadsCutscene 
+            onComplete={() => {
+              setSubView('overworld');
+            }} 
+          />
         ) : activeEnemyId.startsWith('bakunawa') ? (
           <HarmonyStage 
             party={party}
@@ -311,6 +332,7 @@ export function ExpeditionScreen({
       {activeModal === 'shop' && (
         <MariaShopModal 
           party={party}
+          nodes={nodes}
           onUpdateParty={setParty}
           onClose={() => setActiveModal('none')}
         />
@@ -343,11 +365,19 @@ export interface MapScreenProps {
   onOpenExpedition?: () => void;
 }
 
-export function MapScreen({ onOpenScanner, onOpenLocationServices, onOpenCollection, onOpenBadges, onOpenRanks, onOpenExpedition }: MapScreenProps) {
+export function MapScreen({ onOpenScanner, onOpenLocationServices, onOpenCollection, onOpenBadges, onOpenRanks }: MapScreenProps) {
   return (
     <ExpeditionScreen
       isRootMap={true}
-      onBack={onOpenExpedition || (() => {})}
+      party={DEFAULT_HEROES}
+      setParty={() => {}}
+      dex={EXPEDITION_INSTRUMENTS}
+      setDex={() => {}}
+      nodes={EXPEDITION_NODES}
+      setNodes={() => {}}
+      quests={EXPEDITION_QUESTS}
+      setQuests={() => {}}
+      onBack={() => {}}
       onOpenScanner={onOpenScanner}
       onOpenLocationServices={onOpenLocationServices}
       onOpenCollection={onOpenCollection}

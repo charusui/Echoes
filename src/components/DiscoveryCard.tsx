@@ -1,15 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import type { ActiveInstrumentProfile } from '../types';
-import { ChevronRight, ArrowLeft } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { IMAGE_BASE } from '../constants';
 
 interface DiscoveryCardProps {
   profile: ActiveInstrumentProfile;
+  isNew?: boolean;
   onContinue: () => void;
   onBack: () => void;
 }
 
-export function DiscoveryCard({ profile, onContinue, onBack }: DiscoveryCardProps) {
+export function DiscoveryCard({ profile, isNew = true, onContinue, onBack }: DiscoveryCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [rotation, setRotation] = useState({ x: 0, y: 0 });
   const [isFlipped, setIsFlipped] = useState(false);
@@ -107,20 +108,14 @@ export function DiscoveryCard({ profile, onContinue, onBack }: DiscoveryCardProp
       <div className="w-full max-w-sm relative z-10 pb-12 flex flex-col items-center">
         
         {/* Header Bar */}
-        <div className="flex items-center justify-between mb-6 w-full">
-          <button 
-            onClick={() => handleLeave(onBack)}
-            className="px-4 py-2 bg-[#f0dde0] border-[3px] border-[#0f0c0c] hover:bg-[#da2d46] text-[#0f0c0c] transition-all flex items-center gap-1.5 font-orbitron text-[10px] md:text-xs font-black tracking-widest uppercase -skew-x-6 shadow-[3px_3px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none"
-          >
-            <ArrowLeft size={16} className="skew-x-6 stroke-[3px]" /> 
-            <span className="skew-x-6 hidden sm:block">ABORT</span>
-          </button>
-          
-          <div className="bg-[#0f0c0c] border-[3px] border-[#da2d46] px-3 py-1 -skew-x-6 shadow-[4px_4px_0px_0px_#da2d46]">
-            <span className="font-space-mono text-[9px] md:text-xs text-[#f0dde0] font-black tracking-widest uppercase skew-x-6 block">
-              ACQUISITION
-            </span>
-          </div>
+        <div className="flex items-center justify-start mb-6 w-full min-h-[32px]">
+          {isNew && (
+            <div className="bg-[#0f0c0c] border-[3px] border-[#da2d46] px-3 py-1 -skew-x-6 shadow-[4px_4px_0px_0px_#da2d46]">
+              <span className="font-space-mono text-[9px] md:text-xs text-[#f0dde0] font-black tracking-widest uppercase skew-x-6 block">
+                ACQUISITION
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Title */}
@@ -129,7 +124,7 @@ export function DiscoveryCard({ profile, onContinue, onBack }: DiscoveryCardProp
             className="font-orbitron font-black text-[#e0e5ed] text-3xl md:text-4xl tracking-widest uppercase leading-none"
             style={{ textShadow: '4px 4px 0px #0f0c0c, -2px -2px 0px #da2d46' }}
           >
-            NEW<br/>DISCOVERY
+            {isNew ? <>NEW<br/>DISCOVERY</> : <>INSTRUMENT<br/>PROFILE</>}
           </h2>
           <div className="inline-block bg-[#0f0c0c] border-[2px] border-[#e0e5ed] px-2 py-0.5 mt-3 -skew-x-6 shadow-[2px_2px_0px_0px_#da2d46] animate-comic-pulse">
             <p className="font-space-mono text-[#e0e5ed] text-[10px] tracking-widest uppercase font-bold skew-x-6">
@@ -240,12 +235,19 @@ export function DiscoveryCard({ profile, onContinue, onBack }: DiscoveryCardProp
         </div>
 
         {/* Continue Button */}
-        <div className="mt-5 md:mt-10 w-full max-w-[260px] sm:max-w-xs md:max-w-sm relative z-10 shrink-0">
+        <div className="mt-5 md:mt-10 w-full max-w-[260px] sm:max-w-xs md:max-w-sm relative z-10 shrink-0 flex flex-col gap-4">
           <button 
             onClick={() => handleLeave(onContinue)}
             className="w-full py-4 bg-[#da2d46] border-[6px] border-[#0f0c0c] font-orbitron text-sm md:text-base font-black tracking-widest uppercase text-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[10px_10px_0px_0px_#0f0c0c] active:translate-y-2 active:translate-x-2 active:shadow-none transition-all flex items-center justify-center gap-3 -skew-x-6"
           >
             <span className="skew-x-6">PLAY INSTRUMENT</span> <ChevronRight size={24} className="skew-x-6 stroke-[3px]" />
+          </button>
+
+          <button 
+            onClick={() => handleLeave(onBack)}
+            className="w-full py-4 bg-[#f0dde0] border-[6px] border-[#0f0c0c] font-orbitron text-sm md:text-base font-black tracking-widest uppercase text-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[10px_10px_0px_0px_#0f0c0c] active:translate-y-2 active:translate-x-2 active:shadow-none transition-all flex items-center justify-center gap-3 -skew-x-6"
+          >
+            <span className="skew-x-6">CONTINUE ADVENTURE</span>
           </button>
         </div>
 
