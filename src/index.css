@@ -379,12 +379,12 @@ canvas {
   animation: vibrate-x 0.12s linear infinite;
 }
 
-@keyframes sprite-play {
-  from { background-position: 0 0; }
-  to { background-position: -900% 0; }
+@keyframes sprite-5 {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
 }
-.animate-sprite {
-  animation: sprite-play 1s steps(9) infinite;
+.animate-sprite-5 {
+  animation: sprite-5 0.5s steps(5) infinite;
 }
 
 @keyframes sprite-100 {

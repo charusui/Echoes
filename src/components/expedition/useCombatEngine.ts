@@ -114,7 +114,7 @@ export function useCombatEngine({
   }, [targetEnemyIndex]);
 
   const [turnIndex, setTurnIndex] = useState(0);
-  const [activeAction, setActiveAction] = useState<'none' | 'rhythm' | 'spell' | 'parry' | 'attune'>('none');
+  const [activeAction, setActiveAction] = useState<'none' | 'rhythm' | 'spell' | 'parry' | 'attune' | 'post_attack_anim'>('none');
   const [parryStanceActive, setParryStanceActive] = useState(false);
   const [enemyFrame, setEnemyFrame] = useState(0);
   const [isPartyDrawerOpen, setIsPartyDrawerOpen] = useState(false);
@@ -299,6 +299,7 @@ export function useCombatEngine({
     if (allHeroesDead) {
       setIsEndingBattle(true);
       audioEngine.playHitSFX('miss');
+      new Audio('/assets/audio/sfx/party_eliminated.mp3').play().catch(() => {});
       setTimeout(() => {
         onCombatResult({ victory: false, xpGained: 20 });
       }, 2500);
@@ -385,7 +386,7 @@ export function useCombatEngine({
   }, [activeHero.id, onUpdateParty, isBoss, baseEnemyInst, onCombatResult, advanceTurn, enemy.hp, checkPostTurnStates]);
 
   const handleRhythmComplete = useCallback((stats: { combo: number; hits: Record<string, number>; captureProgress?: number }, isCaptureMode?: boolean) => {
-    setActiveAction('none');
+    setActiveAction('post_attack_anim');
     let updatedPartyList: HeroProfile[] = [];
 
     onUpdateParty(prev => {
@@ -422,14 +423,15 @@ export function useCombatEngine({
     });
 
     setTimeout(() => {
+      setActiveAction('none');
       if (!checkPostTurnStates(targetHp, updatedPartyList)) {
         advanceTurn();
       }
-    }, 1000);
+    }, 1800);
   }, [activeHero, dex, enemy, baseEnemyInst, isBoss, onCombatResult, checkPostTurnStates, advanceTurn, onUpdateParty, triggerDamagePopup]);
 
   const handleSpellComplete = useCallback((success: boolean, completedPoints: number) => {
-    setActiveAction('none');
+    setActiveAction('post_attack_anim');
     let updatedPartyList: HeroProfile[] = [];
 
     onUpdateParty(prev => {
@@ -441,7 +443,10 @@ export function useCombatEngine({
 
     if (!success || completedPoints < 10) {
       audioEngine.playHitSFX('miss');
-      setTimeout(() => checkPostTurnStates(null, updatedPartyList) || advanceTurn(), 100);
+      setTimeout(() => {
+        setActiveAction('none');
+        checkPostTurnStates(null, updatedPartyList) || advanceTurn();
+      }, 100);
       return;
     }
 
@@ -459,10 +464,11 @@ export function useCombatEngine({
     });
 
     setTimeout(() => {
+      setActiveAction('none');
       if (!checkPostTurnStates(targetHp, updatedPartyList)) {
         advanceTurn();
       }
-    }, 1000);
+    }, 1800);
   }, [activeHero, dex, enemy, onUpdateParty, checkPostTurnStates, advanceTurn, triggerDamagePopup]);
 
   const handleParryResult = useCallback((parried: boolean) => {
@@ -479,6 +485,10 @@ export function useCombatEngine({
     }
     const rawDmg = Math.round(activeAttackingEnemy.baseDmg * (activeAttackingEnemy.staggered ? 0.5 : 1.0));
     const dmg = parried || parryStanceActive ? Math.round(rawDmg * 0.25) : rawDmg;
+
+    if (parried || parryStanceActive) {
+      new Audio('/assets/audio/sfx/blocking.mp3').play().catch(() => {});
+    }
 
     if (parried) {
       audioEngine.playHitSFX('sick');
@@ -501,6 +511,14 @@ export function useCombatEngine({
       const shieldLeft = Math.max(0, target.shield - dmg);
       const overflow = Math.max(0, dmg - target.shield);
       const newHp = Math.max(0, target.hp - overflow);
+      
+      if (target.hp > 0 && newHp <= 0) {
+        const otherHeroesAlive = Object.values(prev).some(h => h.id !== target.id && h.hp > 0);
+        if (otherHeroesAlive) {
+          new Audio('/assets/audio/sfx/member_eliminated.mp3').play().catch(() => {});
+        }
+      }
+
       const updatedPartyMap = { ...prev, [target.id]: { ...target, shield: shieldLeft, hp: newHp } };
 
       setTimeout(() => {
