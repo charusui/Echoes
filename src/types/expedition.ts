@@ -429,7 +429,7 @@ export const EXPEDITION_NODES: Record<string, MapNode> = {
     y: 180,
     unlocked: true,
     desc: 'The epicenter of the Dissonance. The Lord of Cacophony awaits top-tier conductors.',
-    enemyId: 'bajo_de_unas',
+    enemyId: 'santelmo',
     rewards: '1000 XP & Expedition 33 Mastery Badge',
   },
   crossroads: {

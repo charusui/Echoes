@@ -63,6 +63,17 @@ export function DevMenu({ onOpenStudentSession, onOpenKorlongHunt, onStartGamepl
       color: '#da2d46',
     },
     {
+      label: 'UNLOCK ALL LEVELS',
+      sublabel: 'Removes fog, keeps battles',
+      icon: <Unlock size={16} className="stroke-[2.5px]" />,
+      onClick: () => {
+        localStorage.setItem('echoes_dev_force_unlock', '1');
+        showToast('✓ Fog of war removed (Reloading...)');
+        setTimeout(() => window.location.reload(), 1000);
+      },
+      color: '#38bdf8',
+    },
+    {
       label: 'MAX XP',
       sublabel: '+999 XP instant',
       icon: <Zap size={16} className="stroke-[2.5px]" />,
