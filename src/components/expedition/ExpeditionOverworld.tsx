@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Play, MessageSquare, Compass, ShieldAlert, Camera, Map, Flame, X, ChevronUp } from 'lucide-react';
 import { type MapNode, type ExpeditionQuest } from '../../types/expedition';
 import visayasMap from '../../assets/png/visayas_map.png';
-import visayas_map from '../../assets/png/visayas_map.png';
+import corruptedVisayasMap from '../../assets/png/corrupted_visayas_map.png';
 import { DevMenu } from '../DevMenu'; 
 import { audioEngine } from '../../services/audioSynth';
 
@@ -34,6 +34,7 @@ interface ExpeditionOverworldProps {
   onOpenStudentSession?: () => void;
   onOpenKorlongHunt?: () => void;
   onStartGameplay?: (instrument: string) => void;
+  onNodeComplete?: (nodeId: string) => void;
 }
 
 export function ExpeditionOverworld({
@@ -50,7 +51,8 @@ export function ExpeditionOverworld({
   onOpenShop,
   onOpenStudentSession,
   onOpenKorlongHunt,
-  onStartGameplay
+  onStartGameplay,
+  onNodeComplete
 }: ExpeditionOverworldProps) {
   const [showDialogue, setShowDialogue] = useState(false);
   const [dialogueStep, setDialogueStep] = useState(0);
@@ -229,6 +231,9 @@ export function ExpeditionOverworld({
     } else {
       setShowDialogue(false);
       setDialogueStep(0);
+      if (onNodeComplete) {
+        onNodeComplete(currentNodeId);
+      }
     }
   };
 
@@ -420,14 +425,16 @@ export function ExpeditionOverworld({
 
       const meta = regionMeta[node.id];
 
+      const isDiscovered = discoveredNodeIds.has(node.id);
+
       return (
         <g
           key={node.id}
           transform={`translate(${renderX}, ${renderY}) scale(${dynamicPinScale})`}
-          className="cursor-pointer group pointer-events-auto"
-          onClick={() => handleNodeClick(node.id)}
+          className={`cursor-pointer group pointer-events-auto transition-all duration-500 ${isDiscovered ? 'hover:scale-105' : 'opacity-40 grayscale pointer-events-none'}`}
+          onClick={() => isDiscovered && handleNodeClick(node.id)}
         >
-          <g className="transition-transform duration-200 group-hover:scale-110">
+          <g className="transition-transform duration-200">
             {isSelected && (
               <circle
                 r="48"
@@ -455,54 +462,58 @@ export function ExpeditionOverworld({
             </text>
 
             {/* ── Main Name Box (Comic Style) ── */}
-            <rect x={boxX} y="44" width={boxWidth} height="24" fill="#f8fafc" stroke="#0f0c0c" strokeWidth="4" />
-            <text
-              y="60"
-              textAnchor="middle"
-              fontSize={mainFontSize}
-              fontFamily="Orbitron, sans-serif"
-              fontWeight="900"
-              fill="#0f0c0c"
-              className="select-none pointer-events-none tracking-wider"
-            >
-              {node.name.toUpperCase()}
-            </text>
-
-            {/* ── Region + Collection Stack ── */}
-            {meta && (
+            {isDiscovered && (
               <>
-                <rect x={boxX} y="68" width={boxWidth} height="16" fill={ringColor} stroke="#0f0c0c" strokeWidth="4" />
+                <rect x={boxX} y="44" width={boxWidth} height="24" fill="#f8fafc" stroke="#0f0c0c" strokeWidth="4" />
                 <text
-                  y="79"
+                  y="60"
                   textAnchor="middle"
-                  fontSize="8"
+                  fontSize={mainFontSize}
                   fontFamily="Orbitron, sans-serif"
                   fontWeight="900"
                   fill="#0f0c0c"
-                  className="select-none pointer-events-none tracking-widest"
+                  className="select-none pointer-events-none tracking-wider"
                 >
-                  {meta.region}
+                  {node.name.toUpperCase()}
                 </text>
 
-                <rect x={boxX} y="84" width={boxWidth} height="18" fill={meta.collectionBg} stroke="#0f0c0c" strokeWidth="4" />
-                <text
-                  y="96"
-                  textAnchor="middle"
-                  fontSize="8.5"
-                  fontFamily="Orbitron, sans-serif"
-                  fontWeight="900"
-                  fill={meta.collectionText}
-                  className="select-none pointer-events-none tracking-widest drop-shadow-[1px_1px_0px_#0f0c0c]"
-                >
-                  {meta.collection}
-                </text>
+                {/* ── Region + Collection Stack ── */}
+                {meta && (
+                  <>
+                    <rect x={boxX} y="68" width={boxWidth} height="16" fill={ringColor} stroke="#0f0c0c" strokeWidth="4" />
+                    <text
+                      y="79"
+                      textAnchor="middle"
+                      fontSize="8"
+                      fontFamily="Orbitron, sans-serif"
+                      fontWeight="900"
+                      fill="#0f0c0c"
+                      className="select-none pointer-events-none tracking-widest"
+                    >
+                      {meta.region}
+                    </text>
+
+                    <rect x={boxX} y="84" width={boxWidth} height="18" fill={meta.collectionBg} stroke="#0f0c0c" strokeWidth="4" />
+                    <text
+                      y="96"
+                      textAnchor="middle"
+                      fontSize="8.5"
+                      fontFamily="Orbitron, sans-serif"
+                      fontWeight="900"
+                      fill={meta.collectionText}
+                      className="select-none pointer-events-none tracking-widest drop-shadow-[1px_1px_0px_#0f0c0c]"
+                    >
+                      {meta.collection}
+                    </text>
+                  </>
+                )}
               </>
             )}
           </g>
         </g>
       );
     });
-  }, [nodes, currentNodeId, dynamicPinScale, getDisplayCoords]);
+  }, [nodes, currentNodeId, dynamicPinScale, getDisplayCoords, discoveredNodeIds]);
 
   // ─── DYNAMIC FOG OF WAR MASK ───
   const dynamicMask = useMemo(() => {
@@ -607,7 +618,7 @@ export function ExpeditionOverworld({
           >
             <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden will-change-transform">
               <img
-                src={visayas_map}
+                src={corruptedVisayasMap}
                 alt="Corrupted Visayas Map Background"
                 className="absolute inset-0 w-full h-full object-cover"
                 style={{
@@ -678,7 +689,7 @@ export function ExpeditionOverworld({
                     y={y - 125}
                     width="350"
                     height="250"
-                    className="opacity-75 pointer-events-none transition-opacity duration-1000 ease-in-out"
+                    className="opacity-75 pointer-events-none transition-opacity duration-1000 ease-in-out animate-cloud-drift"
                   />
                 );
               })}
@@ -850,8 +861,8 @@ export function ExpeditionOverworld({
           <X size={28} className="font-black" />
         </button>
 
-        {/* --- MAIN INFO PANEL (FLEXIBLE HEIGHT, NEVER SCROLLS) --- */}
-        <div className="flex-1 min-h-0 bg-[#1e2238] border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] p-3 sm:p-4 flex flex-col gap-2 relative z-10">
+        {/* --- MAIN INFO PANEL (SCROLLABLE NOW) --- */}
+        <div className="flex-1 min-h-0 bg-[#1e2238] border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] p-3 sm:p-4 flex flex-col gap-2 relative z-10 overflow-y-auto">
           
           <div className="shrink-0 flex items-center justify-between mb-1">
             <span className="px-2 py-1 bg-[#38bdf8] text-[#0f0c0c] border-[3px] border-[#0f0c0c] font-orbitron font-black text-[10px] sm:text-xs uppercase -skew-x-6 shadow-[3px_3px_0px_0px_#0f0c0c]">
@@ -871,7 +882,7 @@ export function ExpeditionOverworld({
                 <img
                   src={currentPreviewImg}
                   alt={`${currentNode.name} Preview`}
-                  className="w-full h-full object-cover object-top opacity-90 transition-opacity hover:opacity-100"
+                  className="w-full h-full object-cover object-top opacity-90 transition-opacity hover:opacity-100 animate-ken-burns"
                 />
               </div>
             </div>

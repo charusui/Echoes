@@ -280,6 +280,9 @@ export function ExpeditionScreen({
             onOpenBadges={onOpenBadges}
             onOpenRanks={onOpenRanks}
             onOpenShop={() => setActiveModal('shop')}
+            onNodeComplete={(id) => {
+              setNodes(prev => ({ ...prev, [id]: { ...prev[id]!, completed: true } }));
+            }}
           />
         ) : subView === 'crossroads_cutscene' ? (
           <CrossroadsCutscene 

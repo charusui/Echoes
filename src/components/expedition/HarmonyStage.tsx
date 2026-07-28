@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Sword, Sparkles, Shield, Disc, Zap, ArrowLeft, Users, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react';
 import { audioEngine } from '../../services/audioSynth';
-import { 
-  EXPEDITION_INSTRUMENTS, 
+import {
+  EXPEDITION_INSTRUMENTS,
   getTypeMultiplier,
-  type HeroProfile, 
-  type EnemyProfile, 
+  type HeroProfile,
+  type EnemyProfile,
   type HarmonydexEntry,
   type TurnUnit
 } from '../../types/expedition';
@@ -42,7 +42,7 @@ export type Beam = {
   elapsed: number;
 };
 
-const CHARGE_DURATION = 900; 
+const CHARGE_DURATION = 900;
 
 interface HarmonyStageProps {
   party: Record<string, HeroProfile>;
@@ -92,7 +92,7 @@ export function HarmonyStage({
         stagger: 0,
         maxStagger: 100,
         staggered: false,
-        baseDmg: isB ? 45 : 25, 
+        baseDmg: isB ? 45 : 25,
         captured: inst.captured,
         preset: inst.audioPreset,
         isBoss: isB,
@@ -138,7 +138,7 @@ export function HarmonyStage({
     for (let i = 0; i < maxLen; i++) {
       if (partyList[i]) queue.push({ isHero: true, unit: partyList[i]! });
       else if (partyList.length > 0) queue.push({ isHero: true, unit: partyList[i % partyList.length]! });
-      
+
       if (enemies[i]) queue.push({ isHero: false, unit: enemies[i]! });
       else if (enemies.length > 0) queue.push({ isHero: false, unit: enemies[i % enemies.length]! });
     }
@@ -177,7 +177,7 @@ export function HarmonyStage({
   const [boardY, setBoardY] = useState(20);
   const boardYRef = useRef(20);
   const [isMovingUp, setIsMovingUp] = useState(false);
-  const [isDashing, setIsDashing] = useState(false); 
+  const [isDashing, setIsDashing] = useState(false);
   const keys = useRef({ w: false, s: false, shift: false });
   const previousBakunawaY = useRef(0);
   const [bakunawaY, setBakunawaY] = useState(0);
@@ -187,7 +187,7 @@ export function HarmonyStage({
   const projectilesRef = useRef<Projectile[]>([]);
   const [beams, setBeams] = useState<Beam[]>([]);
   const beamsRef = useRef<Beam[]>([]);
-  
+
   const dashStateRef = useRef({ lastDash: 0, isDashing: false, dashTimer: 0 });
   const attackManagerRef = useRef({ currentPattern: 0, state: 'waiting', timer: performance.now(), shotsFired: 0 });
   const lastDamageTimeRef = useRef(0);
@@ -195,7 +195,7 @@ export function HarmonyStage({
   const bakunawaDesktopImgRef = useRef<HTMLImageElement>(null);
   const bakunawaMobileImgRef = useRef<HTMLImageElement>(null);
   const bakunawaMouthBottomPxRef = useRef(300);
-  const bakunawaMouthXPercentRef = useRef(85); 
+  const bakunawaMouthXPercentRef = useRef(85);
   const combatContainerRef = useRef<HTMLDivElement>(null);
   const partyBoardImgRef = useRef<HTMLImageElement>(null);
   const partyGroupRef = useRef<HTMLDivElement>(null);
@@ -206,14 +206,14 @@ export function HarmonyStage({
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (isHeroTurn || enemy.staggered) return;
-    if (e.pointerType === 'mouse' && e.buttons === 0) return; 
-    
+    if (e.pointerType === 'mouse' && e.buttons === 0) return;
+
     const container = combatContainerRef.current;
     if (!container) return;
     const rect = container.getBoundingClientRect();
     const yPct = 100 - ((e.clientY - rect.top) / rect.height) * 100;
     const clamped = Math.max(0, Math.min(100, yPct));
-    
+
     setIsMovingUp(clamped > boardYRef.current);
     boardYRef.current = clamped;
     setBoardY(clamped);
@@ -229,10 +229,10 @@ export function HarmonyStage({
   const handleLeftPointerUp = useCallback((e: React.PointerEvent) => {
     e.currentTarget.releasePointerCapture(e.pointerId);
     setIsMovingUp(false);
-    
+
     const timeElapsed = performance.now() - touchStartTime.current;
     const distance = Math.abs(e.clientY - touchStartY.current);
-    
+
     if (distance > 40 && timeElapsed < 250 && performance.now() - dashStateRef.current.lastDash > 1500) {
       dashStateRef.current.isDashing = true;
       dashStateRef.current.dashTimer = performance.now();
@@ -243,13 +243,13 @@ export function HarmonyStage({
 
   const triggerDamagePopup = useCallback((text: string, isEnemy: boolean, color: string, effectType?: 'slash' | 'magic' | 'block', customX?: string, customY?: string) => {
     const id = Date.now() + Math.random();
-    const offsetX = (Math.random() - 0.5) * 80; 
+    const offsetX = (Math.random() - 0.5) * 80;
     const offsetY = (Math.random() - 0.5) * 60;
-    
+
     setDamagePopups(prev => [...prev, { id, text, isEnemy, color, effectType, offsetX, offsetY, customX, customY }]);
     setTimeout(() => {
       setDamagePopups(prev => prev.filter(p => p.id !== id));
-    }, 1200); 
+    }, 1200);
   }, []);
 
   const handleProjectileHit = useCallback((dmg: number) => {
@@ -285,10 +285,10 @@ export function HarmonyStage({
     const boardBottom = br.bottom;
     const boardTop = br.bottom + br.height;
     const parryRightPct = br.rightPct + (br.width / (combatContainerRef.current?.clientWidth ?? window.innerWidth) * 100) * 0.5;
-    
-    const goldOrbIdx = projectilesRef.current.findIndex(p => 
-      p.type === 'gold' && 
-      p.x < parryRightPct && p.x > br.leftPct && 
+
+    const goldOrbIdx = projectilesRef.current.findIndex(p =>
+      p.type === 'gold' &&
+      p.x < parryRightPct && p.x > br.leftPct &&
       p.y > boardBottom - 10 && p.y < boardTop + 20
     );
     if (goldOrbIdx !== -1) {
@@ -343,14 +343,14 @@ export function HarmonyStage({
     if (!isShrineBandit) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'w' || e.key === 'W') { 
-        keys.current.w = true; 
-        setIsMovingUp(true); 
-        if (partyGroupRef.current) partyGroupRef.current.style.transition = 'none'; 
+      if (e.key === 'w' || e.key === 'W') {
+        keys.current.w = true;
+        setIsMovingUp(true);
+        if (partyGroupRef.current) partyGroupRef.current.style.transition = 'none';
       }
-      if (e.key === 's' || e.key === 'S') { 
-        keys.current.s = true; 
-        setIsMovingUp(false); 
+      if (e.key === 's' || e.key === 'S') {
+        keys.current.s = true;
+        setIsMovingUp(false);
         if (partyGroupRef.current) partyGroupRef.current.style.transition = 'none';
       }
       if (e.key === 'Shift') { keys.current.shift = true; }
@@ -360,17 +360,17 @@ export function HarmonyStage({
       }
     };
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === 'w' || e.key === 'W') { 
-        keys.current.w = false; 
+      if (e.key === 'w' || e.key === 'W') {
+        keys.current.w = false;
         if (!keys.current.s) {
           setIsMovingUp(false);
-          if (partyGroupRef.current) partyGroupRef.current.style.transition = ''; 
+          if (partyGroupRef.current) partyGroupRef.current.style.transition = '';
         }
       }
-      if (e.key === 's' || e.key === 'S') { 
-        keys.current.s = false; 
+      if (e.key === 's' || e.key === 'S') {
+        keys.current.s = false;
         if (!keys.current.w && partyGroupRef.current) {
-          partyGroupRef.current.style.transition = ''; 
+          partyGroupRef.current.style.transition = '';
         }
       }
       if (e.key === 'Shift') { keys.current.shift = false; }
@@ -378,16 +378,16 @@ export function HarmonyStage({
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
-    
+
     let frameId: number;
     let lastTime = performance.now();
-    
+
     // Core Game Loop - Now highly robust against desyncs
     const loop = () => {
       const time = performance.now(); // Bulletproof time fetching
       const dt = time - lastTime;
       lastTime = time;
-      
+
       let dashSpeedMult = 1;
       if (keys.current.shift && time - dashStateRef.current.lastDash > 1500) {
         dashStateRef.current.isDashing = true;
@@ -410,7 +410,7 @@ export function HarmonyStage({
         else if (keys.current.s) boardYRef.current = Math.max(0, boardYRef.current - dt * speed);
         setBoardY(boardYRef.current);
       }
-      
+
       let currentBakunawaY = previousBakunawaY.current;
       if (enemy.id.startsWith('bakunawa')) {
         currentBakunawaY += (boardYRef.current - currentBakunawaY) * 0.04;
@@ -455,8 +455,8 @@ export function HarmonyStage({
       let am = attackManagerRef.current;
       if (!isHeroTurn && enemy.id.startsWith('bakunawa') && activeAction === 'none' && introStep === 'combat' && !enemy.staggered) {
         let hitAny = false;
-        
-        const spawnOrb = (type: 'blue'|'gold', vy = 0, amp = 0, freq = 0, yOffsetPx = 0) => {
+
+        const spawnOrb = (type: 'blue' | 'gold', vy = 0, amp = 0, freq = 0, yOffsetPx = 0) => {
           projectilesRef.current.push({
             id: performance.now() + Math.random(),
             type,
@@ -473,66 +473,66 @@ export function HarmonyStage({
         };
 
         if (am.state === 'waiting') {
-           if (time - am.timer > 1500) {
-               am.state = 'firing';
-               am.timer = time;
-               am.shotsFired = 0;
-               am.currentPattern = Math.floor(Math.random() * 5); 
-           }
+          if (time - am.timer > 1500) {
+            am.state = 'firing';
+            am.timer = time;
+            am.shotsFired = 0;
+            am.currentPattern = Math.floor(Math.random() * 5);
+          }
         } else if (am.state === 'firing') {
-            const timeInPattern = time - am.timer;
-            
-            if (am.currentPattern === 0) { 
-               if (timeInPattern > am.shotsFired * 300 && am.shotsFired < 4) {
-                   spawnOrb('blue', 0, 0, 0, (Math.random() - 0.5) * 40);
-                   am.shotsFired++;
-               } else if (am.shotsFired >= 4) {
-                   am.state = 'waiting'; am.timer = time;
-               }
+          const timeInPattern = time - am.timer;
+
+          if (am.currentPattern === 0) {
+            if (timeInPattern > am.shotsFired * 300 && am.shotsFired < 4) {
+              spawnOrb('blue', 0, 0, 0, (Math.random() - 0.5) * 40);
+              am.shotsFired++;
+            } else if (am.shotsFired >= 4) {
+              am.state = 'waiting'; am.timer = time;
             }
-            else if (am.currentPattern === 1) { 
-               if (am.shotsFired === 0) {
-                   spawnOrb('blue', 0, 0, 0); 
-                   spawnOrb('blue', 0.04, 0, 0); 
-                   spawnOrb('blue', -0.04, 0, 0); 
-                   spawnOrb('gold', 0, 0, 0, -80); 
-                   am.shotsFired++;
-                   am.state = 'waiting'; am.timer = time;
-               }
+          }
+          else if (am.currentPattern === 1) {
+            if (am.shotsFired === 0) {
+              spawnOrb('blue', 0, 0, 0);
+              spawnOrb('blue', 0.04, 0, 0);
+              spawnOrb('blue', -0.04, 0, 0);
+              spawnOrb('gold', 0, 0, 0, -80);
+              am.shotsFired++;
+              am.state = 'waiting'; am.timer = time;
             }
-            else if (am.currentPattern === 2) { 
-               if (timeInPattern > am.shotsFired * 500 && am.shotsFired < 3) {
-                   spawnOrb('blue', 0, 60, 0.005); 
-                   am.shotsFired++;
-               } else if (am.shotsFired >= 3) {
-                   am.state = 'waiting'; am.timer = time;
-               }
+          }
+          else if (am.currentPattern === 2) {
+            if (timeInPattern > am.shotsFired * 500 && am.shotsFired < 3) {
+              spawnOrb('blue', 0, 60, 0.005);
+              am.shotsFired++;
+            } else if (am.shotsFired >= 3) {
+              am.state = 'waiting'; am.timer = time;
             }
-            else if (am.currentPattern === 3) { 
-               if (am.shotsFired === 0) {
-                   spawnOrb('blue', 0, 0, 0, -100);
-                   spawnOrb('blue', 0, 0, 0, 100);
-                   spawnOrb('gold', 0, 0, 0, 0); 
-                   am.shotsFired++;
-                   am.state = 'waiting'; am.timer = time;
-               }
+          }
+          else if (am.currentPattern === 3) {
+            if (am.shotsFired === 0) {
+              spawnOrb('blue', 0, 0, 0, -100);
+              spawnOrb('blue', 0, 0, 0, 100);
+              spawnOrb('gold', 0, 0, 0, 0);
+              am.shotsFired++;
+              am.state = 'waiting'; am.timer = time;
             }
-            else if (am.currentPattern === 4) { 
-               if (am.shotsFired === 0) {
-                   // Fully randomized vertical spawning area (from 15% to 85% of screen height)
-                   const targetYPct = 15 + Math.random() * 70; 
-                   beamsRef.current.push({ id: time, yPercent: Math.max(10, Math.min(90, targetYPct)), heightPercent: 25, state: 'warning', elapsed: 0 });
-                   am.shotsFired++;
-                   am.state = 'waiting'; 
-                   am.timer = time + 2500;
-               }
+          }
+          else if (am.currentPattern === 4) {
+            if (am.shotsFired === 0) {
+              // Fully randomized vertical spawning area (from 15% to 85% of screen height)
+              const targetYPct = 15 + Math.random() * 70;
+              beamsRef.current.push({ id: time, yPercent: Math.max(10, Math.min(90, targetYPct)), heightPercent: 25, state: 'warning', elapsed: 0 });
+              am.shotsFired++;
+              am.state = 'waiting';
+              am.timer = time + 2500;
             }
+          }
         }
 
         const br = partyBoardRectRef.current;
         const boardBottom = br.bottom;
         const boardTop = br.bottom + br.height;
-        
+
         projectilesRef.current = projectilesRef.current.map(p => {
           if (p.chargeElapsed < CHARGE_DURATION) {
             return { ...p, chargeElapsed: p.chargeElapsed + dt };
@@ -556,23 +556,23 @@ export function HarmonyStage({
         const boardBottomPct = br.bottom / combatH * 100;
 
         beamsRef.current = beamsRef.current.map(b => {
-           const newElapsed = b.elapsed + dt;
-           let newState = b.state;
-           if (b.state === 'warning' && newElapsed > 1500) {
-               newState = 'firing';
-               audioEngine.playHitSFX('sick'); 
-           } else if (b.state === 'firing' && newElapsed > 2200) {
-               newState = 'done';
-           }
-           
-           if (newState === 'firing') {
-               const beamTop = b.yPercent + (b.heightPercent / 2);
-               const beamBottom = b.yPercent - (b.heightPercent / 2);
-               if (boardTopPct > beamBottom && boardBottomPct < beamTop) {
-                   beamHitAny = true;
-               }
-           }
-           return { ...b, elapsed: newElapsed, state: newState };
+          const newElapsed = b.elapsed + dt;
+          let newState = b.state;
+          if (b.state === 'warning' && newElapsed > 1500) {
+            newState = 'firing';
+            audioEngine.playHitSFX('sick');
+          } else if (b.state === 'firing' && newElapsed > 2200) {
+            newState = 'done';
+          }
+
+          if (newState === 'firing') {
+            const beamTop = b.yPercent + (b.heightPercent / 2);
+            const beamBottom = b.yPercent - (b.heightPercent / 2);
+            if (boardTopPct > beamBottom && boardBottomPct < beamTop) {
+              beamHitAny = true;
+            }
+          }
+          return { ...b, elapsed: newElapsed, state: newState };
         }).filter(b => b.state !== 'done');
 
         if ((hitAny || beamHitAny) && time - lastDamageTimeRef.current > 400) {
@@ -582,12 +582,12 @@ export function HarmonyStage({
 
         setProjectiles([...projectilesRef.current]);
         setBeams([...beamsRef.current]);
-        
+
       } else if (projectilesRef.current.length > 0 || beamsRef.current.length > 0) {
-         projectilesRef.current = [];
-         setProjectiles([]);
-         beamsRef.current = [];
-         setBeams([]);
+        projectilesRef.current = [];
+        setProjectiles([]);
+        beamsRef.current = [];
+        setBeams([]);
       }
 
       const currentlyShooting = am.state === 'firing' || beamsRef.current.length > 0 || projectilesRef.current.length > 0;
@@ -598,7 +598,7 @@ export function HarmonyStage({
 
       frameId = requestAnimationFrame(loop);
     };
-    
+
     frameId = requestAnimationFrame(loop);
 
     return () => {
@@ -673,7 +673,7 @@ export function HarmonyStage({
     const bgm = new Audio('/assets/expedition/battle_bg_music.mp3');
     bgm.loop = true;
     bgm.volume = 0.45;
-    bgm.play().catch(() => {});
+    bgm.play().catch(() => { });
 
     return () => {
       bgm.pause();
@@ -687,21 +687,21 @@ export function HarmonyStage({
       tempEnemies[targetEnemyIndex] = { ...tempEnemies[targetEnemyIndex], hp: targetHp };
     }
     const allEnemiesDead = tempEnemies.every(e => e.hp <= 0);
-    
+
     if (allEnemiesDead) {
       setIsEndingBattle(true);
       audioEngine.playHitSFX('sick');
       let explosions = 0;
       const boomInterval = setInterval(() => {
-        audioEngine.playHitSFX('sick'); 
-        triggerDamagePopup('', true, '#ffffff', 'magic'); 
+        audioEngine.playHitSFX('sick');
+        triggerDamagePopup('', true, '#ffffff', 'magic');
         explosions++;
         if (explosions >= 5) clearInterval(boomInterval);
       }, 350);
 
       setTimeout(() => {
         onCombatResult({ victory: true, xpGained: isBoss ? 1000 : 150 });
-      }, 2500); 
+      }, 2500);
       return true;
     }
 
@@ -719,25 +719,25 @@ export function HarmonyStage({
 
   const advanceTurn = useCallback((overrideIndex?: number) => {
     if (isEndingBattle) return;
-    
+
     let nextIdx = overrideIndex !== undefined ? overrideIndex : (turnIndex + 1) % turnQueue.length;
     let nextUnit = turnQueue[nextIdx]!;
-    
+
     let loopCount = 0;
     while (loopCount < turnQueue.length) {
       const isDead = nextUnit.unit.hp <= 0 || (nextUnit.isHero && partyList.every(h => h.hp <= 0));
       const isStaggeredEnemy = !nextUnit.isHero && (nextUnit.unit as EnemyProfile).staggered;
-      
+
       if (!isDead && !isStaggeredEnemy) {
-        break; 
+        break;
       }
-      
+
       if (isStaggeredEnemy && !isDead) {
         setEnemies(prev => {
-           const n = [...prev];
-           const eIdx = n.findIndex(e => e.id === nextUnit.unit.id);
-           if (eIdx !== -1) n[eIdx] = { ...n[eIdx], staggered: false, stagger: 0 };
-           return n;
+          const n = [...prev];
+          const eIdx = n.findIndex(e => e.id === nextUnit.unit.id);
+          if (eIdx !== -1) n[eIdx] = { ...n[eIdx], staggered: false, stagger: 0 };
+          return n;
         });
       }
 
@@ -745,13 +745,13 @@ export function HarmonyStage({
       nextUnit = turnQueue[nextIdx]!;
       loopCount++;
     }
-    
+
     setTurnIndex(nextIdx);
-    
+
     if (!nextUnit.isHero) {
       if (enemies[0]?.id.startsWith('bakunawa')) {
         attackManagerRef.current.state = 'waiting';
-        attackManagerRef.current.timer = performance.now() + 1000; 
+        attackManagerRef.current.timer = performance.now() + 1000;
       } else {
         setTimeout(() => {
           if (!isEndingBattle) {
@@ -769,7 +769,7 @@ export function HarmonyStage({
 
   const handleCommandAttack = () => { if (!isHeroTurn || activeHero.ap < 1 || isEndingBattle) return; setActiveAction('rhythm'); };
   const handleCommandSkill = () => { if (!isHeroTurn || activeHero.ap < 2 || isEndingBattle) return; setActiveAction('spell'); };
-  
+
   const handleCommandAttune = () => {
     if (!isHeroTurn || isEndingBattle) return;
     if (enemy.hp > enemy.maxHp * 0.35 && !enemy.staggered) {
@@ -850,8 +850,8 @@ export function HarmonyStage({
     setEnemy(prev => {
       const nextHp = Math.max(0, prev.hp - totalDmg);
       targetHp = nextHp;
-      if (prev.staggered) return { ...prev, hp: nextHp }; 
-      
+      if (prev.staggered) return { ...prev, hp: nextHp };
+
       const nextStagger = Math.min(prev.maxStagger, prev.stagger + staggerGain);
       const isStaggered = nextStagger >= prev.maxStagger;
       return { ...prev, hp: nextHp, stagger: isStaggered ? prev.maxStagger : nextStagger, staggered: isStaggered };
@@ -994,7 +994,7 @@ export function HarmonyStage({
   const isRightSweepAttack = isBoss && bossAttackVariation === 'right_sweep' && (bossAttackPhase === 'sweep_prep' || bossAttackPhase === 'slam');
 
   return (
-    <div 
+    <div
       ref={combatContainerRef}
       className="relative flex-1 w-full h-full overflow-hidden bg-[#151828] bg-cover bg-center bg-no-repeat select-none"
       style={{ backgroundImage: `linear-gradient(rgba(15, 12, 12, 0.35), rgba(15, 12, 12, 0.5)), url('${isShrineBandit ? '/assets/expedition/shrine_bg.png' : '/assets/expedition/battle_bg.png'}')` }}
@@ -1080,7 +1080,7 @@ export function HarmonyStage({
         <>
           <div className="hidden lg:flex absolute inset-0 z-[1] pointer-events-none items-center justify-center overflow-visible">
             <div className={`animate-boss-breathe w-full h-full flex flex-col items-center justify-center relative ${enemy.id.startsWith('bakunawa') ? 'translate-x-[40%]' : ''}`}>
-              <div 
+              <div
                 className={`w-full h-full flex flex-col items-center transition-transform duration-75 ${enemy.id.startsWith('bakunawa') ? 'justify-end pb-16' : 'justify-center'}`}
                 style={enemy.id.startsWith('bakunawa') ? { transform: `translateY(-${bakunawaY * 0.65}%)` } : {}}
               >
@@ -1105,7 +1105,7 @@ export function HarmonyStage({
               </div>
             </div>
           </div>
-          
+
           <div className="lg:hidden absolute inset-0 z-[1] pointer-events-none flex items-center justify-center overflow-visible">
             <div className={`animate-boss-breathe w-full h-full flex flex-col items-center justify-center relative ${enemy.id.startsWith('bakunawa') ? 'translate-x-[25%]' : ''}`}>
               <div className={`w-full h-full flex flex-col items-center transition-transform duration-75 ${enemy.id.startsWith('bakunawa') ? 'justify-end pb-[10%]' : 'justify-center'}`} style={enemy.id.startsWith('bakunawa') ? { transform: `translateY(calc(26% - ${bakunawaY * 0.65}%))` } : {}}>
@@ -1118,11 +1118,11 @@ export function HarmonyStage({
                     </div>
                   </div>
                 )}
-                <img 
-                  ref={bakunawaMobileImgRef} 
-                  src={enemy.id.startsWith('bakunawa') ? (bossAttackPhase !== 'idle' || isShooting ? "/assets/expedition/bakunawa_mouth_open_transparent.png" : "/assets/expedition/bakunawa_normal_transparent.png") : "/assets/expedition/echo_boss_body.png"} 
-                  alt={enemy.name} 
-                  className={`max-w-none object-contain transition-transform ${introStep === 'dialogue' ? '-translate-y-12 sm:-translate-y-16 duration-[1500ms] ease-in-out' : 'translate-y-0 duration-300'} ${bossAttackPhase !== 'idle' ? 'scale-110 drop-shadow-[0_0_20px_rgba(218,45,70,0.8)]' : 'scale-100'} ${enemy.id.startsWith('bakunawa') ? 'h-[75%] sm:h-[85%] w-auto translate-x-[20%]' : 'h-[60%] sm:h-[70%] w-auto'}`} 
+                <img
+                  ref={bakunawaMobileImgRef}
+                  src={enemy.id.startsWith('bakunawa') ? (bossAttackPhase !== 'idle' || isShooting ? "/assets/expedition/bakunawa_mouth_open_transparent.png" : "/assets/expedition/bakunawa_normal_transparent.png") : "/assets/expedition/echo_boss_body.png"}
+                  alt={enemy.name}
+                  className={`max-w-none object-contain transition-transform ${introStep === 'dialogue' ? '-translate-y-12 sm:-translate-y-16 duration-[1500ms] ease-in-out' : 'translate-y-0 duration-300'} ${bossAttackPhase !== 'idle' ? 'scale-110 drop-shadow-[0_0_20px_rgba(218,45,70,0.8)]' : 'scale-100'} ${enemy.id.startsWith('bakunawa') ? 'h-[75%] sm:h-[85%] w-auto translate-x-[20%]' : 'h-[60%] sm:h-[70%] w-auto'}`}
                 />
               </div>
             </div>
@@ -1170,7 +1170,7 @@ export function HarmonyStage({
         </>
       )}
 
-      <div 
+      <div
         className={`absolute inset-x-0 bottom-0 top-[45%] lg:top-[54%] bg-repeat-x bg-bottom pointer-events-none z-10 opacity-95 drop-shadow-[0_-8px_16px_rgba(0,0,0,0.95)] transition-transform duration-[1500ms] ease-in-out ${introStep === 'dialogue' ? 'translate-y-0' : 'translate-y-[200%]'}`}
         style={{ backgroundImage: `url('${isShrineBandit ? '/assets/expedition/shrine_ground.png' : '/assets/expedition/battle_ground.png'}')`, backgroundSize: 'auto 100%' }}
       />
@@ -1179,7 +1179,7 @@ export function HarmonyStage({
       {!isHeroTurn && enemy.id.startsWith('bakunawa') && introStep === 'combat' && !enemy.staggered && (
         <div className="lg:hidden absolute inset-0 z-[45] flex pointer-events-none">
           {/* Left Screen: Drag & Swipe to Dash */}
-          <div 
+          <div
             className="w-1/2 h-full flex items-center justify-start p-4 touch-none pointer-events-auto"
             onPointerDown={handleLeftPointerDown}
             onPointerMove={handlePointerMove}
@@ -1194,9 +1194,9 @@ export function HarmonyStage({
           </div>
 
           {/* Right Screen: Tap to Parry */}
-          <div 
+          <div
             className="w-1/2 h-full flex items-center justify-end p-6 touch-none pointer-events-auto"
-            onPointerDown={(e) => {
+            onPointerDown={() => {
               if (activeAction === 'none') tryParryRef.current();
             }}
           >
@@ -1208,18 +1208,17 @@ export function HarmonyStage({
       )}
 
       <div className="absolute inset-0 z-30 pointer-events-none overflow-hidden">
-        
+
         {beams.map(b => {
           const isWarning = b.state === 'warning';
           return (
-            <div 
+            <div
               key={b.id}
-              className={`absolute z-20 flex items-center justify-center overflow-hidden transition-all duration-150 ${
-                isWarning ? 'opacity-80' : 'opacity-100'
-              }`}
+              className={`absolute z-20 flex items-center justify-center overflow-hidden transition-all duration-150 ${isWarning ? 'opacity-80' : 'opacity-100'
+                }`}
               style={{
                 left: '-20%',
-                right: `${100 - bakunawaMouthXPercentRef.current}%`, 
+                right: `${100 - bakunawaMouthXPercentRef.current}%`,
                 height: `${b.heightPercent}%`,
                 bottom: `calc(${b.yPercent}% - ${b.heightPercent / 2}%)`,
               }}
@@ -1227,7 +1226,7 @@ export function HarmonyStage({
               {isWarning ? (
                 <div className="relative w-full h-full bg-gradient-to-r from-transparent via-[#da2d46]/40 to-[#da2d46]/80 border-y-[2px] border-[#da2d46]/60 flex items-center overflow-hidden shadow-[0_0_30px_rgba(218,45,70,0.6)]">
                   <div className="absolute w-full h-[2px] bg-[#da2d46] shadow-[0_0_10px_#da2d46,0_0_20px_#da2d46] animate-pulse" />
-                  <div 
+                  <div
                     className="absolute w-full h-full opacity-30 animate-[beamSlideLeft_0.5s_linear_infinite]"
                     style={{
                       backgroundImage: 'repeating-linear-gradient(-45deg, transparent, transparent 20px, #da2d46 20px, #da2d46 40px)',
@@ -1245,10 +1244,10 @@ export function HarmonyStage({
               ) : (
                 <div className="relative w-full h-full flex items-center justify-end animate-[beamShake_0.05s_linear_infinite]">
                   <div className="absolute w-[120%] h-[250%] bg-[#38bdf8] blur-[30px] sm:blur-[50px] opacity-60 z-0 rounded-l-full" />
-                  
+
                   <div className="absolute w-[110%] h-[160%] bg-[#a855f7] blur-[20px] mix-blend-screen opacity-80 z-10 rounded-l-full animate-pulse" />
-                  
-                  <div 
+
+                  <div
                     className="absolute w-full h-[120%] z-10 opacity-90 mix-blend-color-dodge animate-[beamSlideLeft_0.15s_linear_infinite]"
                     style={{
                       backgroundImage: 'repeating-linear-gradient(110deg, transparent, transparent 10px, rgba(255,255,255,0.9) 10px, rgba(255,255,255,0.9) 25px)',
@@ -1256,8 +1255,8 @@ export function HarmonyStage({
                       borderRadius: '100px 0 0 100px'
                     }}
                   />
-                  
-                  <div 
+
+                  <div
                     className="absolute w-full h-[120%] z-10 opacity-70 mix-blend-color-dodge animate-[beamSlideLeft_0.1s_linear_infinite_reverse]"
                     style={{
                       backgroundImage: 'repeating-linear-gradient(70deg, transparent, transparent 15px, #38bdf8 15px, #38bdf8 35px)',
@@ -1265,9 +1264,9 @@ export function HarmonyStage({
                       borderRadius: '100px 0 0 100px'
                     }}
                   />
-                  
+
                   <div className="absolute w-[105%] h-[50%] bg-white rounded-l-full shadow-[inset_0_0_20px_#38bdf8,0_0_30px_#ffffff,0_0_60px_#facc15] z-20 animate-[beamShake_0.1s_linear_infinite]" />
-                  
+
                   <div className="absolute right-0 w-24 sm:w-40 h-[400%] bg-white rounded-full blur-2xl z-30 opacity-100 animate-pulse" />
                   <div className="absolute right-0 w-12 sm:w-20 h-[300%] bg-[#facc15] rounded-full blur-xl mix-blend-screen z-30 opacity-100 animate-pulse" />
                 </div>
@@ -1275,22 +1274,22 @@ export function HarmonyStage({
             </div>
           );
         })}
-        
+
         {projectiles.map(p => {
           const charging = p.chargeElapsed < CHARGE_DURATION;
           const chargeProgress = Math.min(1, p.chargeElapsed / CHARGE_DURATION);
           const BASE = 64;
-          const FULL = BASE * 2; 
+          const FULL = BASE * 2;
           const sizePx = charging ? BASE * (0.4 + chargeProgress * 1.6) : FULL;
           const glowColor = p.type === 'blue' ? 'rgba(0,100,255,0.9)' : 'rgba(255,180,0,0.9)';
           const glowSize = charging ? Math.round(chargeProgress * 30) : 30;
           return (
-            <img 
+            <img
               key={p.id}
               src={p.type === 'blue' ? "/assets/expedition/blue_orb.png" : "/assets/expedition/gold_orb.png"}
               alt="Orb"
               className="absolute object-contain animate-[spin_3s_linear_infinite]"
-              style={{ 
+              style={{
                 width: `${sizePx}px`, height: `${sizePx}px`,
                 left: `${p.x}%`, bottom: `${p.y}px`, transform: 'translateX(-50%)',
                 filter: `drop-shadow(0 0 ${glowSize}px ${glowColor})`,
@@ -1314,7 +1313,7 @@ export function HarmonyStage({
                   <p>⚠️ <strong className="text-white">DODGE</strong> the <span className="text-blue-400 font-bold">Blue Orbs</span> and <span className="text-red-400 font-bold">Red Beams</span>.</p>
                   <p>⚔️ <strong className="text-white">PARRY</strong> the <span className="text-[#facc15] font-bold">Gold Orbs</span> by <span className="hidden lg:inline">pressing <strong className="text-[#da2d46]">SPACE</strong></span><span className="inline lg:hidden">tapping <strong className="text-[#da2d46]">Right Screen</strong></span>!</p>
                 </div>
-                <button 
+                <button
                   onClick={() => setIntroStep('combat')}
                   className="w-full py-3 sm:py-4 bg-[#4ade80] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-lg sm:text-xl uppercase hover:bg-[#6bee9c] hover:-translate-y-1 transition-transform active:translate-y-0 active:shadow-none"
                 >
@@ -1425,7 +1424,7 @@ export function HarmonyStage({
       </div>
 
       <div className="absolute inset-0 z-20 pointer-events-none flex flex-col justify-end">
-        
+
         <div className={`hidden lg:flex absolute bottom-[100px] left-6 flex-row gap-3 z-40 transition-opacity duration-1000 ${introStep === 'dialogue' ? 'opacity-0 pointer-events-none' : 'opacity-100'} pointer-events-auto`}>
           {partyList.map((hero) => {
             const isTurn = isHeroTurn && activeHero.id === hero.id;
@@ -1460,7 +1459,7 @@ export function HarmonyStage({
               <div className="hidden lg:flex absolute left-8 xl:left-12 top-[35%] flex-col items-center pointer-events-auto z-50">
                 <div className="text-[#38bdf8] font-orbitron font-black text-sm mb-2 drop-shadow-[0px_2px_4px_rgba(0,0,0,0.8)]">SHIFT: DASH</div>
                 <div className="text-white font-orbitron font-bold text-sm mb-2 mt-4 drop-shadow-[0px_2px_4px_rgba(0,0,0,0.8)]">UP</div>
-                <input 
+                <input
                   type="range"
                   min="0"
                   max="100"
@@ -1481,8 +1480,8 @@ export function HarmonyStage({
                 <div className="text-white font-orbitron font-bold text-sm mt-2 drop-shadow-[0px_2px_4px_rgba(0,0,0,0.8)]">DOWN</div>
               </div>
             )}
-            
-            <div 
+
+            <div
               ref={partyGroupRef}
               className="absolute left-[5%] lg:left-[10%] xl:left-[12%] flex items-end justify-start z-20 transition-all duration-75 pointer-events-auto"
               style={{ bottom: `calc(10% + ${boardY * 0.65}%)` }}
@@ -1496,16 +1495,16 @@ export function HarmonyStage({
               ) : (
                 <div className="relative">
                   {isDashing && (
-                    <img 
-                      src={isMovingUp ? "/assets/expedition/party_board_normal.png" : "/assets/expedition/party_board_falling.png"} 
-                      className="absolute inset-0 w-[200px] lg:w-[250px] object-contain opacity-50 blur-sm brightness-200 animate-[dashWake_0.3s_ease-out_forwards] -translate-x-12 z-0" 
+                    <img
+                      src={isMovingUp ? "/assets/expedition/party_board_normal.png" : "/assets/expedition/party_board_falling.png"}
+                      className="absolute inset-0 w-[200px] lg:w-[250px] object-contain opacity-50 blur-sm brightness-200 animate-[dashWake_0.3s_ease-out_forwards] -translate-x-12 z-0"
                     />
                   )}
-                  <img 
+                  <img
                     ref={partyBoardImgRef}
-                    src={isMovingUp ? "/assets/expedition/party_board_normal.png" : "/assets/expedition/party_board_falling.png"} 
-                    alt="Party Board" 
-                    className="w-[200px] lg:w-[250px] object-contain drop-shadow-[0_15px_15px_rgba(0,0,0,0.6)] relative z-10" 
+                    src={isMovingUp ? "/assets/expedition/party_board_normal.png" : "/assets/expedition/party_board_falling.png"}
+                    alt="Party Board"
+                    className="w-[200px] lg:w-[250px] object-contain drop-shadow-[0_15px_15px_rgba(0,0,0,0.6)] relative z-10"
                   />
                 </div>
               )}
@@ -1525,7 +1524,7 @@ export function HarmonyStage({
                 if (e.hp <= 0 && isEndingBattle) return null;
                 const isCurrent = idx === targetEnemyIndex;
                 const isAttacking = currentTurnUnit && !currentTurnUnit.isHero && currentTurnUnit.unit.id === e.id;
-                
+
                 return (
                   <div key={e.id} className="flex flex-col items-center gap-3 cursor-pointer transition-all" onClick={() => e.hp > 0 && setTargetEnemyIndex(idx)}>
                     <div className="w-24 h-2 bg-[#0f0c0c]/80 border-2 border-white/50 flex mb-2 shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6">
@@ -1552,7 +1551,7 @@ export function HarmonyStage({
       </div>
 
       {introStep === 'dialogue' && (
-        <div 
+        <div
           className="absolute inset-0 z-[70] flex items-center justify-center pointer-events-auto pb-[20%] cursor-pointer"
           onClick={() => {
             if (dialogueIndex < introDialogue.length - 1) setDialogueIndex(i => i + 1);
@@ -1571,7 +1570,7 @@ export function HarmonyStage({
       )}
 
       <div className={`absolute bottom-0 left-0 w-full z-40 transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isHeroTurn && introStep !== 'dialogue' ? 'translate-y-0' : 'translate-y-[110%]'}`}>
-        
+
         <div className="lg:hidden flex flex-col items-center justify-between gap-1.5 sm:gap-3 bg-[#1e2238] border-t-[2px] sm:border-t-[4px] border-[#0f0c0c] shadow-[0px_-3px_0px_0px_#0f0c0c] p-2 sm:p-3 pb-safe">
           <div className="w-full sm:w-auto flex items-center justify-center gap-1.5 sm:gap-3 px-2 py-1 sm:px-4 py-2 bg-[#0f0c0c] text-[#facc15] border-[2px] sm:border-[3px] border-[#facc15] font-orbitron font-black text-[9px] sm:text-sm uppercase tracking-wider -skew-x-6">
             <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-[#da2d46] fill-current animate-pulse" />
@@ -1612,6 +1611,11 @@ export function HarmonyStage({
               <div className="flex flex-col text-left justify-center">
                 <span className="leading-tight">RETREAT</span>
                 <span className="text-[6px] sm:text-2xs font-bold opacity-80 leading-tight hidden sm:block">Flee Battle</span>
+              </div>
+            </button>
+            <button onClick={() => onCombatResult({ victory: true, xpGained: 1000 })} disabled={isEndingBattle} className="col-span-2 sm:col-span-1 px-1.5 py-1.5 sm:px-4 sm:py-3 bg-fuchsia-600 text-white border-[2px] sm:border-[4px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-[8px] sm:text-sm uppercase -skew-x-6 hover:bg-fuchsia-500 transition-all flex items-center justify-center sm:justify-start gap-1 sm:gap-2 active:translate-y-0.5 active:shadow-none">
+              <div className="flex flex-col text-left justify-center">
+                <span className="leading-tight text-white">SKIP BATTLE ()</span>
               </div>
             </button>
           </div>
@@ -1657,6 +1661,12 @@ export function HarmonyStage({
               <div className="flex flex-col text-left">
                 <span>RETREAT</span>
                 <span className="text-2xs font-bold opacity-80">Flee Battle</span>
+              </div>
+            </button>
+            <button onClick={() => onCombatResult({ victory: true, xpGained: 1000 })} disabled={isEndingBattle} className="px-4 py-3 bg-fuchsia-600 text-white border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-fuchsia-500 transition-all flex items-center gap-2 active:translate-y-0.5 active:shadow-none">
+              <div className="flex flex-col text-left">
+                <span>SKIP BATTLE</span>
+                <span className="text-2xs font-bold opacity-80 text-white">Instant Win</span>
               </div>
             </button>
           </div>
