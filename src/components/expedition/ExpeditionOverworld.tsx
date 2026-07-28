@@ -88,14 +88,15 @@ export function ExpeditionOverworld({
   const currentNode = nodes[currentNodeId] || nodes['cadence_town']!;
   const LINEAR_NODES = ['cadence_town', 'crossroads', 'echo_woods', 'whispering_path', 'harmonic_shrine', 'silent_peak'];
 
-  // ─── NEW: FOG OF WAR DISCOVERY LOGIC ───
   // A node is discovered if the previous node in the linear path is completed,
   // making it playable and clearing the fog. Town is always discovered.
   const discoveredNodeIds = useMemo(() => {
     const discovered = new Set<string>(['cadence_town']);
+    const forceUnlock = localStorage.getItem('echoes_dev_force_unlock') === '1';
+
     for (let i = 1; i < LINEAR_NODES.length; i++) {
       const prevId = LINEAR_NODES[i - 1];
-      if (prevId === 'cadence_town' || nodes[prevId]?.completed) {
+      if (forceUnlock || prevId === 'cadence_town' || nodes[prevId]?.completed) {
         discovered.add(LINEAR_NODES[i]);
       }
     }
@@ -967,7 +968,7 @@ export function ExpeditionOverworld({
                   className="w-full py-2.5 sm:py-3 bg-[#da2d46] text-white border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#ff3b56] transition-all flex items-center justify-center gap-2 active:translate-y-[4px] active:translate-x-[4px] active:shadow-none"
                 >
                   <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current shrink-0 skew-x-6" />
-                  <span className="truncate skew-x-6 drop-shadow-[2px_2px_0px_#0f0c0c]">BATTLE {currentNode.name.split(' ')[0]}</span>
+                  <span className="truncate skew-x-6 drop-shadow-[2px_2px_0px_#0f0c0c]">BATTLE {(currentNode.enemyId || (currentNode.enemyIds && currentNode.enemyIds[0]) || 'ENEMIES').replace(/_/g, ' ').toUpperCase()}</span>
                 </button>
               )}
 
