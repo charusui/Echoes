@@ -518,9 +518,10 @@ export function ExpeditionOverworld({
 
   // ─── DYNAMIC FOG OF WAR MASK ───
   const dynamicMask = useMemo(() => {
-    // If all battle/boss/shrine nodes are completed, remove the mask to reveal the full clean map
+    // If all battle/boss/shrine nodes are completed (or dev unlocked), remove the mask to reveal the full clean map
     const allBattlesCompleted = Object.values(nodes).every(n => n.type === 'town' || n.completed);
-    if (allBattlesCompleted) {
+    const forceUnlock = localStorage.getItem('echoes_dev_force_unlock') === '1';
+    if (allBattlesCompleted || forceUnlock) {
       return 'none';
     }
 
