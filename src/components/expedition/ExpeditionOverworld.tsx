@@ -11,6 +11,7 @@ import wakwak_prev from '../../assets/png/wakwak_prev.png';
 import bandit_prev from '../../assets/png/bandit_prev.png';
 import town_prev from '../../assets/png/town_prev.png';
 import whisper_prev from '../../assets/png/whisper_prev.png';
+import santelmo_prev from '../../assets/png/santelmo_prev.png';
 
 import cloud_one from '../../assets/png/cloud_one.png';
 import cloud_two from '../../assets/png/cloud_two.png';
@@ -432,10 +433,10 @@ export function ExpeditionOverworld({
         <g
           key={node.id}
           transform={`translate(${renderX}, ${renderY}) scale(${dynamicPinScale})`}
-          className={`cursor-pointer group pointer-events-auto transition-all duration-500 ${isDiscovered ? 'hover:scale-105' : 'opacity-40 grayscale pointer-events-none'}`}
+          className={`cursor-pointer group pointer-events-auto transition-opacity duration-500 ${isDiscovered ? '' : 'opacity-40 grayscale pointer-events-none'}`}
           onClick={() => isDiscovered && handleNodeClick(node.id)}
         >
-          <g className="transition-transform duration-200">
+          <g className="transition-transform duration-200 group-hover:-translate-y-2">
             {isSelected && (
               <circle
                 r="48"
@@ -522,11 +523,11 @@ export function ExpeditionOverworld({
     const allBattlesCompleted = Object.values(nodes).every(n => n.type === 'town' || n.completed);
     const forceUnlock = localStorage.getItem('echoes_dev_force_unlock') === '1';
     if (allBattlesCompleted || forceUnlock) {
-      return 'none';
+      return 'linear-gradient(rgba(0,0,0,1), rgba(0,0,0,1))';
     }
 
-    // Now correctly tied to the logical discovery chain instead of strictly completed state
-    const unlockedNodes = Object.values(nodes).filter(n => discoveredNodeIds.has(n.id));
+    // Now correctly tied to the logical clearing chain instead of just discovery
+    const unlockedNodes = Object.values(nodes).filter(n => n.completed || n.id === 'cadence_town');
     if (unlockedNodes.length === 0) {
       return 'radial-gradient(circle 350px at 30% 50%, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 80%)';
     }
@@ -540,7 +541,7 @@ export function ExpeditionOverworld({
       const radius = node.type === 'boss' ? '500px' : '350px';
       return `radial-gradient(circle ${radius} at ${xPct}% ${yPct}%, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 80%)`;
     }).join(', ');
-  }, [nodes, getDisplayCoords, discoveredNodeIds]);
+  }, [nodes, getDisplayCoords]);
 
   // ─── CENTRALIZED PREVIEW DICTIONARY ───
   // Add any future images here to automatically link them to map nodes!
@@ -551,6 +552,7 @@ export function ExpeditionOverworld({
     'echo_village': wakwak_prev,
     'harmonic_shrine': bakunawa_prev,
     'whispering_path': whisper_prev,
+    'silent_peak': santelmo_prev,
   };
 
   const currentPreviewImg = nodePreviewImages[currentNodeId];
@@ -863,8 +865,8 @@ export function ExpeditionOverworld({
           <X size={28} className="font-black" />
         </button>
 
-        {/* --- MAIN INFO PANEL (SCROLLABLE NOW) --- */}
-        <div className="flex-1 min-h-0 bg-[#1e2238] border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] p-3 sm:p-4 flex flex-col gap-2 relative z-10 overflow-y-auto">
+        {/* --- MAIN INFO PANEL (FLEXIBLE HEIGHT, NEVER SCROLLS) --- */}
+        <div className="flex-1 min-h-0 bg-[#1e2238] border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] p-3 sm:p-4 flex flex-col gap-2 relative z-10">
           
           <div className="shrink-0 flex items-center justify-between mb-1">
             <span className="px-2 py-1 bg-[#38bdf8] text-[#0f0c0c] border-[3px] border-[#0f0c0c] font-orbitron font-black text-[10px] sm:text-xs uppercase -skew-x-6 shadow-[3px_3px_0px_0px_#0f0c0c]">
@@ -884,14 +886,14 @@ export function ExpeditionOverworld({
                 <img
                   src={currentPreviewImg}
                   alt={`${currentNode.name} Preview`}
-                  className="w-full h-full object-cover object-top opacity-90 transition-opacity hover:opacity-100 animate-ken-burns"
+                  className={`w-full h-full object-cover ${currentNodeId === 'silent_peak' ? 'object-bottom' : 'object-top'} opacity-90 transition-opacity hover:opacity-100 animate-ken-burns`}
                 />
               </div>
             </div>
           )}
 
-          <div className="shrink-0 bg-[#0f0c0c]/40 p-2.5 sm:p-3 border-l-[4px] border-[#38bdf8] mt-1">
-            <p className="text-xs sm:text-sm text-slate-300 font-bold leading-relaxed whitespace-pre-wrap">
+          <div className="shrink-0 bg-[#0f0c0c]/40 p-2 sm:p-2.5 border-l-[4px] border-[#38bdf8] mt-1">
+            <p className="text-[10px] sm:text-[11px] xl:text-xs text-slate-300 font-bold leading-snug whitespace-pre-wrap">
               {currentNode.desc}
             </p>
           </div>
