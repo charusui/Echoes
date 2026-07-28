@@ -12,6 +12,8 @@ import weave from '../../assets/shop/weave.png';
 import tonic from '../../assets/shop/tonic.png';
 import spice from '../../assets/shop/spice.png';
 import songbook from '../../assets/shop/songbook.png';
+import potion from '../../assets/shop/potion.png';
+import rustedkey from '../../assets/shop/rustedkey.png';
 
 interface MariaShopModalProps {
   party: Record<string, HeroProfile>;
@@ -111,7 +113,7 @@ export function MariaShopModal({ party: _party, nodes, onUpdateParty, onClose, o
         name: 'Mystery Key',
         category: 'Special',
         price: 0,
-        icon: spice,
+        icon: rustedkey,
         description: 'A strange rusted key given by the merchant at the crossroads.',
         effectText: 'Grants access to Echo Village.',
         stock: 1,
@@ -121,7 +123,7 @@ export function MariaShopModal({ party: _party, nodes, onUpdateParty, onClose, o
         name: 'Reverse Potion',
         category: 'Tonic',
         price: 50,
-        icon: tonic,
+        icon: potion,
         description: 'A mysterious potion that seems to invert your exhaustion.',
         effectText: 'Fully restores HP and grants temporary max AP.',
         stock: 'Infinite',
