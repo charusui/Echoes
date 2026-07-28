@@ -378,6 +378,17 @@ export default function SantelmoBossBattle({
 
   return (
     <div className="w-full h-full flex flex-col bg-black relative select-none overflow-hidden touch-none font-orbitron">
+      {/* PORTRAIT LOCK OVERLAY FOR MOBILE DEVICES - conditionally hidden when game is over */}
+      {!gameResult && (
+        <div className="portrait:flex hidden absolute inset-0 z-[9999] bg-[#0f0c0c] flex-col items-center justify-center p-6 text-center shadow-inner overflow-hidden pointer-events-auto">
+          <div className="animate-bounce mb-6">
+            <svg className="w-20 h-20 text-[#facc15]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+          </div>
+          <h2 className="text-white font-orbitron font-black text-3xl mb-4 tracking-wider text-shadow-md">ROTATE DEVICE</h2>
+          <p className="text-slate-300 font-sans text-lg">This boss encounter requires landscape mode for the intended layout.</p>
+        </div>
+      )}
+
       {/* HUD */}
       <div className="absolute top-4 left-4 right-4 flex justify-between z-50 pointer-events-none">
         <div className="flex flex-col gap-1">
@@ -483,7 +494,7 @@ export default function SantelmoBossBattle({
               style={{ 
                 left: `${(img.x / GAME_W) * 100}%`, 
                 top: `${(img.y / GAME_H) * 100}%`,
-                transform: 'translate(-50%, -85%)',
+                transform: 'translate(-50%, -50%)',
                 width: `${(PLAYER_W / GAME_W) * 100}%`,
                 height: `${(PLAYER_H / GAME_H) * 100}%`,
                 opacity: img.timer / 0.3 * 0.9,
@@ -521,7 +532,7 @@ export default function SantelmoBossBattle({
             style={{ 
               left: `${(s.player.x / GAME_W) * 100}%`, 
               top: `${(s.player.y / GAME_H) * 100}%`,
-              transform: 'translate(-50%, -85%)',
+              transform: 'translate(-50%, -50%)',
               width: `${(PLAYER_W / GAME_W) * 100}%`,
               height: `${(PLAYER_H / GAME_H) * 100}%`,
               opacity: s.player.invulnTimer > 0 && Math.floor(s.player.invulnTimer * 10) % 2 === 0 ? 0.5 : 1
@@ -658,7 +669,7 @@ export default function SantelmoBossBattle({
       )}
 
       {/* Mobile Controls Overlay */}
-      <div className="sm:hidden absolute bottom-4 inset-x-4 flex justify-between z-40 opacity-80 pointer-events-auto">
+      <div className="lg:hidden absolute bottom-4 inset-x-4 flex justify-between z-40 opacity-80 pointer-events-auto">
         <div className="flex gap-2">
           <button 
             className="w-16 h-16 bg-[#2a2d43] border-4 border-black rounded-lg active:bg-slate-500 flex items-center justify-center touch-none select-none"
@@ -707,7 +718,7 @@ export default function SantelmoBossBattle({
       </div>
       
       {/* Keyboard Hint for Desktop */}
-      <div className="hidden sm:block absolute bottom-4 left-1/2 -translate-x-1/2 z-40 text-white/50 text-xs font-space-mono pointer-events-none">
+      <div className="hidden lg:block absolute bottom-4 left-1/2 -translate-x-1/2 z-40 text-white/50 text-xs font-space-mono pointer-events-none">
         [W/A/D] Move & Jump • [SPACE] Swing Bat • [E] Dash
       </div>
     </div>
