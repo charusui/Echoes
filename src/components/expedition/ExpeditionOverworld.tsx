@@ -8,6 +8,9 @@ import { audioEngine } from '../../services/audioSynth';
 
 import bakunawa_prev from '../../assets/png/bakunawa_prev.png';
 import wakwak_prev from '../../assets/png/wakwak_prev.png';
+import bandit_prev from '../../assets/png/bandit_prev.png';
+import town_prev from '../../assets/png/town_prev.png';
+import whisper_prev from '../../assets/png/whisper_prev.png';
 
 import cloud_one from '../../assets/png/cloud_one.png';
 import cloud_two from '../../assets/png/cloud_two.png';
@@ -526,6 +529,19 @@ export function ExpeditionOverworld({
     }).join(', ');
   }, [nodes, getDisplayCoords, discoveredNodeIds]);
 
+  // ─── CENTRALIZED PREVIEW DICTIONARY ───
+  // Add any future images here to automatically link them to map nodes!
+  const nodePreviewImages: Record<string, string> = {
+    'cadence_town': town_prev,
+    'crossroads': bandit_prev,
+    'echo_woods': wakwak_prev,
+    'echo_village': wakwak_prev,
+    'harmonic_shrine': bakunawa_prev,
+    'whispering_path': whisper_prev,
+  };
+
+  const currentPreviewImg = nodePreviewImages[currentNodeId];
+
   return (
     <div className="flex-1 flex flex-col md:flex-row overflow-hidden w-full h-full relative font-orbitron">
       
@@ -642,18 +658,15 @@ export function ExpeditionOverworld({
 
               {memoizedNodes}
 
-              {/* ─── NEW: FOG OF WAR CLOUDS ─── */}
+              {/* ─── FOG OF WAR CLOUDS ─── */}
               {LINEAR_NODES.map((nodeId, index) => {
-                // If it is discovered, don't render the fog cloud over it
                 if (discoveredNodeIds.has(nodeId)) return null;
 
                 const node = nodes[nodeId];
-                // Fallback 0 coordinates in case node prop is momentarily missing, getDisplayCoords handles mapping
                 const origX = node?.x || 0;
                 const origY = node?.y || 0;
                 const { x, y } = getDisplayCoords(nodeId, origX, origY);
 
-                // Rotate through the user's imported clouds
                 const cloudImages = [cloud_one, cloud_two, cloud_three, cloud_four];
                 const cloudImg = cloudImages[index % cloudImages.length];
 
@@ -852,13 +865,13 @@ export function ExpeditionOverworld({
           </h3>
 
           {/* --- FLUID HERO PREVIEW IMAGE --- */}
-          {(currentNodeId === 'echo_woods' || currentNodeId === 'echo_village' || currentNodeId === 'harmonic_shrine') && (
+          {currentPreviewImg && (
             <div className="flex-1 min-h-[90px] sm:min-h-[120px] max-h-[180px] xl:max-h-[220px] w-full border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] bg-[#0f0c0c] mt-2 mb-1 overflow-hidden -skew-x-2 relative">
-              <div className="absolute skew-x-2">
+              <div className="absolute skew-x-2 w-full h-full">
                 <img
-                  src={currentNodeId === 'harmonic_shrine' ? bakunawa_prev : wakwak_prev}
-                  alt={`${currentNode.name} Boss Preview`}
-                  className="w-full h-full object-cover opacity-90 transition-opacity hover:opacity-100"
+                  src={currentPreviewImg}
+                  alt={`${currentNode.name} Preview`}
+                  className="w-full h-full object-cover object-top opacity-90 transition-opacity hover:opacity-100"
                 />
               </div>
             </div>
