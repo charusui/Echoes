@@ -41,6 +41,7 @@ export function StandardCombat(props: ExpeditionCombatProps) {
     handleRhythmComplete, handleSpellComplete, handleParryResult, handleWingSlamCounterComplete, handleAttuneComplete, isRightSweepAttack
   } = engine;
   
+  // NEW LOGIC FROM PULLED CODE: Dynamic hero sprites based on combat state
   const getHeroSprite = (hero: HeroProfile) => {
     const n = hero.name.toLowerCase();
     let folder = 'boy2_gifs';
@@ -66,6 +67,7 @@ export function StandardCombat(props: ExpeditionCombatProps) {
     
     return defaultIdle;
   };
+  
   const onFlee = props.onFlee;
   const onCombatResult = props.onCombatResult;
   const dex = props.dex;
@@ -74,10 +76,9 @@ export function StandardCombat(props: ExpeditionCombatProps) {
   const ghostPct = Math.max(0, (ghostHp / enemy.maxHp) * 100);
   const staggerPct = Math.max(0, (enemy.stagger / enemy.maxStagger) * 100);
 
-
   return (
     <div 
-      className="flex-1 flex flex-col justify-between p-2 sm:p-4 lg:p-6 relative overflow-hidden bg-[#151828] bg-cover bg-center bg-no-repeat select-none"
+      className="flex-1 flex flex-col justify-between relative overflow-hidden bg-[#151828] bg-cover bg-center bg-no-repeat select-none"
       style={{ backgroundImage: `linear-gradient(rgba(15, 12, 12, 0.35), rgba(15, 12, 12, 0.5)), url('/assets/expedition/battle_bg.png')` }}
     >
       <style>{`
@@ -126,6 +127,8 @@ export function StandardCombat(props: ExpeditionCombatProps) {
           80% { transform: translateX(4px); filter: brightness(1.5); }
           100% { transform: translateX(0); filter: brightness(1); }
         }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
       {enemy.hp <= 0 && (
@@ -137,7 +140,9 @@ export function StandardCombat(props: ExpeditionCombatProps) {
           <div className="animate-boss-breathe w-full h-full flex flex-col items-center justify-center relative">
             {enemy.staggered && enemy.hp > 0 && (
               <div className="absolute -translate-y-40 sm:-translate-y-52 z-20 flex flex-col items-center justify-center pointer-events-none animate-fadeIn">
-                <div className="w-48 h-24 overflow-hidden relative drop-shadow-[0_0_8px_#facc15]"><img src="/assets/expedition/stun_spritesheet_tight.png" className="absolute top-0 left-0 h-full w-[500%] max-w-none animate-sprite-5" alt="Stun" /></div>
+                <div className="w-48 h-24 overflow-hidden relative drop-shadow-[0_0_8px_#facc15]">
+                  <img src="/assets/expedition/stun_spritesheet_tight.png" className="absolute top-0 left-0 h-full w-[500%] max-w-none animate-sprite-5" alt="Stun" />
+                </div>
               </div>
             )}
             <img
@@ -272,7 +277,8 @@ export function StandardCombat(props: ExpeditionCombatProps) {
         })}
       </div>
 
-      <div className="lg:hidden relative w-full flex flex-col items-center justify-center pt-2 z-20 gap-2">
+      {/* Top Header stats area */}
+      <div className="lg:hidden relative w-full flex flex-col items-center justify-center pt-4 px-2 z-20 gap-2">
         <div className="w-full max-w-xl mx-auto flex flex-col gap-1 px-2 sm:px-4 pointer-events-auto">
           <div className="flex flex-col sm:flex-row items-center sm:items-baseline justify-between font-orbitron tracking-wide px-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] gap-0.5 sm:gap-0">
             <span className="font-black text-sm sm:text-base text-white uppercase tracking-wider text-center sm:text-left leading-tight">
@@ -305,6 +311,34 @@ export function StandardCombat(props: ExpeditionCombatProps) {
           <div className="relative w-full h-1 sm:h-1.5 bg-[#0f0c0c]/80 border border-slate-800 overflow-hidden mt-0.5">
             <div className="absolute top-0 left-0 h-full bg-[#facc15] transition-all duration-300" style={{ width: `${staggerPct}%` }} />
           </div>
+        </div>
+      </div>
+
+      {/* Top Turn UI */}
+      <div className="absolute right-2 top-20 sm:top-14 lg:top-4 lg:right-4 flex items-center gap-2 bg-[#1e2238]/90 border-[3px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] px-3 py-1.5 -skew-x-2 backdrop-blur-sm z-50 max-w-[90vw]">
+        <span className="font-orbitron font-black text-2xs text-[#facc15] uppercase border-r border-slate-600 pr-2 shrink-0">
+          TURN
+        </span>
+        <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar">
+          {turnQueue.map((unit, idx) => {
+            const isCurrent = idx === turnIndex % turnQueue.length;
+            return (
+              <div 
+                key={idx}
+                className={`w-6 h-6 border border-[#0f0c0c] flex items-center justify-center shrink-0 overflow-hidden transition-all ${
+                  isCurrent 
+                    ? 'bg-[#facc15] shadow-[1px_1px_0px_0px_#0f0c0c] scale-105' 
+                    : unit.isHero ? 'bg-[#2a2d43]' : 'bg-[#da2d46]'
+                }`}
+              >
+                {unit.isHero ? (
+                  <img src={(unit.unit as HeroProfile).avatar} alt="H" className="min-w-full min-h-full object-cover" />
+                ) : (
+                  <span className="text-xs">👹</span>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -345,33 +379,6 @@ export function StandardCombat(props: ExpeditionCombatProps) {
             />
           </div>
         </div>
-
-        <div className="absolute right-4 top-2 flex items-center gap-2 bg-[#1e2238]/90 border-[3px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] px-3 py-1.5 -skew-x-2 backdrop-blur-sm">
-          <span className="font-orbitron font-black text-2xs text-[#facc15] uppercase border-r border-slate-600 pr-2">
-            TURN
-          </span>
-          <div className="flex items-center gap-1.5">
-            {turnQueue.map((unit, idx) => {
-              const isCurrent = idx === turnIndex % turnQueue.length;
-              return (
-                <div 
-                  key={idx}
-                  className={`px-2 py-0.5 border border-[#0f0c0c] font-orbitron font-bold text-2xs flex items-center gap-1 transition-all ${
-                    isCurrent 
-                      ? 'bg-[#facc15] text-[#0f0c0c] scale-105 shadow-[1px_1px_0px_0px_#0f0c0c]' 
-                      : unit.isHero ? 'bg-[#2a2d43] text-white' : 'bg-[#da2d46] text-white'
-                  }`}
-                >
-                  {unit.isHero ? (
-                    <img src={(unit.unit as HeroProfile).avatar} alt="Hero" className="w-5 h-5 object-cover" />
-                  ) : (
-                    <span className="text-xs">👹</span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
       </div>
 
       <div className="lg:hidden flex-1 w-full relative z-10 flex items-center justify-center overflow-hidden">
@@ -389,7 +396,11 @@ export function StandardCombat(props: ExpeditionCombatProps) {
               {enemy.staggered && enemy.hp > 0 && (
                 <div className="absolute -translate-y-28 sm:-translate-y-36 z-20 flex flex-col items-center justify-center pointer-events-none animate-fadeIn">
                   <div className="relative w-36 h-12 flex items-center justify-center">
-                    <div className="absolute inset-0 flex items-center justify-center"><div className="w-28 h-14 sm:w-36 sm:h-18 overflow-hidden relative drop-shadow-[0_0_8px_#facc15]"><img src="/assets/expedition/stun_spritesheet_tight.png" className="absolute top-0 left-0 h-full w-[500%] max-w-none animate-sprite-5" alt="Stun" /></div></div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-28 h-14 sm:w-36 sm:h-18 overflow-hidden relative drop-shadow-[0_0_8px_#facc15]">
+                        <img src="/assets/expedition/stun_spritesheet_tight.png" className="absolute top-0 left-0 h-full w-[500%] max-w-none animate-sprite-5" alt="Stun" />
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -530,22 +541,23 @@ export function StandardCombat(props: ExpeditionCombatProps) {
           </button>
         </div>
 
-        {/* ── ACTIVE CHARACTER FOCUS (Mobile) ── */}
+        {/* ── ACTIVE CHARACTER FOCUS (Mobile Portrait Alignment Fix) ── */}
         {isShrineBandit && !isBoss ? (
-          <div className="absolute bottom-[18%] left-8 sm:left-12 flex items-end justify-center z-20 pointer-events-none transition-all duration-300">
+          <div className="absolute bottom-[8%] sm:bottom-[18%] left-4 sm:left-12 flex items-end justify-center z-30 pointer-events-none transition-all duration-300">
             <div key={activeHero.id} className="flex flex-col items-center gap-0 z-30 animate-in fade-in slide-in-from-left-4 duration-300">
               <div className="relative origin-bottom flex items-center justify-center">
-                <img src={getHeroSprite(activeHero)} alt={activeHero.name} className="w-64 h-64 sm:w-72 sm:h-72 object-contain drop-shadow-[0px_8px_16px_rgba(0,0,0,0.8)]" />
+                <img src={getHeroSprite(activeHero)} alt={activeHero.name} className="w-44 h-44 sm:w-72 sm:h-72 object-contain drop-shadow-[0px_8px_16px_rgba(0,0,0,0.8)]" />
               </div>
-              <span className="relative z-30 -mt-16 sm:-mt-20 font-orbitron font-black text-[9px] sm:text-[10px] uppercase tracking-wider text-[#facc15] bg-[#0f0c0c] px-3 py-0.5 border-[2px] border-[#facc15] shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 truncate text-center">
+              <span className="relative z-30 -mt-10 sm:-mt-20 font-orbitron font-black text-[9px] sm:text-[10px] uppercase tracking-wider text-[#facc15] bg-[#0f0c0c] px-3 py-0.5 border-[2px] border-[#facc15] shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 truncate text-center">
                 {activeHero.name}
               </span>
             </div>
           </div>
         ) : null}
 
+        {/* ── ENEMIES FOCUS (Mobile Portrait Alignment Fix) ── */}
         {!isBoss ? (
-          <div className="absolute bottom-[18%] right-4 flex items-end gap-2 sm:gap-4 z-20">
+          <div className="absolute bottom-[10%] sm:bottom-[18%] right-2 sm:right-4 flex items-end justify-end gap-1 sm:gap-4 z-20">
             {enemies.length > 1 ? (
               enemies.map((e, idx) => {
                 if (e.hp <= 0 && isEndingBattle) return null;
@@ -560,19 +572,21 @@ export function StandardCombat(props: ExpeditionCombatProps) {
                     className={`flex flex-col items-center gap-0.5 cursor-pointer transition-all ${zIndex}`}
                     onClick={() => e.hp > 0 && setTargetEnemyIndex(idx)}
                   >
-                    <div className="w-16 h-1.5 bg-[#0f0c0c]/80 border border-white/50 flex">
+                    <div className="w-12 sm:w-16 h-1.5 bg-[#0f0c0c]/80 border border-white/50 flex">
                       <div className="bg-[#da2d46] h-full transition-all" style={{ width: `${Math.max(0, (e.hp / e.maxHp) * 100)}%` }} />
                     </div>
                     <div className={`relative origin-bottom flex items-center justify-center ${e.hp <= 0 ? 'animate-[bossDeath_2s_ease-in_forwards]' : e.staggered ? 'animate-bounce' : isAttacking ? 'animate-pulse scale-110' : 'transition-all duration-300'}`}>
-                      <img src={`/assets/expedition/enemy_frame_${isAttacking ? enemyFrame : 0}.png`} alt={e.name} className={`w-24 h-24 sm:w-28 sm:h-28 object-contain scale-x-[-1] transition-all duration-300 ${isCurrent ? 'drop-shadow-[0px_0px_8px_rgba(250,204,21,1)]' : 'drop-shadow-[0px_8px_16px_rgba(0,0,0,0.8)]'}`} onError={(ev) => { (ev.currentTarget as HTMLElement).style.display = 'none'; }} />
+                      <img src={`/assets/expedition/enemy_frame_${isAttacking ? enemyFrame : 0}.png`} alt={e.name} className={`w-20 h-20 sm:w-28 sm:h-28 object-contain scale-x-[-1] transition-all duration-300 ${isCurrent ? 'drop-shadow-[0px_0px_8px_rgba(250,204,21,1)]' : 'drop-shadow-[0px_8px_16px_rgba(0,0,0,0.8)]'}`} onError={(ev) => { (ev.currentTarget as HTMLElement).style.display = 'none'; }} />
                       {e.hp <= 0 && <div className="absolute inset-0 bg-red-600/50 mix-blend-color-burn rounded-full animate-[ping_0.5s_cubic-bezier(0,0,0.2,1)_infinite]" />}
                       {e.staggered && e.hp > 0 && (
                         <div className="absolute inset-x-0 -top-6 z-20 flex items-center justify-center pointer-events-none">
-                          <div className="w-28 h-14 sm:w-36 sm:h-18 overflow-hidden relative drop-shadow-[0_0_8px_#facc15]"><img src="/assets/expedition/stun_spritesheet_tight.png" className="absolute top-0 left-0 h-full w-[500%] max-w-none animate-sprite-5" alt="Stun" /></div>
+                          <div className="w-20 h-10 overflow-hidden relative drop-shadow-[0_0_6px_#facc15]">
+                            <img src="/assets/expedition/stun_spritesheet_tight.png" className="absolute top-0 left-0 h-full w-[500%] max-w-none animate-sprite-5" alt="Stun" />
+                          </div>
                         </div>
                       )}
                     </div>
-                    <span className={`font-orbitron font-black text-[8px] uppercase tracking-wider text-[#da2d46] bg-[#0f0c0c] px-2 py-0.5 border-[2px] border-[#da2d46] shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 truncate max-w-[100px] text-center ${!isCurrent ? 'opacity-80' : ''}`}>
+                    <span className={`font-orbitron font-black text-[7px] sm:text-[8px] uppercase tracking-wider text-[#da2d46] bg-[#0f0c0c] px-1.5 sm:px-2 py-0.5 border-[2px] border-[#da2d46] shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 truncate max-w-[80px] sm:max-w-[100px] text-center ${!isCurrent ? 'opacity-80' : ''}`}>
                       {e.name}
                     </span>
                   </div>
@@ -588,7 +602,9 @@ export function StandardCombat(props: ExpeditionCombatProps) {
                   {enemy.hp <= 0 && <div className="absolute inset-0 bg-red-600/50 mix-blend-color-burn rounded-full animate-[ping_0.5s_cubic-bezier(0,0,0.2,1)_infinite]" />}
                   {enemy.staggered && enemy.hp > 0 && (
                     <div className="absolute inset-x-0 -top-6 z-20 flex items-center justify-center pointer-events-none">
-                      <div className="w-28 h-14 sm:w-36 sm:h-18 overflow-hidden relative drop-shadow-[0_0_8px_#facc15]"><img src="/assets/expedition/stun_spritesheet_tight.png" className="absolute top-0 left-0 h-full w-[500%] max-w-none animate-sprite-5" alt="Stun" /></div>
+                      <div className="w-28 h-14 overflow-hidden relative drop-shadow-[0_0_8px_#facc15]">
+                        <img src="/assets/expedition/stun_spritesheet_tight.png" className="absolute top-0 left-0 h-full w-[500%] max-w-none animate-sprite-5" alt="Stun" />
+                      </div>
                     </div>
                   )}
                 </div>
@@ -647,9 +663,9 @@ export function StandardCombat(props: ExpeditionCombatProps) {
           })}
         </div>
 
-        {/* ── ACTIVE CHARACTER FOCUS (Desktop) ── */}
+        {/* ── ACTIVE CHARACTER FOCUS (Desktop Hero Shifted Left) ── */}
         {isShrineBandit && !isBoss ? (
-          <div className="flex items-end justify-center translate-x-16 lg:translate-x-24 -translate-y-4 lg:-translate-y-8 z-20 pointer-events-none">
+          <div className="flex items-end justify-center translate-x-16 lg:-translate-x-16 -translate-y-4 lg:-translate-y-8 z-20 pointer-events-none">
             <div key={activeHero.id} className="flex flex-col items-center gap-0 z-30 animate-in fade-in slide-in-from-left-8 duration-300">
               <div className="relative origin-bottom transition-transform flex items-center justify-center">
                 <img src={getHeroSprite(activeHero)} alt={activeHero.name} className="w-[470px] h-[470px] object-contain drop-shadow-[0px_12px_24px_rgba(0,0,0,0.8)]" />
@@ -661,8 +677,9 @@ export function StandardCombat(props: ExpeditionCombatProps) {
           </div>
         ) : null}
 
+        {/* ── ENEMIES FOCUS (Desktop Alignment Fix) ── */}
         {!isBoss ? (
-          <div className="flex items-end justify-center gap-4 -translate-x-20 z-10">
+          <div className="flex items-end justify-center gap-4 -translate-x-20 lg:translate-y-28 z-10">
             {enemies.length > 1 ? (
               enemies.map((e, idx) => {
                 if (e.hp <= 0 && isEndingBattle) return null;
@@ -685,7 +702,9 @@ export function StandardCombat(props: ExpeditionCombatProps) {
                       {e.hp <= 0 && <div className="absolute inset-0 bg-red-600/50 mix-blend-color-burn rounded-full animate-[ping_0.5s_cubic-bezier(0,0,0.2,1)_infinite]" />}
                       {e.staggered && e.hp > 0 && (
                         <div className="absolute inset-x-0 -top-8 z-20 flex items-center justify-center pointer-events-none">
-                          <div className="w-28 h-14 sm:w-36 sm:h-18 overflow-hidden relative drop-shadow-[0_0_8px_#facc15]"><img src="/assets/expedition/stun_spritesheet_tight.png" className="absolute top-0 left-0 h-full w-[500%] max-w-none animate-sprite-5" alt="Stun" /></div>
+                          <div className="w-36 h-18 overflow-hidden relative drop-shadow-[0_0_10px_#facc15]">
+                            <img src="/assets/expedition/stun_spritesheet_tight.png" className="absolute top-0 left-0 h-full w-[500%] max-w-none animate-sprite-5" alt="Stun" />
+                          </div>
                         </div>
                       )}
                     </div>
@@ -696,7 +715,7 @@ export function StandardCombat(props: ExpeditionCombatProps) {
                 );
               })
             ) : (
-              <div className="flex flex-col items-center gap-1 -translate-x-20 z-10">
+              <div className="flex flex-col items-center gap-1 -translate-x-20 lg:translate-y-28 z-10">
                 <div className="w-32 h-2 bg-[#0f0c0c]/80 border-2 border-white/50 flex shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6">
                   <div className="bg-[#da2d46] h-full transition-all" style={{ width: `${Math.max(0, (enemy.hp / enemy.maxHp) * 100)}%` }} />
                 </div>
@@ -705,7 +724,9 @@ export function StandardCombat(props: ExpeditionCombatProps) {
                   {enemy.hp <= 0 && <div className="absolute inset-0 bg-red-600/50 mix-blend-color-burn rounded-full animate-[ping_0.5s_cubic-bezier(0,0,0.2,1)_infinite]" />}
                   {enemy.staggered && enemy.hp > 0 && (
                     <div className="absolute inset-x-0 -top-8 z-20 flex items-center justify-center pointer-events-none">
-                      <div className="w-28 h-14 sm:w-36 sm:h-18 overflow-hidden relative drop-shadow-[0_0_8px_#facc15]"><img src="/assets/expedition/stun_spritesheet_tight.png" className="absolute top-0 left-0 h-full w-[500%] max-w-none animate-sprite-5" alt="Stun" /></div>
+                      <div className="w-48 h-24 overflow-hidden relative drop-shadow-[0_0_10px_#facc15]">
+                        <img src="/assets/expedition/stun_spritesheet_tight.png" className="absolute top-0 left-0 h-full w-[500%] max-w-none animate-sprite-5" alt="Stun" />
+                      </div>
                     </div>
                   )}
                 </div>
@@ -718,7 +739,7 @@ export function StandardCombat(props: ExpeditionCombatProps) {
         ) : null}
       </div>
 
-      <div className="lg:hidden relative z-40 flex flex-col items-center justify-between gap-1.5 sm:gap-3 bg-[#1e2238] border-[2px] sm:border-[4px] border-[#0f0c0c] shadow-[0px_-3px_0px_0px_#0f0c0c] p-2 sm:p-3">
+      <div className="lg:hidden relative z-40 flex flex-col sm:flex-row items-center justify-between gap-1.5 sm:gap-3 bg-[#1e2238] border-t-[2px] sm:border-t-[4px] border-[#0f0c0c] border-x-0 border-b-0 w-full p-2 sm:p-3 pb-safe shadow-[0px_-3px_0px_0px_#0f0c0c]">
         <div className="w-full sm:w-auto flex items-center justify-center gap-1.5 sm:gap-3 px-2 py-1 sm:px-4 sm:py-2 bg-[#0f0c0c] text-[#facc15] border-[2px] sm:border-[3px] border-[#facc15] font-orbitron font-black text-[9px] sm:text-sm uppercase tracking-wider -skew-x-6">
           <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-[#da2d46] fill-current animate-pulse" />
           <span className="truncate">ACTIVE TURN: {isHeroTurn ? activeHero.name.toUpperCase() : "ENEMY ATTACK PHASE"}</span>
