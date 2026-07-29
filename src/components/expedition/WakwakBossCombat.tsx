@@ -55,6 +55,35 @@ export function WakwakBossCombat(props: ExpeditionCombatProps) {
   const ghostPct = Math.max(0, (ghostHp / enemy.maxHp) * 100);
   const staggerPct = Math.max(0, (enemy.stagger / enemy.maxStagger) * 100);
 
+  const renderTurnBar = () => (
+    <div className="flex items-center gap-1 sm:gap-2 bg-[#1e2238] border-[2px] sm:border-[3px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] px-1.5 sm:px-3 py-1 sm:py-1.5 -skew-x-6 overflow-hidden">
+      <span className="font-orbitron font-black text-[8px] sm:text-2xs text-[#facc15] uppercase border-r border-slate-600 pr-1.5 sm:pr-2 shrink-0">
+        TURN
+      </span>
+      <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto hide-scrollbar">
+        {turnQueue.map((unit, idx) => {
+          const isCurrent = idx === turnIndex % turnQueue.length;
+          return (
+            <div 
+              key={idx}
+              className={`w-5 h-5 sm:w-6 sm:h-6 border border-[#0f0c0c] flex items-center justify-center shrink-0 overflow-hidden transition-all ${
+                isCurrent 
+                  ? 'bg-[#facc15] shadow-[1px_1px_0px_0px_#0f0c0c] scale-105' 
+                  : unit.isHero ? 'bg-[#2a2d43]' : 'bg-[#da2d46]'
+              }`}
+            >
+              {unit.isHero ? (
+                <img src={(unit.unit as HeroProfile).avatar} alt="H" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-[10px] sm:text-xs">👹</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   return (
     <div 
       className="flex-1 flex flex-col justify-between relative overflow-hidden bg-[#151828] bg-cover bg-center bg-no-repeat select-none"
@@ -265,7 +294,15 @@ export function WakwakBossCombat(props: ExpeditionCombatProps) {
         })}
       </div>
 
-      <div className="lg:hidden relative w-full flex flex-col items-center justify-center pt-1 z-20 gap-1">
+      <div className="lg:hidden relative w-full flex flex-col items-center justify-center pt-2 px-2 z-20 gap-2">
+        <div className="flex flex-col items-center gap-1 sm:gap-2 shrink-0 portrait:flex landscape:hidden">
+          <div className="flex items-center justify-center gap-1.5 px-2 py-1 bg-[#0f0c0c] text-[#facc15] border-[2px] border-[#facc15] font-orbitron font-black text-[9px] uppercase tracking-wider -skew-x-6">
+            <Zap className="w-3 h-3 text-[#da2d46] fill-current animate-pulse" />
+            <span className="truncate">ACTIVE TURN: {isHeroTurn ? activeHero.name.toUpperCase() : "ENEMY ATTACK PHASE"}</span>
+          </div>
+          {renderTurnBar()}
+        </div>
+
         <div className="w-full max-w-xl mx-auto flex flex-col gap-0.5 px-2 sm:px-4 pointer-events-auto">
           <div className="flex flex-row items-center justify-between font-orbitron tracking-wide px-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] gap-1">
             <span className="font-black text-[10px] sm:text-xs text-white uppercase tracking-wider text-left leading-tight truncate">
@@ -339,38 +376,7 @@ export function WakwakBossCombat(props: ExpeditionCombatProps) {
           </div>
         </div>
 
-        {/* 
-          FIX APPLIED HERE: 
-          Instead of fluid padding (px-2 py-0.5), we force a strict 24x24px (w-6 h-6) locked square and overflow-hidden.
-          This guarantees that even if a string completely fails to load as an image, the text is instantly clipped 
-          and the UI cannot expand leftwards to block the Health Bar.
-        */}
-        <div className="absolute right-4 top-2 flex items-center gap-2 bg-[#1e2238]/90 border-[3px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] px-3 py-1.5 -skew-x-2 backdrop-blur-sm max-w-[250px] overflow-hidden">
-          <span className="font-orbitron font-black text-2xs text-[#facc15] uppercase border-r border-slate-600 pr-2 shrink-0">
-            TURN
-          </span>
-          <div className="flex items-center gap-1.5 overflow-hidden">
-            {turnQueue.map((unit, idx) => {
-              const isCurrent = idx === turnIndex % turnQueue.length;
-              return (
-                <div 
-                  key={idx}
-                  className={`w-6 h-6 border border-[#0f0c0c] flex items-center justify-center shrink-0 overflow-hidden transition-all ${
-                    isCurrent 
-                      ? 'bg-[#facc15] shadow-[1px_1px_0px_0px_#0f0c0c] scale-105' 
-                      : unit.isHero ? 'bg-[#2a2d43]' : 'bg-[#da2d46]'
-                  }`}
-                >
-                  {unit.isHero ? (
-                    <img src={(unit.unit as HeroProfile).avatar} alt="H" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-xs">👹</span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
+
       </div>
 
       <div className="lg:hidden flex-1 w-full relative z-10 flex items-center justify-center overflow-hidden">
@@ -727,12 +733,15 @@ export function WakwakBossCombat(props: ExpeditionCombatProps) {
         ) : null}
       </div>
 
-      <div className="lg:hidden relative z-40 flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-2 bg-[#1e2238] border-t-[2px] border-[#0f0c0c] shadow-[0px_-2px_0px_0px_#0f0c0c] p-1.5 w-full">
-        
-        <div className="w-full sm:w-auto flex items-center justify-center gap-1 sm:gap-1.5 px-2 py-1 bg-[#0f0c0c] text-[#facc15] border-[2px] border-[#facc15] font-orbitron font-black text-[9px] uppercase tracking-wider -skew-x-6 shrink-0">
-          <Zap className="w-3 h-3 text-[#da2d46] fill-current animate-pulse shrink-0" />
-          <span className="truncate">ACTIVE TURN: {isHeroTurn ? activeHero.name.toUpperCase() : "ENEMY ATTACK PHASE"}</span>
-        </div>
+      <div className="lg:hidden relative z-40 flex flex-col items-center gap-2 bg-[#1e2238] border-t-[2px] border-[#0f0c0c] shadow-[0px_-2px_0px_0px_#0f0c0c] p-1.5 w-full">
+        <div className="w-full flex flex-row items-center justify-between gap-1 sm:gap-2">
+          <div className="hidden landscape:flex flex-col gap-1 sm:gap-2 shrink-0">
+            <div className="w-full sm:w-auto flex items-center justify-center gap-1 sm:gap-1.5 px-2 py-1 bg-[#0f0c0c] text-[#facc15] border-[2px] border-[#facc15] font-orbitron font-black text-[9px] uppercase tracking-wider -skew-x-6 shrink-0">
+              <Zap className="w-3 h-3 text-[#da2d46] fill-current animate-pulse shrink-0" />
+              <span className="truncate">ACTIVE TURN: {isHeroTurn ? activeHero.name.toUpperCase() : "ENEMY ATTACK PHASE"}</span>
+            </div>
+            {renderTurnBar()}
+          </div>
 
         <div className="grid grid-cols-3 sm:flex sm:flex-row sm:flex-wrap items-stretch justify-end gap-1 w-full sm:w-auto sm:flex-1">
           <button onClick={handleCommandAttack} disabled={!isHeroTurn || activeHero.ap < 1 || activeAction !== 'none' || isEndingBattle} className="col-span-1 px-1 py-1 bg-[#da2d46] text-white border-[2px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] font-orbitron font-black text-[7px] sm:text-[9px] uppercase -skew-x-4 hover:bg-[#ff3b56] disabled:opacity-50 disabled:pointer-events-none transition-all flex flex-row items-center justify-center sm:justify-start gap-1 active:translate-y-0.5 active:shadow-none">
@@ -783,11 +792,15 @@ export function WakwakBossCombat(props: ExpeditionCombatProps) {
           </button>
         </div>
       </div>
+      </div>
 
       <div className="hidden lg:flex relative z-40 items-center justify-between gap-4 bg-[#1e2238] border-[4px] border-[#0f0c0c] shadow-[0px_-4px_0px_0px_#0f0c0c] p-4">
-        <div className="flex items-center gap-3 px-4 py-2 bg-[#0f0c0c] text-[#facc15] border-[3px] border-[#facc15] font-orbitron font-black text-sm uppercase tracking-wider -skew-x-6 shrink-0">
-          <Zap className="w-4 h-4 text-[#da2d46] fill-current animate-pulse shrink-0" />
-          <span>ACTIVE TURN: {isHeroTurn ? activeHero.name.toUpperCase() : "ENEMY ATTACK PHASE"}</span>
+        <div className="flex flex-col gap-2 shrink-0">
+          <div className="flex items-center gap-3 px-4 py-2 bg-[#0f0c0c] text-[#facc15] border-[3px] border-[#facc15] font-orbitron font-black text-sm uppercase tracking-wider -skew-x-6 shrink-0">
+            <Zap className="w-4 h-4 text-[#da2d46] fill-current animate-pulse shrink-0" />
+            <span>ACTIVE TURN: {isHeroTurn ? activeHero.name.toUpperCase() : "ENEMY ATTACK PHASE"}</span>
+          </div>
+          {renderTurnBar()}
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-3">

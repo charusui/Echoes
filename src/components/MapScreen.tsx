@@ -14,7 +14,7 @@ import {
   EXPEDITION_QUESTS
 } from '../types/expedition';
 import { ExpeditionOverworld } from './expedition/ExpeditionOverworld';
-import { ExpeditionCombat, type TurnUpdateInfo } from './expedition/ExpeditionCombat';
+import { ExpeditionCombat } from './expedition/ExpeditionCombat';
 import { HarmonyStage } from './expedition/HarmonyStage';
 import { HarmonydexModal } from './expedition/HarmonydexModal';
 import { EquipmentModal } from './expedition/EquipmentModal';
@@ -22,6 +22,7 @@ import { QuestsModal } from './expedition/QuestsModal';
 import { CombatResultModal } from './expedition/CombatResultModal';
 import { MariaShopModal } from './expedition/MariaShopModal';
 import { CrossroadsCutscene } from './expedition/CrossroadsCutscene';
+import { TownEntranceCutscene } from './expedition/TownEntranceCutscene';
 
 export interface ExpeditionScreenProps {
   onBack: () => void;
@@ -61,7 +62,7 @@ export function ExpeditionScreen({
   setQuests,
 }: ExpeditionScreenProps) {
   // Navigation & View state
-  const [subView, setSubView] = useState<'overworld' | 'combat' | 'crossroads_cutscene'>('overworld');
+  const [subView, setSubView] = useState<'overworld' | 'combat' | 'crossroads_cutscene' | 'town_cutscene'>('overworld');
   const [activeEnemyId, setActiveEnemyId] = useState<string>('corrupted_violin');
   const [activeEnemyGauntlet, setActiveEnemyGauntlet] = useState<string[] | undefined>();
   const [currentNodeId, setCurrentNodeId] = useState<string>('cadence_town');
@@ -75,11 +76,18 @@ export function ExpeditionScreen({
   } | null>(null);
 
   const [isMuted, setIsMuted] = useState(false);
-  const [turnInfo, setTurnInfo] = useState<TurnUpdateInfo | null>(null);
 
   useEffect(() => {
     onCombatStateChange?.(subView === 'combat');
   }, [subView, onCombatStateChange]);
+
+  const [hasSeenTownIntro, setHasSeenTownIntro] = useState(() => localStorage.getItem('echoes_town_intro') === 'true');
+
+  useEffect(() => {
+    if (currentNodeId === 'cadence_town' && !hasSeenTownIntro && subView === 'overworld') {
+      setSubView('town_cutscene');
+    }
+  }, [currentNodeId, hasSeenTownIntro, subView]);
 
   const handleToggleMute = useCallback(() => {
     const muted = audioEngine.toggleMute();
@@ -242,30 +250,6 @@ export function ExpeditionScreen({
 
       {/* Main View Area */}
       <main className="relative z-10 flex-1 flex overflow-hidden">
-        {/* RELOCATED MOBILE TURN BAR */}
-        {subView === 'combat' && turnInfo && (
-          <div className="lg:hidden absolute top-2 right-2 z-50 flex items-center gap-0.5 bg-[#1e2238]/95 border-[2px] border-[#0f0c0c] shadow-[1px_1px_0px_0px_#0f0c0c] px-1.5 py-0.5 -skew-x-2 backdrop-blur-sm scale-[0.82] sm:scale-95 origin-right">
-            <span className="font-orbitron font-black text-[8px] text-[#facc15] uppercase border-r border-slate-600 pr-1">
-              TURN
-            </span>
-            <div className="flex items-center gap-0.5">
-              {turnInfo.queue.map((unit, idx) => {
-                const isCurrent = idx === turnInfo.index % turnInfo.queue.length;
-                return (
-                  <div 
-                    key={idx}
-                    className={`px-1 py-0.5 border border-[#0f0c0c] font-orbitron font-bold text-[8px] sm:text-[9px] flex items-center transition-all ${
-                      isCurrent ? 'bg-[#facc15] text-[#0f0c0c] scale-105 shadow-[1px_1px_0px_0px_#0f0c0c]' : unit.isHero ? 'bg-[#2a2d43] text-white' : 'bg-[#da2d46] text-white'
-                    }`}
-                  >
-                    <span>{unit.avatar}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
         {subView === 'overworld' ? (
           <ExpeditionOverworld 
             nodes={nodes}
@@ -284,6 +268,14 @@ export function ExpeditionScreen({
               setNodes(prev => ({ ...prev, [id]: { ...prev[id]!, completed: true } }));
             }}
           />
+        ) : subView === 'town_cutscene' ? (
+          <TownEntranceCutscene 
+            onComplete={() => {
+              localStorage.setItem('echoes_town_intro', 'true');
+              setHasSeenTownIntro(true);
+              setSubView('overworld');
+            }} 
+          />
         ) : subView === 'crossroads_cutscene' ? (
           <CrossroadsCutscene 
             onComplete={() => {
@@ -299,7 +291,6 @@ export function ExpeditionScreen({
             onCombatResult={handleCombatResult}
             onFlee={() => setSubView('overworld')}
             onUpdateParty={setParty}
-            onTurnUpdate={setTurnInfo}
           />
         ) : (
           <ExpeditionCombat 
@@ -310,7 +301,6 @@ export function ExpeditionScreen({
             onCombatResult={handleCombatResult}
             onFlee={() => setSubView('overworld')}
             onUpdateParty={setParty}
-            onTurnUpdate={setTurnInfo}
           />
         )}
       </main>
