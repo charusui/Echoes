@@ -1086,14 +1086,7 @@ export function HarmonyStage({
               >
                 {enemy.staggered && enemy.hp > 0 && (
                   <div className={`absolute z-20 flex flex-col items-center justify-center pointer-events-none animate-fadeIn ${enemy.id.startsWith('bakunawa') ? 'top-[5%] left-[25%]' : '-translate-y-40 sm:-translate-y-52'}`}>
-                    <div className="relative w-48 h-16 flex items-center justify-center">
-                      <div className="absolute inset-0 flex items-center justify-around animate-[spin_3s_linear_infinite] drop-shadow-[0_0_12px_#facc15]">
-                        <span className="text-3xl animate-bounce">⭐</span><span className="text-xl text-[#facc15] animate-pulse">✨</span><span className="text-3xl animate-bounce" style={{ animationDelay: '200ms' }}>⭐</span><span className="text-xl text-[#facc15] animate-pulse" style={{ animationDelay: '400ms' }}>✨</span><span className="text-3xl animate-bounce" style={{ animationDelay: '600ms' }}>⭐</span>
-                      </div>
-                      <div className="absolute inset-0 flex items-center justify-around animate-[spin_2s_linear_infinite_reverse] drop-shadow-[0_0_8px_#ff8000] scale-75 opacity-90">
-                        <span className="text-2xl">💫</span><span className="text-2xl">💫</span><span className="text-2xl">💫</span>
-                      </div>
-                    </div>
+                    <div className="w-48 h-24 overflow-hidden relative drop-shadow-[0_0_8px_#facc15]"><img src="/assets/expedition/stun_spritesheet_tight.png" className="absolute top-0 left-0 h-full w-[500%] max-w-none animate-sprite-5" alt="Stun" /></div>
                   </div>
                 )}
                 <img

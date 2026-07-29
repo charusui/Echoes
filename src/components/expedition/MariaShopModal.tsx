@@ -165,6 +165,7 @@ export function MariaShopModal({ party: _party, nodes, onUpdateParty, onClose, o
     }
 
     audioEngine.playHitSFX('perfect');
+    new Audio('/assets/audio/sfx/bought.mp3').play().catch(() => {});
 
     if (onUpdateParty) {
       if (item.id === 'turmeric_tonic') {
