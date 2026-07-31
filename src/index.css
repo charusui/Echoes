@@ -141,6 +141,22 @@ body {
   animation: parry-arc 0.25s ease-out forwards;
 }
 
+@keyframes swingRight {
+  0% { transform: rotate(-60deg) translate(5%, -5%); }
+  100% { transform: rotate(110deg) translate(5%, 5%); }
+}
+
+@keyframes swingLeft {
+  0% { transform: rotate(60deg) translate(-5%, -5%); }
+  100% { transform: rotate(-110deg) translate(-5%, 5%); }
+}
+
+@keyframes trailFade {
+  0% { opacity: 0; }
+  30% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 /* ─── Scrollbar ──────────────────────────────────────────────────────────────── */
 
 ::-webkit-scrollbar       { width: 4px; }
