@@ -360,6 +360,7 @@ function InnerApp() {
           onOpenCollection={() => setView('collection')}
           onOpenBadges={() => setView('badges')}
           onOpenRanks={() => setView('ranks')}
+          onOpenKorlongHunt={() => setView('korlongHunt')}
         />
       )}
 

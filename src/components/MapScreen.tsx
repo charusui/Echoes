@@ -31,6 +31,7 @@ export interface ExpeditionScreenProps {
   onOpenCollection?: () => void;
   onOpenBadges?: () => void;
   onOpenRanks?: () => void;
+  onOpenKorlongHunt?: () => void;
   isRootMap?: boolean;
   onCombatStateChange?: (inCombat: boolean) => void;
   party: Record<string, HeroProfile>;
@@ -50,6 +51,7 @@ export function ExpeditionScreen({
   onOpenCollection,
   onOpenBadges,
   onOpenRanks,
+  onOpenKorlongHunt,
   isRootMap,
   onCombatStateChange,
   party,
@@ -263,6 +265,7 @@ export function ExpeditionScreen({
             onOpenCollection={onOpenCollection}
             onOpenBadges={onOpenBadges}
             onOpenRanks={onOpenRanks}
+            onOpenKorlongHunt={onOpenKorlongHunt}
             onOpenShop={() => setActiveModal('shop')}
             onNodeComplete={(id) => {
               setNodes(prev => ({ ...prev, [id]: { ...prev[id]!, completed: true } }));
