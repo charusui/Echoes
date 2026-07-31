@@ -381,7 +381,7 @@ export function WakwakBossCombat(props: ExpeditionCombatProps) {
 
       <div className="lg:hidden flex-1 w-full relative z-10 flex items-center justify-center overflow-hidden">
         <div 
-          className="absolute inset-x-0 bottom-0 h-24 sm:h-36 bg-repeat-x bg-bottom pointer-events-none z-10 opacity-95 drop-shadow-[0_-6px_12px_rgba(0,0,0,0.95)]"
+          className="absolute inset-x-0 bottom-0 h-24 sm:h-36 bg-repeat-x bg-bottom pointer-events-none z-10 opacity-95 drop-shadow-[0_-6px_12px_rgba(0,0,0,0.95)] translate-y-6 landscape:translate-y-12 sm:translate-y-8"
           style={{
             backgroundImage: `url('/assets/expedition/battle_ground.png')`,
             backgroundSize: 'auto 100%',

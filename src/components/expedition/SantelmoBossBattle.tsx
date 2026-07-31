@@ -47,6 +47,7 @@ export default function SantelmoBossBattle({
   const [_frame, setFrame] = useState(0);
   const [gameResult, setGameResult] = useState<'victory' | 'defeat' | null>(null);
   const [transitionState, setTransitionState] = useState<'none' | 'select_p1' | 'select_p2' | 'ultimate'>('none');
+  const [introStep, setIntroStep] = useState<'hint' | 'combat'>('hint');
   const [activeHeroId, setActiveHeroId] = useState<string | null>(null);
 
   // Mutable Game State
@@ -105,7 +106,7 @@ export default function SantelmoBossBattle({
 
   // Game Loop
   useEffect(() => {
-    if (gameResult || transitionState !== 'none') return;
+    if (gameResult || transitionState !== 'none' || introStep === 'hint') return;
 
     let lastTime = performance.now();
 
@@ -371,7 +372,7 @@ export default function SantelmoBossBattle({
     return () => {
       if (animRef.current) cancelAnimationFrame(animRef.current);
     };
-  }, [gameResult, transitionState, onComplete]);
+  }, [gameResult, transitionState, introStep, onComplete]);
 
   const s = state.current;
   const avatar = '/girl_idle.gif'; // Fixed player sprite
@@ -544,17 +545,66 @@ export default function SantelmoBossBattle({
               className="h-[150%] max-w-none object-contain" 
               style={{ transform: `scaleX(${s.player.facing})` }} 
             />
-            {/* Bat Swing Hitbox Visual */}
+            {/* Bat Swing Hitbox Visual (Baseball Bat) */}
             {s.player.isSwinging && (
-              <div 
-                className="absolute w-[150%] h-[120%] bg-white/40 rounded-full blur-sm"
-                style={{ 
-                  bottom: '40%',
-                  left: s.player.facing === 1 ? '50%' : 'auto', 
-                  right: s.player.facing === -1 ? '50%' : 'auto',
-                  transform: s.player.facing === 1 ? 'rotate(-45deg)' : 'rotate(45deg)'
-                }} 
-              />
+              <>
+                <div 
+                  className="absolute"
+                  style={{ 
+                    bottom: '75%',
+                    left: s.player.facing === 1 ? '40%' : 'auto', 
+                    right: s.player.facing === -1 ? '40%' : 'auto',
+                    width: '80%',
+                    height: '140%',
+                    transformOrigin: s.player.facing === 1 ? 'bottom left' : 'bottom right',
+                    transform: s.player.facing === 1 ? 'rotate(60deg)' : 'rotate(-60deg)',
+                    animation: s.player.facing === 1 ? 'swingRight 0.15s ease-out forwards' : 'swingLeft 0.15s ease-out forwards',
+                  }} 
+                >
+                  <img 
+                    src="/assets/expedition/ancestral_gold_bat.png" 
+                    alt="Ancestral Golden Bat"
+                    className="w-full h-full object-contain pointer-events-none"
+                    style={{ 
+                      objectPosition: 'bottom left',
+                      transform: s.player.facing === -1 ? 'scaleX(-1)' : 'none' 
+                    }}
+                  />
+                </div>
+                
+                {/* Dynamic Circular Trail */}
+                <svg 
+                  className="absolute pointer-events-none"
+                  style={{ 
+                    bottom: '75%',
+                    left: s.player.facing === 1 ? '40%' : 'auto', 
+                    right: s.player.facing === -1 ? '40%' : 'auto',
+                    width: '160px', 
+                    height: '160px',
+                    transform: s.player.facing === 1 
+                      ? 'translate(-50%, 50%) rotate(0deg)' 
+                      : 'translate(50%, 50%) scaleX(-1)', 
+                    animation: 'trailFade 0.15s ease-out forwards'
+                  }}
+                  viewBox="-100 -100 200 200"
+                >
+                  <path 
+                    d="M -69 -40 A 80 80 0 0 1 75 27" 
+                    fill="none" 
+                    stroke="url(#slashGrad)" 
+                    strokeWidth="16" 
+                    strokeLinecap="round"
+                    className="blur-[2px]"
+                  />
+                  <defs>
+                    <linearGradient id="slashGrad" x1="0" y1="1" x2="1" y2="0">
+                      <stop offset="0%" stopColor="white" stopOpacity="0" />
+                      <stop offset="50%" stopColor="white" stopOpacity="0.8" />
+                      <stop offset="100%" stopColor="white" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </>
             )}
           </div>
 
@@ -717,6 +767,27 @@ export default function SantelmoBossBattle({
         </div>
       </div>
       
+      {/* Intro Tutorial Pop-up */}
+      {introStep === 'hint' && (
+        <div className="absolute inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm pointer-events-auto transition-opacity">
+          <div className="flex flex-col items-center gap-4 bg-[#0f0c0c]/95 border-[4px] border-[#4ade80] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.8)] p-6 sm:p-8 max-w-2xl w-[95%] text-center -skew-x-3">
+            <h2 className="font-orbitron font-black text-2xl sm:text-4xl text-[#4ade80] uppercase tracking-widest drop-shadow-md">Boss Battle Rules</h2>
+            <div className="text-white font-sans text-sm sm:text-lg leading-relaxed space-y-3 mt-4 text-left">
+              <p><span className="text-[#facc15] font-bold">MOVE:</span> Use <strong className="text-[#38bdf8]">W / A / S / D</strong> or <strong className="text-[#38bdf8]">Arrow Keys</strong> to run and jump.</p>
+              <p><span className="text-[#facc15] font-bold">DASH:</span> Press <strong className="text-[#38bdf8]">E</strong> to dash and avoid damage.</p>
+              <p><span className="text-[#facc15] font-bold">DEFLECT:</span> Press <strong className="text-[#38bdf8]">SPACE</strong> or tap <strong className="text-[#38bdf8]">BAT</strong> to swing. Hit the ground fireballs back at Santelmo!</p>
+              <p className="text-[#da2d46] font-bold mt-2 text-sm italic">Avoid the purple sky fireballs, they cannot be deflected!</p>
+            </div>
+            <button 
+              onClick={() => setIntroStep('combat')}
+              className="mt-6 px-8 py-3 bg-[#facc15] text-[#0f0c0c] font-orbitron font-black text-xl uppercase tracking-widest border-[3px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] hover:bg-[#ffdf3d] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#0f0c0c] transition-all"
+            >
+              START BATTLE
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Keyboard Hint for Desktop */}
       <div className="hidden lg:block absolute bottom-4 left-1/2 -translate-x-1/2 z-40 text-white/50 text-xs font-space-mono pointer-events-none">
         [W/A/D] Move & Jump • [SPACE] Swing Bat • [E] Dash

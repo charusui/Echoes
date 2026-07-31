@@ -865,8 +865,8 @@ export function ExpeditionOverworld({
           <X size={28} className="font-black" />
         </button>
 
-        {/* --- MAIN INFO PANEL (FLEXIBLE HEIGHT, NEVER SCROLLS) --- */}
-        <div className="flex-1 min-h-0 bg-[#1e2238] border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] p-3 sm:p-4 flex flex-col gap-2 relative z-10">
+        {/* --- MAIN INFO PANEL (FLEXIBLE HEIGHT, COMPACT FITS ALL) --- */}
+        <div className="flex-1 min-h-0 bg-[#1e2238] border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] p-2 sm:p-3 flex flex-col gap-1.5 sm:gap-2 relative z-10 overflow-hidden">
           
           <div className="shrink-0 flex items-center justify-between mb-1">
             <span className="px-2 py-1 bg-[#38bdf8] text-[#0f0c0c] border-[3px] border-[#0f0c0c] font-orbitron font-black text-[10px] sm:text-xs uppercase -skew-x-6 shadow-[3px_3px_0px_0px_#0f0c0c]">
@@ -881,7 +881,7 @@ export function ExpeditionOverworld({
 
           {/* --- FLUID HERO PREVIEW IMAGE --- */}
           {currentPreviewImg && (
-            <div className="flex-1 min-h-[90px] sm:min-h-[120px] max-h-[180px] xl:max-h-[220px] w-full border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] bg-[#0f0c0c] mt-2 mb-1 overflow-hidden -skew-x-2 relative">
+            <div className="flex-1 min-h-0 shrink max-h-[160px] xl:max-h-[200px] w-full border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] bg-[#0f0c0c] mt-1 mb-0.5 overflow-hidden -skew-x-2 relative">
               <div className="absolute skew-x-2 w-full h-full">
                 <img
                   src={currentPreviewImg}
@@ -892,15 +892,15 @@ export function ExpeditionOverworld({
             </div>
           )}
 
-          <div className="shrink-0 bg-[#0f0c0c]/40 p-2 sm:p-2.5 border-l-[4px] border-[#38bdf8] mt-1">
-            <p className="text-[10px] sm:text-[11px] xl:text-xs text-slate-300 font-bold leading-snug whitespace-pre-wrap">
+          <div className="shrink-0 bg-[#0f0c0c]/40 p-1.5 sm:p-2 border-l-[3px] sm:border-l-[4px] border-[#38bdf8] mt-0.5">
+            <p className="text-[9px] sm:text-[10px] xl:text-xs text-slate-300 font-bold leading-snug whitespace-pre-wrap">
               {currentNode.desc}
             </p>
           </div>
 
           {/* DASHED DIVIDER & LOCKED ACTION AREA */}
-          <div className="shrink-0 border-t-[2px] border-dashed border-[#0f0c0c]/30 mt-auto pt-2 flex flex-col gap-2">
-            <div className="bg-[#0f0c0c] px-3 py-2 border-[4px] border-[#0f0c0c] flex flex-col gap-1 shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-2">
+          <div className="shrink-0 border-t-[2px] border-dashed border-[#0f0c0c]/30 mt-auto pt-1.5 flex flex-col gap-1.5">
+            <div className="bg-[#0f0c0c] px-2 py-1.5 border-[3px] border-[#0f0c0c] flex flex-col gap-0.5 shadow-[3px_3px_0px_0px_#0f0c0c] -skew-x-2">
               <span className="text-[9px] sm:text-[10px] font-orbitron font-black uppercase text-[#facc15] tracking-wider skew-x-2 leading-none">
                 📍 REGIONAL REWARDS
               </span>
@@ -919,7 +919,7 @@ export function ExpeditionOverworld({
                       setShowDialogue(true);
                       if (isMobile) setIsSidebarOpen(false);
                     }}
-                    className="w-full py-2.5 sm:py-3 bg-[#facc15] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#ffdf3d] transition-all flex items-center justify-center gap-2 active:translate-y-[4px] active:translate-x-[4px] active:shadow-none"
+                    className="w-full py-1.5 sm:py-2 bg-[#facc15] text-[#0f0c0c] border-[3px] sm:border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-[10px] sm:text-xs uppercase -skew-x-6 hover:bg-[#ffdf3d] transition-all flex items-center justify-center gap-1.5 active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
                   >
                     <MessageSquare className="w-5 h-5 fill-current shrink-0 skew-x-6" />
                     <span className="truncate skew-x-6">TALK TO NPC</span>
@@ -932,7 +932,7 @@ export function ExpeditionOverworld({
                         if (onOpenShop) onOpenShop();
                         if (isMobile) setIsSidebarOpen(false);
                       }}
-                      className="w-full py-2 bg-[#f97316] text-white border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-[10px] sm:text-xs uppercase -skew-x-6 hover:bg-[#fb923c] transition-all flex items-center justify-center gap-1.5 active:translate-y-0.5 active:shadow-none animate-pulse"
+                      className="w-full py-1.5 bg-[#f97316] text-white border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-[10px] sm:text-xs uppercase -skew-x-6 hover:bg-[#fb923c] transition-all flex items-center justify-center gap-1.5 active:translate-y-0.5 active:shadow-none animate-pulse"
                     >
                       <span className="truncate font-black tracking-wider skew-x-6">SHOP</span>
                     </button>
@@ -948,7 +948,7 @@ export function ExpeditionOverworld({
                         setShowDialogue(true);
                         if (isMobile) setIsSidebarOpen(false);
                       }}
-                      className="w-full py-2 sm:py-2.5 bg-[#facc15] text-[#0f0c0c] border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-[10px] sm:text-xs uppercase -skew-x-6 hover:bg-[#ffdf3d] transition-all flex items-center justify-center gap-1.5 active:translate-y-0.5 active:shadow-none"
+                      className="w-full py-1.5 sm:py-2 bg-[#facc15] text-[#0f0c0c] border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-[10px] sm:text-xs uppercase -skew-x-6 hover:bg-[#ffdf3d] transition-all flex items-center justify-center gap-1.5 active:translate-y-0.5 active:shadow-none"
                     >
                       <MessageSquare className="w-4 h-4 fill-current shrink-0 skew-x-6" />
                       <span className="truncate skew-x-6">TALK TO RESCUED NPC</span>
@@ -956,7 +956,7 @@ export function ExpeditionOverworld({
                   )}
                   <button
                     disabled
-                    className="w-full py-2.5 sm:py-3 bg-gray-500 text-white border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 flex items-center justify-center gap-2 opacity-50 cursor-not-allowed"
+                    className="w-full py-1.5 sm:py-2 bg-gray-500 text-white border-[3px] sm:border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-[10px] sm:text-xs uppercase -skew-x-6 flex items-center justify-center gap-1.5 opacity-50 cursor-not-allowed"
                   >
                     <span className="truncate skew-x-6 drop-shadow-[2px_2px_0px_#0f0c0c]">AREA CLEARED</span>
                   </button>
@@ -968,7 +968,7 @@ export function ExpeditionOverworld({
                     if (currentNode.enemyIds) onStartBattle(currentNode.enemyIds[0], currentNode.enemyIds);
                     else if (currentNode.enemyId) onStartBattle(currentNode.enemyId);
                   }}
-                  className="w-full py-2.5 sm:py-3 bg-[#da2d46] text-white border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#ff3b56] transition-all flex items-center justify-center gap-2 active:translate-y-[4px] active:translate-x-[4px] active:shadow-none"
+                  className="w-full py-1.5 sm:py-2 bg-[#da2d46] text-white border-[3px] sm:border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-[10px] sm:text-xs uppercase -skew-x-6 hover:bg-[#ff3b56] transition-all flex items-center justify-center gap-1.5 active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
                 >
                   <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current shrink-0 skew-x-6" />
                   <span className="truncate skew-x-6 drop-shadow-[2px_2px_0px_#0f0c0c]">BATTLE {(currentNode.enemyId || (currentNode.enemyIds && currentNode.enemyIds[0]) || 'ENEMIES').replace(/_/g, ' ').toUpperCase()}</span>
@@ -977,7 +977,7 @@ export function ExpeditionOverworld({
 
               <button
                 onClick={() => { playSound('journal_open'); onOpenQuests(); }}
-                className="w-full py-2 sm:py-2.5 bg-[#38bdf8] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-[10px] sm:text-xs uppercase -skew-x-6 hover:bg-[#7dd3fc] transition-all flex items-center justify-center gap-2 active:translate-y-[4px] active:translate-x-[4px] active:shadow-none"
+                className="w-full py-1.5 sm:py-2 bg-[#38bdf8] text-[#0f0c0c] border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-[10px] sm:text-xs uppercase -skew-x-6 hover:bg-[#7dd3fc] transition-all flex items-center justify-center gap-1.5 active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
               >
                 <Compass className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 skew-x-6" />
                 <span className="truncate skew-x-6">OPEN QUEST JOURNAL</span>
@@ -987,14 +987,14 @@ export function ExpeditionOverworld({
         </div>
 
         {/* --- WEAKNESS MATRIX (LOCKED TO BOTTOM) --- */}
-        <div className="shrink-0 bg-[#1e2238] border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] p-4 flex flex-col gap-3 mb-4 md:mb-0 relative z-10">
-          <div className="absolute -top-4 left-4 bg-[#facc15] px-3 py-1 border-[3px] border-[#0f0c0c] -skew-x-6 shadow-[3px_3px_0px_0px_#0f0c0c]">
-             <h4 className="font-orbitron font-black text-[10px] sm:text-xs uppercase tracking-wider text-[#0f0c0c] skew-x-6 flex items-center gap-1.5">
-               <ShieldAlert size={14} className="fill-[#0f0c0c] text-[#facc15]"/> WEAKNESS MATRIX
+        <div className="shrink-0 bg-[#1e2238] border-[3px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] p-2.5 sm:p-3 flex flex-col gap-2 mb-4 md:mb-0 relative z-10">
+          <div className="absolute -top-3 left-3 bg-[#facc15] px-2 py-0.5 border-[2px] border-[#0f0c0c] -skew-x-6 shadow-[2px_2px_0px_0px_#0f0c0c]">
+             <h4 className="font-orbitron font-black text-[9px] sm:text-[10px] uppercase tracking-wider text-[#0f0c0c] skew-x-6 flex items-center gap-1">
+               <ShieldAlert size={12} className="fill-[#0f0c0c] text-[#facc15]"/> WEAKNESS MATRIX
              </h4>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-1.5 text-[9px] sm:text-xs font-orbitron font-black pt-4 pb-1">
+          <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-1.5 text-[8px] sm:text-[10px] font-orbitron font-black pt-2 pb-0.5">
             <span className="px-2 py-1 bg-[#da2d46] text-white border-[2px] border-[#0f0c0c] -skew-x-6 shadow-[2px_2px_0px_0px_#0f0c0c]">STRING</span>
             <span className="text-white font-black drop-shadow-[1px_1px_0px_#0f0c0c]">➔</span>
             <span className="px-2 py-1 bg-[#facc15] text-[#0f0c0c] border-[2px] border-[#0f0c0c] -skew-x-6 shadow-[2px_2px_0px_0px_#0f0c0c]">PERC</span>
@@ -1006,7 +1006,7 @@ export function ExpeditionOverworld({
             <span className="px-2 py-1 bg-[#4ade80] text-[#0f0c0c] border-[2px] border-[#0f0c0c] -skew-x-6 shadow-[2px_2px_0px_0px_#0f0c0c]">WOOD</span>
           </div>
 
-          <p className="text-[10px] sm:text-xs text-slate-300 font-bold leading-tight bg-[#0f0c0c] p-2.5 border-[2px] border-[#0f0c0c]">
+          <p className="text-[9px] sm:text-[10px] text-slate-300 font-bold leading-tight bg-[#0f0c0c] p-1.5 sm:p-2 border-[2px] border-[#0f0c0c]">
             Super Effective attacks deal <strong className="text-[#da2d46] font-black">2.0x Damage</strong> and double Stagger buildup!
           </p>
         </div>
