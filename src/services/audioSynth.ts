@@ -97,34 +97,51 @@ export class AudioEngine {
   playHitSFX(judgement: string): void {
     if (!this.ctx || !this.masterGain || this.isMuted) return;
     const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.connect(gain);
-    gain.connect(this.masterGain);
 
     if (judgement === 'sick' || judgement === 'perfect') {
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(880, now);
-      osc.frequency.exponentialRampToValueAtTime(1760, now + 0.12);
-      gain.gain.setValueAtTime(0.3, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-      osc.start(now);
-      osc.stop(now + 0.12);
+      // Satisfying bright "chime" (Root, 5th, Octave)
+      const freqs = [880, 1320, 1760]; 
+      freqs.forEach((freq, i) => {
+        const osc = this.ctx!.createOscillator();
+        const gain = this.ctx!.createGain();
+        osc.type = i === 0 ? 'triangle' : 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.15, now + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        osc.connect(gain);
+        gain.connect(this.masterGain!);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      });
     } else if (judgement === 'good') {
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(523.25, now);
-      osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.1);
-      gain.gain.setValueAtTime(0.2, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-      osc.start(now);
-      osc.stop(now + 0.1);
+      // Slightly softer chime (Root, 5th)
+      const freqs = [659.25, 988.88]; 
+      freqs.forEach(freq => {
+        const osc = this.ctx!.createOscillator();
+        const gain = this.ctx!.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.1, now + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+        osc.connect(gain);
+        gain.connect(this.masterGain!);
+        osc.start(now);
+        osc.stop(now + 0.2);
+      });
     } else {
-      // miss / bad
+      // miss / bad - low thud
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(150, now);
       osc.frequency.linearRampToValueAtTime(80, now + 0.15);
-      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.2, now + 0.01);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      osc.connect(gain);
+      gain.connect(this.masterGain);
       osc.start(now);
       osc.stop(now + 0.15);
     }

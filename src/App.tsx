@@ -73,7 +73,38 @@ function InnerApp() {
 
   useEffect(() => {
     updateStreak();
+
+    const handleUnlock = () => {
+      setDex(prev => {
+        const newDex = { ...prev };
+        Object.keys(EXPEDITION_INSTRUMENTS).forEach(key => {
+          if (!newDex[key]) {
+            newDex[key] = { ...EXPEDITION_INSTRUMENTS[key] };
+          }
+          newDex[key].captured = true;
+        });
+        return newDex;
+      });
+    };
+    window.addEventListener('dev:unlockAll', handleUnlock);
+    return () => window.removeEventListener('dev:unlockAll', handleUnlock);
   }, [updateStreak]);
+
+  useEffect(() => {
+    if (progress && progress.unlockedInstruments) {
+      setDex(prev => {
+        const newDex = { ...prev };
+        let changed = false;
+        Object.keys(newDex).forEach(key => {
+          if (!newDex[key].captured && progress.unlockedInstruments.includes(newDex[key].name)) {
+            newDex[key] = { ...newDex[key], captured: true };
+            changed = true;
+          }
+        });
+        return changed ? newDex : prev;
+      });
+    }
+  }, [progress.unlockedInstruments]);
 
   const handleStartTitle = useCallback(() => {
     // FORCE CUTSCENE FOR TESTING
@@ -204,31 +235,44 @@ function InnerApp() {
           profile.instrument.culturalPurpose = matchedMaster.hint || profile.instrument.culturalPurpose;
         }
 
-        const isNew = recordScan(profile.instrument.name);
-        if (isNew) {
-          if (xpMultiplier > 0) addXP(Math.round(50 * xpMultiplier), 'discovery');
-          setIsDiscoveryNew(true);
+        if (verificationResult.method === 'upload') {
+          // Practice Mode: Don't record scan, don't unlock, don't add XP.
+          // Go straight to combat so they can see effects.
+          setIsDiscoveryNew(false);
           setView('scannerCombat');
         } else {
-          if (xpMultiplier > 0) addXP(Math.round(10 * xpMultiplier), 'scan');
-          showToast(`You already have ${profile.instrument.name}!`);
-          setIsDiscoveryNew(false);
-          setView('discoveryCard');
+          // Unlock Mode (Camera/Scan)
+          const isNew = recordScan(profile.instrument.name);
+          if (isNew) {
+            if (xpMultiplier > 0) addXP(Math.round(50 * xpMultiplier), 'discovery');
+            
+            // Mark as captured in Dex so it can be equipped
+            const targetId = matchedExpedition?.id || Object.values(EXPEDITION_INSTRUMENTS).find(e => e.name === matchedMaster?.name)?.id;
+            if (targetId) {
+              setDex(prev => {
+                if (prev[targetId]) {
+                  return {
+                    ...prev,
+                    [targetId]: { ...prev[targetId], captured: true }
+                  };
+                }
+                return prev;
+              });
+            }
+
+            setIsDiscoveryNew(true);
+            setView('scannerCombat');
+          } else {
+            if (xpMultiplier > 0) addXP(Math.round(10 * xpMultiplier), 'scan');
+            showToast(`You already have ${profile.instrument.name}!`);
+            setIsDiscoveryNew(false);
+            setView('discoveryCard');
+          }
         }
       } else {
-        const profileId = profile.instrument.name || `Custom Instrument ${Date.now()}`;
-        const isNewCustom = !progress.customProfiles || !progress.customProfiles[profileId];
-        saveCustomProfile(profileId, profile);
-        if (isNewCustom) {
-          if (xpMultiplier > 0) addXP(Math.round(20 * xpMultiplier), 'custom_discovery');
-          setIsDiscoveryNew(true);
-          setView('scannerCombat');
-        } else {
-          if (xpMultiplier > 0) addXP(Math.round(5 * xpMultiplier), 'custom_scan');
-          showToast(`You already have ${profile.instrument.name}!`);
-          setIsDiscoveryNew(false);
-          setView('discoveryCard');
-        }
+        // Unknown/Invalid instrument
+        showToast('Invalid or unknown instrument! This is not in our database.');
+        setView('scanner');
       }
     } catch (err) {
       console.error('[App] Pipeline error:', err);
@@ -360,6 +404,7 @@ function InnerApp() {
           onOpenCollection={() => setView('collection')}
           onOpenBadges={() => setView('badges')}
           onOpenRanks={() => setView('ranks')}
+          onOpenKorlongHunt={() => setView('korlongHunt')}
         />
       )}
 

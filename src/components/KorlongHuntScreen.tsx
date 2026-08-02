@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronLeft, MapPin, RefreshCw, Star } from 'lucide-react';
 import { KorlongCutscene } from './KorlongCutscene';
-import visayasMap from '../assets/png/visayas_map.png';
+import visayasMap from '../assets/png/visayas_map.png?v=2';
 import {
   loadKorlongSpawn,
   generateKorlongSpawn,
@@ -34,7 +34,9 @@ function bearingDeg(lat1: number, lng1: number, lat2: number, lng2: number): num
   return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
 }
 
-type HuntState = 'no-gps' | 'locating' | 'no-spawn' | 'hunting' | 'discovered';
+import { useGameOnAuth } from '../hooks/useGameOnAuth';
+
+type HuntState = 'no-gps' | 'locating' | 'no-spawn' | 'hunting' | 'auth-required' | 'discovered';
 
 export function KorlongHuntScreen({ onBack, onDiscovered }: KorlongHuntScreenProps) {
   const [huntState, setHuntState] = useState<HuntState>('locating');
@@ -45,6 +47,7 @@ export function KorlongHuntScreen({ onBack, onDiscovered }: KorlongHuntScreenPro
   const [retryCountdown, setRetryCountdown] = useState(0);
   const [showDiscovery, setShowDiscovery] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const auth = useGameOnAuth();
 
   // ── Audio Management ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -94,7 +97,7 @@ export function KorlongHuntScreen({ onBack, onDiscovered }: KorlongHuntScreenPro
       if (active) {
         const dist = haversineDistanceMeters(latitude, longitude, active.lat, active.lng);
         setDistanceMeters(dist);
-        setHuntState('hunting');
+        setHuntState(h => h !== 'auth-required' ? 'hunting' : h);
         return active;
       }
 
@@ -103,7 +106,7 @@ export function KorlongHuntScreen({ onBack, onDiscovered }: KorlongHuntScreenPro
       if (generated) {
         const dist = haversineDistanceMeters(latitude, longitude, generated.lat, generated.lng);
         setDistanceMeters(dist);
-        setHuntState('hunting');
+        setHuntState(h => h !== 'auth-required' ? 'hunting' : h);
         return generated;
       }
 
@@ -119,11 +122,18 @@ export function KorlongHuntScreen({ onBack, onDiscovered }: KorlongHuntScreenPro
   // ── Discovery Check ───────────────────────────────────────────────────────
   useEffect(() => {
     if (distanceMeters <= DISCOVERY_RADIUS_METERS && !discoveredRef.current && huntState === 'hunting') {
-      discoveredRef.current = true;
-      setShowDiscovery(true);
+      setHuntState('auth-required');
       clearKorlongSpawn();
     }
   }, [distanceMeters, huntState]);
+
+  // ── Auth Success Check ────────────────────────────────────────────────────
+  useEffect(() => {
+    if (auth.status === 'success' && !discoveredRef.current) {
+      discoveredRef.current = true;
+      setShowDiscovery(true);
+    }
+  }, [auth.status]);
 
   const handleCutsceneComplete = useCallback(() => {
     setHuntState('discovered');
@@ -493,6 +503,47 @@ export function KorlongHuntScreen({ onBack, onDiscovered }: KorlongHuntScreenPro
               <p className="font-space-mono text-[10px] text-[#888ea1] text-center">
                 Signal active for {Math.round((spawn.expiresAt - Date.now()) / 60000)}min · Compass points to spawn
               </p>
+            )}
+          </div>
+        )}
+
+        {/* ── Auth Required ── */}
+        {huntState === 'auth-required' && !showDiscovery && (
+          <div className="w-full max-w-sm flex flex-col items-center gap-6 mt-12 animate-fade-in z-50">
+            <div className="bg-[#0f0c0c] border-[4px] border-[#da2d46] p-6 -skew-x-2 shadow-[6px_6px_0px_0px_#da2d46] text-center w-full">
+              <p className="font-orbitron font-black text-[#da2d46] text-xl tracking-widest uppercase skew-x-2">SIGNAL SECURED</p>
+              <p className="font-space-mono text-xs text-[#888ea1] mt-4 skew-x-2 leading-relaxed">
+                You have successfully tracked down the Korlong! Connect your GameOn Portal account to extract the artifact data into your profile.
+              </p>
+
+              {auth.status === 'error' && (
+                <p className="font-space-mono text-xs text-red-500 mt-4 skew-x-2 font-bold">{auth.errorMsg}</p>
+              )}
+            </div>
+
+            <button
+              onClick={auth.startAuthFlow}
+              disabled={auth.status !== 'idle' && auth.status !== 'error'}
+              className={`w-full py-4 border-[4px] border-[#0f0c0c] font-orbitron font-black text-sm tracking-widest uppercase -skew-x-6 shadow-[6px_6px_0px_0px_#0f0c0c] transition-all flex items-center justify-center gap-3 ${
+                (auth.status !== 'idle' && auth.status !== 'error')
+                  ? 'bg-[#888ea1] text-[#2a2d43] cursor-not-allowed opacity-70'
+                  : 'bg-[#da2d46] text-[#0f0c0c] hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#0f0c0c] active:translate-y-1 active:shadow-none'
+              }`}
+            >
+              <span className="skew-x-6">
+                {auth.status === 'initializing' ? 'INITIALIZING...' : 
+                 auth.status === 'waiting-for-auth' ? 'WAITING FOR BROWSER...' :
+                 auth.status === 'unlocking' ? 'EXTRACTING ARTIFACT...' :
+                 'CONNECT GAMEON ACCOUNT'}
+              </span>
+            </button>
+            
+            {(auth.status === 'waiting-for-auth' || auth.status === 'unlocking') && (
+               <p className="font-space-mono text-[10px] text-[#da2d46] animate-pulse mt-2 text-center">
+                 {auth.status === 'waiting-for-auth' 
+                   ? 'Please complete the login process in the browser window.' 
+                   : 'Finalizing extraction...'}
+               </p>
             )}
           </div>
         )}

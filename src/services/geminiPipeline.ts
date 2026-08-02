@@ -145,6 +145,13 @@ CRITICAL CONTEXT: This application specializes in traditional Philippine Visayan
 - Octavina: A Rondalla string instrument. CRITICAL VISUAL CUE: Shaped exactly like a miniature acoustic guitar (figure-eight body) with a flat back, but has a shorter neck and 14 strings like a bandurria.
 - Bajo de Uñas: A massive acoustic bass. Very large, upright stringed bass instrument (resembling a large cello or double bass), featuring a carved body, f-holes, a long neck, and typically 4 thick strings.
 
+**Unverified Locations (Requires Community Review):**
+- Buktot: A Visayan stringed instrument. Look for a resonating body made from a half-coconut shell (or similar dried gourd) with 4 strings and a straight wooden neck.
+- Pasiyak: A water whistle. Look for a small, hollowed-out pipe or container shape that is blown into.
+- Tugo: A traditional drum. Look for a cylindrical wooden body with animal skin stretched over the top.
+- Lantoy: A tiny bamboo flute. Look for a very small, short, simple bamboo tube with blowing and finger holes.
+- Subing: A bamboo jaw harp. Look for a slender, flat piece of carved bamboo with a thin, flexible tongue carved into the center that is plucked.
+
 If the image matches or closely resembles one of these Visayan instruments, identify it accurately.
 If it is ANY other instrument from around the world (e.g. American drum kit, modern electric guitar, piano), identify it accurately and provide its general origin instead. 
 Classify it strictly as one of: string, percussion, or wind.

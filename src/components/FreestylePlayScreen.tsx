@@ -13,12 +13,12 @@ interface FreestylePlayScreenProps {
 
 export function FreestylePlayScreen({ profile, onBack }: FreestylePlayScreenProps) {
   const [activeLanes, setActiveLanes] = useState<Set<number>>(new Set());
-  const [hitIndicator, setHitIndicator] = useState<{ type: HitJudgement | 'Sablay', text: string, id: number } | null>(null);
+  const [hitIndicator, setHitIndicator] = useState<{ type: HitJudgement | 'Miss', text: string, id: number } | null>(null);
 
   const totalLanesOverride = profile.instrument.category === 'string' ? profile.acoustic.scaleNotes.length : undefined;
 
   const handlePassiveMiss = useCallback(() => {
-    setHitIndicator({ type: 'Sablay', text: 'SABLAY', id: Math.random() });
+    setHitIndicator({ type: 'Miss', text: 'MISS', id: Math.random() });
     setTimeout(() => setHitIndicator(null), 400);
   }, []);
 
@@ -50,7 +50,7 @@ export function FreestylePlayScreen({ profile, onBack }: FreestylePlayScreenProp
     const hitResult = hitLane(laneId);
     
     if (hitResult) {
-      const textMap = { perfect: 'TADHANA!', good: 'GANDA!' };
+      const textMap = { perfect: 'SICK!', good: 'GOOD!' };
       const jType = hitResult.judgement as 'perfect' | 'good';
       
       setHitIndicator({
@@ -61,8 +61,8 @@ export function FreestylePlayScreen({ profile, onBack }: FreestylePlayScreenProp
       setTimeout(() => setHitIndicator(null), 500);
     } else if (gameState.isPlaying) {
       setHitIndicator({
-        type: 'Sablay',
-        text: 'SABLAY!',
+        type: 'Miss',
+        text: 'MISS!',
         id: Math.random()
       });
       setTimeout(() => setHitIndicator(null), 400);
@@ -114,7 +114,7 @@ export function FreestylePlayScreen({ profile, onBack }: FreestylePlayScreenProp
           <div 
             key={hitIndicator.id}
             className={`absolute top-1/3 left-1/2 -translate-x-1/2 z-50 font-orbitron font-black text-4xl md:text-6xl -skew-x-6 animate-[bounce_0.2s_ease-out]
-              ${hitIndicator.type === 'Sablay' 
+              ${hitIndicator.type === 'Miss' 
                 ? 'text-[#da2d46] drop-shadow-[4px_4px_0px_#0f0c0c]' 
                 : 'text-[#facc15] drop-shadow-[4px_4px_0px_#0f0c0c]'
               }

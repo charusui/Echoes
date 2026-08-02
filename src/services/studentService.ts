@@ -10,7 +10,7 @@ export const STUDENT_PROFILES: StudentProfile[] = [
   {
     id: 'maya',
     name: 'Maya',
-    avatar: '/assets/avatars/maya_v2.png',
+    avatar: '/assets/avatars/maya_v2.png?v=2',
     trait: 'RHYTHM NERD',
     focusCategory: 'percussion',
     favoriteInstrument: 'Tultugan',
@@ -39,7 +39,7 @@ Your personality traits:
   {
     id: 'diego',
     name: 'Diego',
-    avatar: '/assets/avatars/diego_v2.png',
+    avatar: '/assets/avatars/diego_v2.png?v=2',
     trait: 'STRING THEORIST',
     focusCategory: 'string',
     favoriteInstrument: 'Cebuano Gitara',
@@ -66,7 +66,7 @@ Your personality traits:
   {
     id: 'aya',
     name: 'Aya',
-    avatar: '/assets/avatars/aya_v2.png',
+    avatar: '/assets/avatars/aya_v2.png?v=2',
     trait: 'WIND CHASER',
     focusCategory: 'wind',
     favoriteInstrument: 'Tulali',

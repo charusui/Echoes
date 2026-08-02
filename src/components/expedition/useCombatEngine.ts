@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Sword, Sparkles, Shield, Disc, Zap, ArrowLeft, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { audioEngine } from '../../services/audioSynth';
+import { useProgress } from '../../context/ProgressProvider';
 import { 
   EXPEDITION_INSTRUMENTS, 
   getTypeMultiplier,
@@ -53,7 +54,8 @@ export function useCombatEngine({
   onUpdateParty,
   onTurnUpdate,
   customEnemies,
-}: ExpeditionCombatProps) {
+}: ExpeditionCombatProps) { 
+  const { updateShards, updateInventory, progress } = useProgress();
   const [enemies, setEnemies] = useState<EnemyProfile[]>(() => {
     if (customEnemies) return customEnemies;
     const list = enemyGauntlet && enemyGauntlet.length > 0 ? enemyGauntlet : [enemyId];
@@ -258,7 +260,15 @@ export function useCombatEngine({
   }, [activeAction, isBoss, bossAttackVariation]);
 
   useEffect(() => {
-    const bgm = new Audio('/assets/expedition/battle_bg_music.mp3');
+    let bgmPath = '/assets/expedition/battle_bg_music.mp3';
+    const firstEnemy = enemies[0];
+    if (firstEnemy) {
+      if (firstEnemy.id.startsWith('bakunawa')) bgmPath = '/assets/audio/bgm/bakunawa_bgm.mp3';
+      else if (firstEnemy.id.startsWith('wakwak')) bgmPath = '/assets/audio/bgm/wakwak_bgm.mp3';
+      else if (firstEnemy.id.startsWith('santelmo')) bgmPath = '/assets/audio/bgm/volcano_bgm.mp3';
+    }
+
+    const bgm = new Audio(bgmPath);
     bgm.loop = true;
     bgm.volume = 0.45;
     bgm.play().catch(() => {});
@@ -267,7 +277,7 @@ export function useCombatEngine({
       bgm.pause();
       bgm.currentTime = 0;
     };
-  }, []);
+  }, [enemies]);
 
   const checkPostTurnStates = useCallback((targetHp: number | null, currentParty: HeroProfile[]) => {
     const tempEnemies = [...enemies];
@@ -278,6 +288,15 @@ export function useCombatEngine({
     
     if (allEnemiesDead) {
       setIsEndingBattle(true);
+      let shardsEarned = 0;
+      tempEnemies.forEach(e => {
+        if (e.id.startsWith('wakwak') || e.id.startsWith('bakunawa') || e.id.startsWith('santelmo') || e.id.startsWith('lord_cacophony')) {
+          shardsEarned += 250;
+        } else {
+          shardsEarned += Math.floor(Math.random() * 20) + 15;
+        }
+      });
+      updateShards(shardsEarned);
       
       audioEngine.playHitSFX('sick');
 
@@ -336,6 +355,35 @@ export function useCombatEngine({
     }
   }, [turnIndex, turnQueue, isEndingBattle, isBoss, partyList]);
 
+  const handleUseItem = useCallback((itemId: string) => {
+    // 1. apply effect
+    onUpdateParty(prev => {
+      const newParty = { ...prev };
+      if (itemId === 'turmeric_tonic') {
+        Object.values(newParty).forEach(h => { h.hp = Math.min(h.hp + 150, h.maxHp); h.stagger = 0; });
+      } else if (itemId === 'reverse_potion') {
+        Object.values(newParty).forEach(h => { h.hp = h.maxHp; h.ap = h.maxAp; h.stagger = 0; });
+      } else if (itemId === 'cadence_fork') {
+        Object.values(newParty).forEach(h => { h.ap = h.maxAp; });
+      } else if (itemId === 'solar_spice') {
+        Object.values(newParty).forEach(h => { h.overdrive = Math.min((h.overdrive || 0) + 40, 100); });
+      }
+      return newParty;
+    });
+
+    // 2. update inventory
+    updateInventory(itemId, -1);
+    
+    // 3. sound
+    audioEngine.playHitSFX('heal');
+
+    // 4. advance turn
+    setTimeout(() => {
+      setActiveAction('none');
+      advanceTurn();
+    }, 500);
+  }, [updateInventory, onUpdateParty, advanceTurn]);
+
   const handleCommandAttack = () => { if (!isHeroTurn || activeHero.ap < 1 || isEndingBattle) return; setActiveAction('rhythm'); };
   const handleCommandSkill = () => { if (!isHeroTurn || activeHero.ap < 2 || isEndingBattle) return; setActiveAction('spell'); };
   
@@ -354,7 +402,7 @@ export function useCombatEngine({
       const h = prev[activeHero.id]!;
       return {
         ...prev,
-        [activeHero.id]: { ...h, ap: Math.min(h.maxAp, h.ap + 2), shield: h.shield + 40 }
+        [activeHero.id]: { ...h, ap: Math.min(h.maxAp, h.ap + 2), shield: h.shield + 5 }
       };
     });
     setParryStanceActive(true);
@@ -508,9 +556,18 @@ export function useCombatEngine({
 
     onUpdateParty(prev => {
       const target = prev[activeHero.id] || partyList[0]!;
-      const shieldLeft = Math.max(0, target.shield - dmg);
-      const overflow = Math.max(0, dmg - target.shield);
+      const bonusShield = (parryStanceActive && parried) ? 35 : 0;
+      const currentShield = target.shield + bonusShield;
+
+      const shieldLeft = Math.max(0, currentShield - dmg);
+      const overflow = Math.max(0, dmg - currentShield);
       const newHp = Math.max(0, target.hp - overflow);
+
+      let finalShield = shieldLeft;
+      if (parryStanceActive) {
+        const originalShield = Math.max(0, target.shield - 5);
+        finalShield = Math.min(shieldLeft, originalShield);
+      }
       
       if (target.hp > 0 && newHp <= 0) {
         const otherHeroesAlive = Object.values(prev).some(h => h.id !== target.id && h.hp > 0);
@@ -519,7 +576,7 @@ export function useCombatEngine({
         }
       }
 
-      const updatedPartyMap = { ...prev, [target.id]: { ...target, shield: shieldLeft, hp: newHp } };
+      const updatedPartyMap = { ...prev, [target.id]: { ...target, shield: finalShield, hp: newHp } };
 
       setTimeout(() => {
         checkPostTurnStates(null, Object.values(updatedPartyMap));
@@ -622,6 +679,8 @@ export function useCombatEngine({
     handleParryResult,
     handleWingSlamCounterComplete,
     handleAttuneComplete,
-    isRightSweepAttack
+    isRightSweepAttack,
+    handleUseItem,
+    inventory: progress?.inventory ?? {},
   };
 }

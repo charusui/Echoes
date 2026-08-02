@@ -15,6 +15,8 @@ interface ProgressContextType {
   saveCustomProfile: (profileId: string, profileData: any) => void;
   unlockAllInstruments: () => void;
   addPendingReview: (result: VerificationResult) => void;
+  updateShards: (amount: number) => void;
+  updateInventory: (itemId: string, amount: number) => void;
 }
 
 const DEFAULT_PROGRESS: UserProgress = {
@@ -29,6 +31,8 @@ const DEFAULT_PROGRESS: UserProgress = {
   customProfiles: {},
   pendingReviews: [],
   masteryUnlocked: {},
+  shards: 100, // Starting shards
+  inventory: {},
 };
 
 const ProgressContext = createContext<ProgressContextType | null>(null);
@@ -36,7 +40,8 @@ const ProgressContext = createContext<ProgressContextType | null>(null);
 export function ProgressProvider({ children }: { children: React.ReactNode }) {
   const [progress, setProgress] = useState<UserProgress>(() => {
     const saved = localStorage.getItem('filinstruments_progress');
-    return saved ? JSON.parse(saved) : DEFAULT_PROGRESS;
+    const parsed = saved ? JSON.parse(saved) : null;
+    return parsed ? { ...DEFAULT_PROGRESS, ...parsed, shards: parsed.shards ?? 100, inventory: parsed.inventory ?? {} } : DEFAULT_PROGRESS;
   });
 
   useEffect(() => {
@@ -92,6 +97,7 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
       unlockedRegions: ['Western Visayas', 'Central Visayas', 'Eastern Visayas'],
       badges: [...new Set([...prev.badges, 'trailblazer', 'collector', 'legend'])],
     }));
+    window.dispatchEvent(new Event('dev:unlockAll'));
   };
 
   const addPendingReview = (result: VerificationResult) => {
@@ -123,6 +129,24 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
 
   const unlockRegion = (region: string) => {
     setProgress(prev => prev.unlockedRegions.includes(region) ? prev : { ...prev, unlockedRegions: [...prev.unlockedRegions, region] });
+  };
+
+  const updateShards = (amount: number) => {
+    setProgress(prev => ({ ...prev, shards: Math.max(0, (prev.shards || 0) + amount) }));
+  };
+
+  const updateInventory = (itemId: string, amount: number) => {
+    setProgress(prev => {
+      const current = prev.inventory?.[itemId] || 0;
+      const newAmount = Math.max(0, current + amount);
+      return {
+        ...prev,
+        inventory: {
+          ...prev.inventory,
+          [itemId]: newAmount
+        }
+      };
+    });
   };
 
   const awardBadge = (badge: string) => {
@@ -165,9 +189,9 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ProgressContext.Provider value={{
-      progress, addXP, recordScan, updateStreak, unlockRegion, awardBadge,
-      useStreakShield, getClassroomLeaderboard, saveCustomProfile,
-      unlockAllInstruments, addPendingReview,
+      progress, addXP, recordScan, updateStreak,
+      unlockRegion, awardBadge, useStreakShield, getClassroomLeaderboard, saveCustomProfile,
+      unlockAllInstruments, addPendingReview, updateShards, updateInventory
     }}>
       {children}
     </ProgressContext.Provider>

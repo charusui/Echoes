@@ -1,31 +1,31 @@
 import { useEffect, useState, useRef } from 'react';
 
 // Running animation frames
-import one from '../assets/running animation/1.png';
-import two from '../assets/running animation/2.png';
-import three from '../assets/running animation/3.png';
-import four from '../assets/running animation/4.png';
-import five from '../assets/running animation/5.png';
-import six from '../assets/running animation/6.png';
-import seven from '../assets/running animation/7.png';
-import eight from '../assets/running animation/8.png';
-import nine from '../assets/running animation/9.png';
-import ten from '../assets/running animation/10.png';
-import eleven from '../assets/running animation/11.png';
-import twelve from '../assets/running animation/12.png';
-import thirteen from '../assets/running animation/13.png';
-import fourteen from '../assets/running animation/14.png';
-import fifteen from '../assets/running animation/15.png';
-import sixteen from '../assets/running animation/16.png';
-import seventeen from '../assets/running animation/17.png';
-import eighteen from '../assets/running animation/18.png';
-import nineteen from '../assets/running animation/19.png';
-import twenty from '../assets/running animation/20.png';
+import one from '../assets/running animation/1.png?v=2';
+import two from '../assets/running animation/2.png?v=2';
+import three from '../assets/running animation/3.png?v=2';
+import four from '../assets/running animation/4.png?v=2';
+import five from '../assets/running animation/5.png?v=2';
+import six from '../assets/running animation/6.png?v=2';
+import seven from '../assets/running animation/7.png?v=2';
+import eight from '../assets/running animation/8.png?v=2';
+import nine from '../assets/running animation/9.png?v=2';
+import ten from '../assets/running animation/10.png?v=2';
+import eleven from '../assets/running animation/11.png?v=2';
+import twelve from '../assets/running animation/12.png?v=2';
+import thirteen from '../assets/running animation/13.png?v=2';
+import fourteen from '../assets/running animation/14.png?v=2';
+import fifteen from '../assets/running animation/15.png?v=2';
+import sixteen from '../assets/running animation/16.png?v=2';
+import seventeen from '../assets/running animation/17.png?v=2';
+import eighteen from '../assets/running animation/18.png?v=2';
+import nineteen from '../assets/running animation/19.png?v=2';
+import twenty from '../assets/running animation/20.png?v=2';
 
 // Background and Title
 import bg from '../assets/titlescreen/bg.jpeg';
-import title from '../assets/titlescreen/title.png';
-import bush from '../assets/titlescreen/bush.png';
+import title from '../assets/titlescreen/title.png?v=2';
+import bush from '../assets/titlescreen/bush.png?v=2';
 
 const FRAMES = [
   one, two, three, four, five, six, seven, eight, nine, ten,

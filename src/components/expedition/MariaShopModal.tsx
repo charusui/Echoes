@@ -21,6 +21,9 @@ interface MariaShopModalProps {
   onUpdateParty?: React.Dispatch<React.SetStateAction<Record<string, HeroProfile>>>;
   onClose: () => void;
   onAddXP?: (amount: number) => void;
+  onUpdateInventory?: (itemId: string, countChange: number) => void;
+  shards?: number;
+  onUpdateShards?: (amount: number) => void;
 }
 
 interface ShopItem {
@@ -98,13 +101,13 @@ const INITIAL_SHOP_ITEMS: ShopItem[] = [
 ];
 
 const MARIA_DIALOGUES = [
-  "Welcome to Maria's Fine Goods! Take a look around our bustling market square in the Town of Cadence!",
-  "All our tonics are brewed fresh using sacred herbs and spices harvested right from the Silent Valley.",
-  "That T'nalak weave over there? Handcrafted by traditional master weavers—it can deflect even Lord Cacophony's shockwaves!",
-  "Need to tune up your party before facing the anomalies? Try the Cadence Tuning Fork or our Polished Acoustic Rosin!",
+  "Magandang araw! Welcome to Maria's Fine Goods — the only real shop between the Crossroads and Echo Village!",
+  "Win battles to earn Harmonic Shards. The stronger the enemy, the more shards you'll collect — bosses drop 250!",
+  "The Turmeric Tonic is my best seller! Stock up before you fight the Wakwak over in Echo Village — trust me.",
+  "Psst! If you've already visited the Crossroads and helped that poor traveler, come back — I've restocked something special just for you.",
 ];
 
-export function MariaShopModal({ party: _party, nodes, onUpdateParty, onClose, onAddXP }: MariaShopModalProps) {
+export function MariaShopModal({ party: _party, nodes, onUpdateParty, onClose, onAddXP, onUpdateInventory, shards = 250, onUpdateShards }: MariaShopModalProps) {
   const [items, setItems] = useState<ShopItem[]>(() => {
     const baseItems = [...INITIAL_SHOP_ITEMS];
     if (nodes && nodes['crossroads']?.completed) {
@@ -131,7 +134,7 @@ export function MariaShopModal({ party: _party, nodes, onUpdateParty, onClose, o
     }
     return baseItems;
   });
-  const [shards, setShards] = useState<number>(250);
+  
   const [dialogueIndex, setDialogueIndex] = useState<number>(0);
   const [purchasedNotification, setPurchasedNotification] = useState<string | null>(null);
   
@@ -156,7 +159,9 @@ export function MariaShopModal({ party: _party, nodes, onUpdateParty, onClose, o
       return;
     }
 
-    setShards((prev) => prev - item.price);
+    if (onUpdateShards) {
+      onUpdateShards(-item.price);
+    }
 
     if (typeof item.stock === 'number') {
       setItems((prev) =>
@@ -169,14 +174,9 @@ export function MariaShopModal({ party: _party, nodes, onUpdateParty, onClose, o
 
     if (onUpdateParty) {
       if (item.id === 'turmeric_tonic') {
-        onUpdateParty((prevParty) => {
-          const updated: Record<string, HeroProfile> = {};
-          for (const key of Object.keys(prevParty)) {
-            const h = prevParty[key]!;
-            updated[key] = { ...h, hp: Math.min(h.maxHp, h.hp + 150) };
-          }
-          return updated;
-        });
+        if (onUpdateInventory) {
+          onUpdateInventory(item.id, 1);
+        }
       } else if (item.id === 'acoustic_rosin') {
         onUpdateParty((prevParty) => {
           const updated: Record<string, HeroProfile> = {};
@@ -201,14 +201,17 @@ export function MariaShopModal({ party: _party, nodes, onUpdateParty, onClose, o
           };
         });
       } else if (item.id === 'cadence_fork') {
-        onUpdateParty((prevParty) => {
-          const updated: Record<string, HeroProfile> = {};
-          for (const key of Object.keys(prevParty)) {
-            const h = prevParty[key]!;
-            updated[key] = { ...h, ap: h.maxAp };
-          }
-          return updated;
-        });
+        if (onUpdateInventory) {
+          onUpdateInventory(item.id, 1);
+        }
+      } else if (item.id === 'solar_spice') {
+        if (onUpdateInventory) {
+          onUpdateInventory(item.id, 1);
+        }
+      } else if (item.id === 'reverse_potion') {
+        if (onUpdateInventory) {
+          onUpdateInventory(item.id, 1);
+        }
       }
     }
 
@@ -485,7 +488,7 @@ export function MariaShopModal({ party: _party, nodes, onUpdateParty, onClose, o
 
                           <div className="pt-3 flex items-center justify-between gap-3">
                             <div className="flex flex-col">
-                              <span className="font-orbitron font-black text-lg sm:text-xl text-[#da2d46] drop-shadow-[1px_1px_0px_#0f0c0c]">
+                              <span className={`font-orbitron font-black text-lg sm:text-xl drop-shadow-[1px_1px_0px_#0f0c0c] ${canAfford ? 'text-[#16a34a]' : 'text-[#da2d46]'}`}>
                                 💎 {item.price}
                               </span>
                               {typeof item.stock === 'number' && (

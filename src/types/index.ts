@@ -154,6 +154,8 @@ export interface UserProgress {
   customProfiles: Record<string, any>; // Stores Omit<ActiveInstrumentProfile, 'imageBase64'>
   pendingReviews: VerificationResult[];
   masteryUnlocked: Record<string, boolean>;
+  shards: number;
+  inventory: Record<string, number>;
 }
 
 // ─── Quizzes & Story ──────────────────────────────────────────────────────────

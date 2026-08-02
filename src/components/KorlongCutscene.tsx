@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 // Import images
-import line_one from '../assets/images/line_one.png';
-import line_two from '../assets/images/line_two.png';
-import line_three from '../assets/images/line_three.png';
-import line_four from '../assets/images/line_four.png';
+import line_one from '../assets/images/line_one.png?v=2';
+import line_two from '../assets/images/line_two.png?v=2';
+import line_three from '../assets/images/line_three.png?v=2';
+import line_four from '../assets/images/line_four.png?v=2';
 
 interface KorlongCutsceneProps {
   onComplete: () => void;

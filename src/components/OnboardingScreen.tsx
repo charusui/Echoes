@@ -23,7 +23,7 @@ const SLIDES = [
   },
   {
     title: "PLAY & MASTER",
-    description: "Play rhythmic minigames to master the instruments, earn XP, and unlock dynamic ancestral stories.",
+    description: "Play rhythmic minigames to master the instruments, earn Harmonic Shards, and unlock dynamic ancestral stories.",
     icon: <Music size={64} className="text-[#0f0c0c] skew-x-6" />,
     panelColor: "bg-[#da2d46]",
     accentColor: "bg-[#f0dde0]",

@@ -1,10 +1,10 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Volume2, VolumeX, ArrowLeft, Map, BookOpen, Settings, Camera, Flame, Shield, Lock, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { useProgress } from '../context/ProgressProvider';
-import mapImg from '../assets/png/visayas_map.png';
+import mapImg from '../assets/png/visayas_map.png?v=2';
 import { audioEngine } from '../services/audioSynth';
-import { 
-  type HeroProfile, 
+import {
+  type HeroProfile,
   type HarmonydexEntry,
   type MapNode,
   type ExpeditionQuest,
@@ -23,6 +23,7 @@ import { CombatResultModal } from './expedition/CombatResultModal';
 import { MariaShopModal } from './expedition/MariaShopModal';
 import { CrossroadsCutscene } from './expedition/CrossroadsCutscene';
 import { TownEntranceCutscene } from './expedition/TownEntranceCutscene';
+import { BossLoreCutscene } from './expedition/BossLoreCutscene';
 
 export interface ExpeditionScreenProps {
   onBack: () => void;
@@ -31,6 +32,7 @@ export interface ExpeditionScreenProps {
   onOpenCollection?: () => void;
   onOpenBadges?: () => void;
   onOpenRanks?: () => void;
+  onOpenKorlongHunt?: () => void;
   isRootMap?: boolean;
   onCombatStateChange?: (inCombat: boolean) => void;
   party: Record<string, HeroProfile>;
@@ -50,6 +52,7 @@ export function ExpeditionScreen({
   onOpenCollection,
   onOpenBadges,
   onOpenRanks,
+  onOpenKorlongHunt,
   isRootMap,
   onCombatStateChange,
   party,
@@ -62,12 +65,31 @@ export function ExpeditionScreen({
   setQuests,
 }: ExpeditionScreenProps) {
   // Navigation & View state
-  const [subView, setSubView] = useState<'overworld' | 'combat' | 'crossroads_cutscene' | 'town_cutscene'>('overworld');
+  const { progress, updateInventory, updateShards } = useProgress();
+  const [subView, setSubView] = useState<'overworld' | 'combat' | 'crossroads_cutscene' | 'town_cutscene' | 'boss_lore'>('overworld');
   const [activeEnemyId, setActiveEnemyId] = useState<string>('corrupted_violin');
   const [activeEnemyGauntlet, setActiveEnemyGauntlet] = useState<string[] | undefined>();
   const [currentNodeId, setCurrentNodeId] = useState<string>('cadence_town');
-  
-  // Modal states
+
+  // Boss lore: track pending enemy until lore is dismissed
+  const [pendingBossId, setPendingBossId] = useState<string | null>(null);
+  const [pendingGauntlet, setPendingGauntlet] = useState<string[] | undefined>();
+
+  const BOSS_IDS = ['wakwak', 'bakunawa', 'santelmo'];
+
+  const handleStartBattle = useCallback((enemyId: string, enemyGauntlet?: string[]) => {
+    setActiveEnemyId(enemyId);
+    setActiveEnemyGauntlet(enemyGauntlet);
+    const isBoss = BOSS_IDS.some(b => enemyId === b || enemyGauntlet?.includes(b));
+    if (isBoss) {
+      const bossId = BOSS_IDS.find(b => enemyId === b || enemyGauntlet?.includes(b))!;
+      setPendingBossId(bossId);
+      setPendingGauntlet(enemyGauntlet);
+      setSubView('boss_lore');
+    } else {
+      setSubView('combat');
+    }
+  }, []);
   const [activeModal, setActiveModal] = useState<'none' | 'harmonydex' | 'equipment' | 'quests' | 'result' | 'shop'>('none');
   const [lastBattleResult, setLastBattleResult] = useState<{
     victory: boolean;
@@ -96,14 +118,10 @@ export function ExpeditionScreen({
 
   // Compute active quest
   const activeQuest = Object.values(quests).find(q => q.status === 'active') || Object.values(quests)[2] || Object.values(quests)[0];
-  const capturedCount = Object.values(dex).filter(i => i.captured).length;
-  const totalCount = Object.keys(dex).length;
+  const dexEntries = Object.values(dex).filter(i => !i.id.startsWith('generic_') && !i.isEnemy);
+  const capturedCount = dexEntries.filter(i => i.captured).length;
+  const totalCount = dexEntries.length;
 
-  const handleStartBattle = useCallback((enemyId: string, enemyGauntlet?: string[]) => {
-    setActiveEnemyId(enemyId);
-    setActiveEnemyGauntlet(enemyGauntlet);
-    setSubView('combat');
-  }, []);
 
   const handleCombatResult = useCallback((result: { victory: boolean; xpGained: number; capturedEntry?: HarmonydexEntry }) => {
     if (result.capturedEntry) {
@@ -171,7 +189,7 @@ export function ExpeditionScreen({
   return (
     <div className="h-screen max-h-screen bg-[#2a2d43] text-white font-sans flex flex-col overflow-hidden relative">
       {/* Background Halftone Pattern & Speed Slashes */}
-      <div 
+      <div
         className="absolute inset-0 opacity-15 pointer-events-none"
         style={{
           backgroundImage: 'radial-gradient(#da2d46 2px, transparent 2px)',
@@ -203,7 +221,7 @@ export function ExpeditionScreen({
           </div>
 
           {/* Active Quest Pill */}
-          <div 
+          <div
             onClick={() => setActiveModal('quests')}
             className="cursor-pointer flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-0.5 sm:py-1 bg-[#da2d46] text-white border-[2px] sm:border-[3px] border-[#0f0c0c] shadow-[1px_1px_0px_0px_#0f0c0c] sm:shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 hover:bg-[#ff3b56] transition-all max-w-[145px] sm:max-w-xs"
             title="Click to view Quest Journal"
@@ -251,7 +269,7 @@ export function ExpeditionScreen({
       {/* Main View Area */}
       <main className="relative z-10 flex-1 flex overflow-hidden">
         {subView === 'overworld' ? (
-          <ExpeditionOverworld 
+          <ExpeditionOverworld
             nodes={nodes}
             currentNodeId={currentNodeId}
             onSelectNode={setCurrentNodeId}
@@ -263,27 +281,36 @@ export function ExpeditionScreen({
             onOpenCollection={onOpenCollection}
             onOpenBadges={onOpenBadges}
             onOpenRanks={onOpenRanks}
+            onOpenKorlongHunt={onOpenKorlongHunt}
             onOpenShop={() => setActiveModal('shop')}
             onNodeComplete={(id) => {
               setNodes(prev => ({ ...prev, [id]: { ...prev[id]!, completed: true } }));
             }}
           />
         ) : subView === 'town_cutscene' ? (
-          <TownEntranceCutscene 
+          <TownEntranceCutscene
             onComplete={() => {
               localStorage.setItem('echoes_town_intro', 'true');
               setHasSeenTownIntro(true);
               setSubView('overworld');
-            }} 
+            }}
           />
         ) : subView === 'crossroads_cutscene' ? (
-          <CrossroadsCutscene 
+          <CrossroadsCutscene
             onComplete={() => {
               setSubView('overworld');
-            }} 
+            }}
+          />
+        ) : subView === 'boss_lore' && pendingBossId ? (
+          <BossLoreCutscene
+            bossId={pendingBossId}
+            onComplete={() => {
+              setPendingBossId(null);
+              setSubView('combat');
+            }}
           />
         ) : activeEnemyId.startsWith('bakunawa') ? (
-          <HarmonyStage 
+          <HarmonyStage
             party={party}
             enemyId={activeEnemyId}
             enemyGauntlet={activeEnemyGauntlet}
@@ -293,7 +320,7 @@ export function ExpeditionScreen({
             onUpdateParty={setParty}
           />
         ) : (
-          <ExpeditionCombat 
+          <ExpeditionCombat
             party={party}
             enemyId={activeEnemyId}
             enemyGauntlet={activeEnemyGauntlet}
@@ -307,14 +334,14 @@ export function ExpeditionScreen({
 
       {/* Modals */}
       {activeModal === 'harmonydex' && (
-        <HarmonydexModal 
+        <HarmonydexModal
           dex={dex}
           onClose={() => setActiveModal('none')}
         />
       )}
 
       {activeModal === 'equipment' && (
-        <EquipmentModal 
+        <EquipmentModal
           party={party}
           dex={dex}
           onEquip={handleEquipWeapon}
@@ -323,23 +350,26 @@ export function ExpeditionScreen({
       )}
 
       {activeModal === 'shop' && (
-        <MariaShopModal 
+        <MariaShopModal
           party={party}
           nodes={nodes}
           onUpdateParty={setParty}
           onClose={() => setActiveModal('none')}
+          onUpdateInventory={updateInventory}
+          shards={progress.shards || 0}
+          onUpdateShards={updateShards}
         />
       )}
 
       {activeModal === 'quests' && (
-        <QuestsModal 
+        <QuestsModal
           quests={quests}
           onClose={() => setActiveModal('none')}
         />
       )}
 
       {activeModal === 'result' && lastBattleResult && (
-        <CombatResultModal 
+        <CombatResultModal
           result={lastBattleResult}
           onContinue={() => setActiveModal('none')}
         />
@@ -363,14 +393,14 @@ export function MapScreen({ onOpenScanner, onOpenLocationServices, onOpenCollect
     <ExpeditionScreen
       isRootMap={true}
       party={DEFAULT_HEROES}
-      setParty={() => {}}
+      setParty={() => { }}
       dex={EXPEDITION_INSTRUMENTS}
-      setDex={() => {}}
+      setDex={() => { }}
       nodes={EXPEDITION_NODES}
-      setNodes={() => {}}
+      setNodes={() => { }}
       quests={EXPEDITION_QUESTS}
-      setQuests={() => {}}
-      onBack={() => {}}
+      setQuests={() => { }}
+      onBack={() => { }}
       onOpenScanner={onOpenScanner}
       onOpenLocationServices={onOpenLocationServices}
       onOpenCollection={onOpenCollection}
@@ -384,12 +414,12 @@ const REGION_PINS = [
   { id: 'western', name: 'Western Visayas', instrument: 'Tultugan', levelRequired: 1, top: '45%', left: '25%', emoji: '🪘', totalInstruments: 6 },
   { id: 'central', name: 'Central Visayas', instrument: 'Cebuano Gitara', levelRequired: 2, top: '65%', left: '55%', emoji: '🎸', totalInstruments: 5 },
   { id: 'eastern', name: 'Eastern Visayas', instrument: 'Lantoy', levelRequired: 3, top: '40%', left: '80%', emoji: '🎶', totalInstruments: 3 },
-  { id: 'negros', name: 'Negros Region', instrument: 'Subing', levelRequired: 4, top: '60%', left: '42%', emoji: '🎵'}, 
+  { id: 'negros', name: 'Negros Region', instrument: 'Subing', levelRequired: 4, top: '60%', left: '42%', emoji: '🎵' },
 ];
 
 // Legacy MapScreen code kept for reference if needed
 export function LegacyMapScreen({ onOpenScanner, onOpenLocationServices, onSelectInstrument, onOpenCollection: _onOpenCollection, onOpenBadges, onOpenRanks, onOpenExpedition }: MapScreenProps) {
-  const { progress } = useProgress();
+  const { progress, updateInventory, updateShards } = useProgress();
   const [isExpeditionsExpanded, setIsExpeditionsExpanded] = useState(false);
 
   const [dimensions, setDimensions] = useState({
@@ -476,16 +506,16 @@ export function LegacyMapScreen({ onOpenScanner, onOpenLocationServices, onSelec
 
   const levelTitle =
     progress.level === 1 ? 'APPRENTICE'
-    : progress.level === 2 ? 'VILLAGE MUSICIAN'
-    : progress.level === 3 ? 'CULTURAL KEEPER'
-    : progress.level === 4 ? 'REGIONAL EXPERT'
-    : 'MASTER INSTRUMENTALIST';
+      : progress.level === 2 ? 'VILLAGE MUSICIAN'
+        : progress.level === 3 ? 'CULTURAL KEEPER'
+          : progress.level === 4 ? 'REGIONAL EXPERT'
+            : 'MASTER INSTRUMENTALIST';
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden pb-safe bg-[#2a2d43] z-0">
-      
-      <div 
-        className="absolute inset-0 z-[-3] opacity-30 pointer-events-none" 
+
+      <div
+        className="absolute inset-0 z-[-3] opacity-30 pointer-events-none"
         style={{ backgroundImage: 'radial-gradient(#da2d46 2px, transparent 2px)', backgroundSize: '20px 20px' }}
       />
 
@@ -530,7 +560,7 @@ export function LegacyMapScreen({ onOpenScanner, onOpenLocationServices, onSelec
             const pinLeftRatio = parseFloat(pin.left) / 100;
             const relativeX = dimensions.width * pinLeftRatio - dimensions.width / 2;
             const screenX = dimensions.width / 2 + (relativeX + panOffset.x) * mapScale;
-            
+
             let labelOffset = '-50%'; // default centered
             if (screenX < 120) labelOffset = '-15%'; // Pin near left edge -> shift right
             else if (screenX > dimensions.width - 120) labelOffset = '-85%'; // Pin near right edge -> shift left
@@ -550,14 +580,13 @@ export function LegacyMapScreen({ onOpenScanner, onOpenLocationServices, onSelec
               >
                 {/* Wrapper ensures animation affects both circle and label without messing up flex centering */}
                 <div className="relative flex flex-col items-center animate-comic-bounce">
-                  
+
                   {/* Bouncing Circular Pin */}
-                  <div className={`relative z-10 w-10 h-10 sm:w-12 sm:h-12 rounded-full border-[3px] sm:border-[4px] border-[#0f0c0c] flex items-center justify-center text-lg sm:text-xl transition-colors ${
-                    isUnlocked 
-                      ? 'bg-gradient-to-br from-[#da2d46] to-[#f0dde0] shadow-[4px_4px_0px_0px_#0f0c0c]' 
+                  <div className={`relative z-10 w-10 h-10 sm:w-12 sm:h-12 rounded-full border-[3px] sm:border-[4px] border-[#0f0c0c] flex items-center justify-center text-lg sm:text-xl transition-colors ${isUnlocked
+                      ? 'bg-gradient-to-br from-[#da2d46] to-[#f0dde0] shadow-[4px_4px_0px_0px_#0f0c0c]'
                       : 'bg-gradient-to-br from-[#2a2d43] to-[#888ea1] shadow-[2px_2px_0px_0px_#0f0c0c]'
-                  }`}>
-                    
+                    }`}>
+
                     {/* Comic Ripples */}
                     {isUnlocked && (
                       <>
@@ -565,14 +594,13 @@ export function LegacyMapScreen({ onOpenScanner, onOpenLocationServices, onSelec
                         <div className="absolute inset-0 rounded-full border-[3px] border-[#da2d46] animate-comic-ripple-delayed" />
                       </>
                     )}
-                    <span className="relative z-10 block translate-y-px">{isUnlocked ? pin.emoji : <Lock size={16} className="text-[#0f0c0c]"/>}</span>
+                    <span className="relative z-10 block translate-y-px">{isUnlocked ? pin.emoji : <Lock size={16} className="text-[#0f0c0c]" />}</span>
                   </div>
 
                   {/* Absolutely Positioned Label (Stays connected to circle but adjusts bounds dynamically) */}
-                  <div 
-                    className={`absolute top-full mt-2 w-max px-3 py-1 sm:px-4 sm:py-1.5 border-[3px] border-[#0f0c0c] flex flex-col items-center justify-center text-center shadow-[4px_4px_0px_0px_#0f0c0c] transition-all duration-300 ${
-                      isUnlocked ? 'bg-[#da2d46] group-hover:bg-[#e0e5ed]' : 'bg-[#2a2d43]'
-                    }`}
+                  <div
+                    className={`absolute top-full mt-2 w-max px-3 py-1 sm:px-4 sm:py-1.5 border-[3px] border-[#0f0c0c] flex flex-col items-center justify-center text-center shadow-[4px_4px_0px_0px_#0f0c0c] transition-all duration-300 ${isUnlocked ? 'bg-[#da2d46] group-hover:bg-[#e0e5ed]' : 'bg-[#2a2d43]'
+                      }`}
                     style={{
                       left: '50%',
                       transform: `translateX(${labelOffset}) skewX(-6deg)`
@@ -581,7 +609,7 @@ export function LegacyMapScreen({ onOpenScanner, onOpenLocationServices, onSelec
                     <p className={`font-orbitron font-black text-[9px] sm:text-[10px] tracking-widest uppercase ${isUnlocked ? 'text-[#0f0c0c]' : 'text-[#888ea1]'}`}>
                       {isUnlocked ? pin.name : 'LOCKED'}
                     </p>
-                    
+
                     {isUnlocked ? (
                       <p className="font-space-mono flex items-center justify-center gap-1 text-[8px] sm:text-[9px] text-[#0f0c0c] font-black uppercase mt-0.5">
                         <span>♪ {pin.instrument}</span>
@@ -608,13 +636,13 @@ export function LegacyMapScreen({ onOpenScanner, onOpenLocationServices, onSelec
 
       {/* ─── HUD (COMPACTED HEAVILY FOR MOBILE) ─── */}
       <div className="absolute top-0 right-0 z-40 p-2 pt-6 sm:p-6 sm:pt-12 flex flex-col items-end gap-1.5 sm:gap-3 pointer-events-none w-full max-w-[220px] sm:max-w-sm">
-        
+
         {/* Main HUD Panel */}
         <div className="bg-[#e0e5ed] border-[2px] sm:border-[4px] border-[#0f0c0c] p-1.5 sm:p-3 shadow-[3px_3px_0px_0px_#0f0c0c] sm:shadow-[6px_6px_0px_0px_#0f0c0c] -skew-x-2 pointer-events-auto w-full">
-          
+
           <div className="flex items-start justify-between gap-1.5 sm:gap-3 skew-x-2">
             <div className="text-left flex-1">
-              <h1 
+              <h1
                 className="font-orbitron text-[14px] sm:text-2xl font-black uppercase text-[#e0e5ed] leading-none"
                 style={{ textShadow: '2px 2px 0px #0f0c0c, -1px 0px 0px #da2d46' }}
               >
@@ -753,7 +781,7 @@ export function LegacyMapScreen({ onOpenScanner, onOpenLocationServices, onSelec
 
       {/* ─── BOTTOM CTA (SCAN BUTTON & TOOLTIP) ─── */}
       <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 z-40 pointer-events-none w-full px-4 sm:px-6 max-w-sm">
-        
+
         <div className="relative w-full pointer-events-auto">
           {/* Restored: Tooltip Speech Bubble positioned clearly above */}
           {progress.xp === 0 && progress.unlockedInstruments.length === 0 && (

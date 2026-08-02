@@ -153,15 +153,15 @@ export function ResultsScreen({ gameState, profile, onPlayAgain, onNewInstrument
           <div className="grid grid-cols-3 gap-3 text-center mb-4 skew-x-1">
             <div className="bg-[#f0dde0] border-[3px] border-[#0f0c0c] py-2 -skew-x-2 shadow-[2px_2px_0px_0px_#0f0c0c]">
               <div className="font-orbitron font-black text-xl text-[#0f0c0c] skew-x-2">{gameState.perfectCount}</div>
-              <div className="text-[#da2d46] font-black text-[9px] font-space-mono tracking-widest uppercase skew-x-2">TADHANA</div>
+              <div className="text-[#da2d46] font-black text-[9px] font-space-mono tracking-widest uppercase skew-x-2">SICK</div>
             </div>
             <div className="bg-[#f0dde0] border-[3px] border-[#0f0c0c] py-2 -skew-x-2 shadow-[2px_2px_0px_0px_#0f0c0c]">
               <div className="font-orbitron font-black text-xl text-[#0f0c0c] skew-x-2">{gameState.goodCount}</div>
-              <div className="text-[#0f0c0c] font-black text-[9px] font-space-mono tracking-widest uppercase skew-x-2">GANDA</div>
+              <div className="text-[#0f0c0c] font-black text-[9px] font-space-mono tracking-widest uppercase skew-x-2">GOOD</div>
             </div>
             <div className="bg-[#2a2d43] border-[3px] border-[#0f0c0c] py-2 -skew-x-2 shadow-[2px_2px_0px_0px_#0f0c0c]">
               <div className="font-orbitron font-black text-xl text-[#e0e5ed] skew-x-2">{displayMissCount}</div>
-              <div className="text-[#da2d46] font-black text-[9px] font-space-mono tracking-widest uppercase skew-x-2">SABLAY</div>
+              <div className="text-[#da2d46] font-black text-[9px] font-space-mono tracking-widest uppercase skew-x-2">MISS</div>
             </div>
           </div>
 

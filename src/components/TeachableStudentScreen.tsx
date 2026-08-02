@@ -140,7 +140,7 @@ export function TeachableStudentScreen({
                   return (
                     <img 
                       key={i}
-                      src={`/assets/avatars/${student.id}_sticker_${i + 1}.png`}
+                      src={`/assets/avatars/${student.id}_sticker_${i + 1}.png?v=2`}
                       alt=""
                       className="absolute w-28 h-28 object-contain transition-all duration-500 drop-shadow-sm group-hover:drop-shadow-md"
                       style={{
