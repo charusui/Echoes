@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Volume2, VolumeX, ArrowLeft, Map, BookOpen, Settings, Camera, Flame, Shield, Lock, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { useProgress } from '../context/ProgressProvider';
 import mapImg from '../assets/png/visayas_map.png?v=2';
@@ -98,6 +98,38 @@ export function ExpeditionScreen({
   } | null>(null);
 
   const [isMuted, setIsMuted] = useState(false);
+  const mapBgmRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    // Only play map BGM when we are in the overworld view and the shop is not open
+    const shouldPlayMapBgm = subView === 'overworld' && activeModal !== 'shop';
+    
+    if (shouldPlayMapBgm) {
+      if (!mapBgmRef.current) {
+        mapBgmRef.current = new Audio('/assets/audio/bgm/map_bgm.mp3');
+        mapBgmRef.current.loop = true;
+        mapBgmRef.current.volume = 0.3;
+      }
+      mapBgmRef.current.muted = isMuted;
+      mapBgmRef.current.play().catch((err) => {
+        console.warn("Autoplay blocked map BGM:", err);
+      });
+    } else {
+      if (mapBgmRef.current) {
+        mapBgmRef.current.pause();
+        mapBgmRef.current.currentTime = 0;
+        mapBgmRef.current = null;
+      }
+    }
+
+    return () => {
+      if (mapBgmRef.current) {
+        mapBgmRef.current.pause();
+        mapBgmRef.current.currentTime = 0;
+        mapBgmRef.current = null;
+      }
+    };
+  }, [subView, activeModal, isMuted]);
 
   useEffect(() => {
     onCombatStateChange?.(subView === 'combat');
