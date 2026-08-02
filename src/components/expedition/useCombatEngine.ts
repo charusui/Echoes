@@ -261,23 +261,34 @@ export function useCombatEngine({
 
   useEffect(() => {
     let bgmPath = '/assets/expedition/battle_bg_music.mp3';
-    const firstEnemy = enemies[0];
-    if (firstEnemy) {
-      if (firstEnemy.id.startsWith('bakunawa')) bgmPath = '/assets/audio/bgm/bakunawa_bgm.mp3';
-      else if (firstEnemy.id.startsWith('wakwak')) bgmPath = '/assets/audio/bgm/wakwak_bgm.mp3';
-      else if (firstEnemy.id.startsWith('santelmo')) bgmPath = '/assets/audio/bgm/volcano_bgm.mp3';
+    let firstEnemyId = '';
+    if (customEnemies && customEnemies.length > 0) {
+      firstEnemyId = customEnemies[0].id;
+    } else if (enemyGauntlet && enemyGauntlet.length > 0) {
+      firstEnemyId = enemyGauntlet[0];
+    } else if (enemyId) {
+      firstEnemyId = enemyId;
+    }
+
+    if (firstEnemyId) {
+      if (firstEnemyId.startsWith('bakunawa')) bgmPath = '/assets/audio/bgm/bakunawa_bgm.mp3';
+      else if (firstEnemyId.startsWith('wakwak')) bgmPath = '/assets/audio/bgm/wakwak_bgm.mp3';
+      else if (firstEnemyId.startsWith('santelmo')) bgmPath = '/assets/audio/bgm/volcano_bgm.mp3';
     }
 
     const bgm = new Audio(bgmPath);
     bgm.loop = true;
     bgm.volume = 0.45;
-    bgm.play().catch(() => {});
+    bgm.muted = audioEngine.muted;
+    bgm.play().catch((err) => {
+      console.warn("Autoplay policy blocked combat BGM:", err);
+    });
 
     return () => {
       bgm.pause();
       bgm.currentTime = 0;
     };
-  }, [enemies]);
+  }, [enemyId, enemyGauntlet, customEnemies]);
 
   const checkPostTurnStates = useCallback((targetHp: number | null, currentParty: HeroProfile[]) => {
     const tempEnemies = [...enemies];

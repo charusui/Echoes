@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShoppingBag, Sparkles, MessageCircle, ArrowLeft, Zap, Package, Shield, Beaker, X } from 'lucide-react';
 import mariasShopBanner from '../../assets/images/market_bg.png';
 import mariaSprite from '../../assets/png/maria_sprite.png';
@@ -108,6 +108,20 @@ const MARIA_DIALOGUES = [
 ];
 
 export function MariaShopModal({ party: _party, nodes, onUpdateParty, onClose, onAddXP, onUpdateInventory, shards = 250, onUpdateShards }: MariaShopModalProps) {
+  useEffect(() => {
+    const shopBgm = new Audio('/assets/audio/bgm/shop_bgm.mp3');
+    shopBgm.loop = true;
+    shopBgm.volume = 0.3;
+    shopBgm.muted = audioEngine.muted;
+    shopBgm.play().catch((err) => {
+      console.warn("Autoplay blocked shop BGM:", err);
+    });
+
+    return () => {
+      shopBgm.pause();
+      shopBgm.currentTime = 0;
+    };
+  }, []);
   const [items, setItems] = useState<ShopItem[]>(() => {
     const baseItems = [...INITIAL_SHOP_ITEMS];
     if (nodes && nodes['crossroads']?.completed) {

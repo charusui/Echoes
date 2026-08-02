@@ -670,9 +670,10 @@ export function HarmonyStage({
   }, [activeAction, isBoss, bossAttackVariation]);
 
   useEffect(() => {
-    const bgm = new Audio('/assets/expedition/battle_bg_music.mp3');
+    const bgm = new Audio('/assets/audio/bgm/bakunawa_bgm.mp3');
     bgm.loop = true;
     bgm.volume = 0.45;
+    bgm.muted = audioEngine.muted;
     bgm.play().catch(() => { });
 
     return () => {

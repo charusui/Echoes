@@ -75,6 +75,10 @@ export class AudioEngine {
 
   private isMuted = false;
 
+  get muted(): boolean {
+    return this.isMuted;
+  }
+
   resume(): Promise<void> {
     this.resumeSync();
     return Promise.resolve();
