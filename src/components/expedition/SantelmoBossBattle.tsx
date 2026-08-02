@@ -9,6 +9,7 @@ interface SantelmoBossBattleProps {
   bossName: string;
   dex: Record<string, HarmonydexEntry>;
   onComplete: (result: { victory: boolean; xpGained: number }) => void;
+  onFlee?: () => void;
 }
 
 // Game Constants
@@ -39,9 +40,10 @@ export default function SantelmoBossBattle({
   bossName,
   dex,
   onComplete,
+  onFlee,
 }: SantelmoBossBattleProps) {
   // Party stats
-  const totalPartyHp = Object.values(party).reduce((acc, hero) => acc + hero.maxHp, 0);
+  const totalPartyHp = Object.values(party).reduce((acc, hero) => acc + hero.maxHp, 0) * 6;
   
   // React state for UI overlays
   const [_frame, setFrame] = useState(0);
@@ -50,10 +52,27 @@ export default function SantelmoBossBattle({
   const [introStep, setIntroStep] = useState<'hint' | 'combat'>('hint');
   const [activeHeroId, setActiveHeroId] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (gameResult) return;
+
+    const bgm = new Audio('/assets/audio/bgm/volcano_bgm.mp3');
+    bgm.loop = true;
+    bgm.volume = 0.45;
+    bgm.muted = audioEngine.muted;
+    bgm.play().catch((err) => {
+      console.warn("Autoplay policy blocked volcano BGM:", err);
+    });
+
+    return () => {
+      bgm.pause();
+      bgm.currentTime = 0;
+    };
+  }, [gameResult]);
+
   // Mutable Game State
   const state = useRef({
     player: { x: 100, y: GROUND_Y, vx: 0, vy: 0, isSwinging: false, swingTimer: 0, facing: 1 as 1 | -1, invulnTimer: 0, isDashing: false, dashTimer: 0, dashCooldown: 0, canDoubleJump: true },
-    boss: { x: GAME_W / 2, y: 150, hp: 500, maxHp: 500, phase: 1, hurtTimer: 0 },
+    boss: { x: GAME_W / 2, y: 150, hp: 3000, maxHp: 3000, phase: 1, hurtTimer: 0 },
     partyHp: totalPartyHp,
     maxPartyHp: totalPartyHp,
     fireballs: [] as Fireball[],
@@ -241,33 +260,55 @@ export default function SantelmoBossBattle({
       // Spawning Ground Fireballs
       s.spawnTimer -= dt;
       if (s.spawnTimer <= 0) {
-        const craterX = CRATERS[Math.floor(Math.random() * CRATERS.length)];
-        s.fireballs.push({
-          id: s.nextFireballId++,
-          x: craterX,
-          y: GROUND_Y,
-          vx: (Math.random() - 0.5) * 2, // Slight horizontal drift
-          vy: -14 - Math.random() * 4,
-          type: 'ground',
-          state: 'active'
+        // Roll for how many to spawn: 1 or 2 (slightly more chance of 2 in Phase 2)
+        const count = Math.random() < (s.boss.phase === 2 ? 0.4 : 0.3) ? 2 : 1;
+
+        // Select distinct craters
+        const selectedCraters: number[] = [];
+        const availableCraters = [...CRATERS];
+        for (let c = 0; c < count; c++) {
+          if (availableCraters.length === 0) break;
+          const idx = Math.floor(Math.random() * availableCraters.length);
+          selectedCraters.push(availableCraters.splice(idx, 1)[0]!);
+        }
+
+        selectedCraters.forEach(craterX => {
+          s.fireballs.push({
+            id: s.nextFireballId++,
+            x: craterX,
+            y: GROUND_Y,
+            vx: (Math.random() - 0.5) * 2.5, // Slight horizontal drift
+            vy: -15 - Math.random() * 5, // Moderately fast upward velocity
+            type: 'ground',
+            state: 'active'
+          });
         });
-        s.spawnTimer = 1.0 + Math.random() * 1.0; // Spawn every 1-2s
+
+        // Spawn fireballs faster in Phase 1 (every 0.25 - 0.55s), keeping Phase 2 unchanged
+        s.spawnTimer = s.boss.phase === 2
+          ? 0.4 + Math.random() * 0.4
+          : 0.25 + Math.random() * 0.3;
       }
 
       // Phase 2: Sky Fireballs
       if (s.boss.phase === 2) {
         s.skySpawnTimer -= dt;
         if (s.skySpawnTimer <= 0) {
-          s.fireballs.push({
-            id: s.nextFireballId++,
-            x: Math.random() * GAME_W,
-            y: -50,
-            vx: (Math.random() - 0.5) * 3,
-            vy: 5 + Math.random() * 3,
-            type: 'sky',
-            state: 'active'
-          });
-          s.skySpawnTimer = 0.5 + Math.random() * 1.0; // Spawn every 0.5-1.5s
+          // Spawn 1 or 2 fireballs simultaneously
+          const count = Math.random() < 0.3 ? 2 : 1;
+          for (let c = 0; c < count; c++) {
+            s.fireballs.push({
+              id: s.nextFireballId++,
+              x: Math.random() * GAME_W,
+              y: -50,
+              vx: (Math.random() - 0.5) * 4,
+              vy: 5 + Math.random() * 4, // Balanced downward speed
+              type: 'sky',
+              state: 'active'
+            });
+          }
+          // Spawn every 0.4 - 0.9s
+          s.skySpawnTimer = 0.4 + Math.random() * 0.5;
         }
       }
 
@@ -392,14 +433,24 @@ export default function SantelmoBossBattle({
 
       {/* HUD */}
       <div className="absolute top-4 left-4 right-4 flex justify-between z-50 pointer-events-none">
-        <div className="flex flex-col gap-1">
-          <span className="text-white font-black text-sm drop-shadow-md">PARTY HP</span>
-          <div className="w-48 h-4 bg-gray-900 border-2 border-black">
-            <div 
-              className="h-full bg-green-500 transition-all duration-200" 
-              style={{ width: `${Math.max(0, (s.partyHp / s.maxPartyHp) * 100)}%` }} 
-            />
+        <div className="flex flex-col gap-2 pointer-events-auto">
+          <div className="flex flex-col gap-1">
+            <span className="text-white font-black text-sm drop-shadow-md">PARTY HP</span>
+            <div className="w-48 h-4 bg-gray-900 border-2 border-black">
+              <div 
+                className="h-full bg-green-500 transition-all duration-200" 
+                style={{ width: `${Math.max(0, (s.partyHp / s.maxPartyHp) * 100)}%` }} 
+              />
+            </div>
           </div>
+          {onFlee && !gameResult && (
+            <button
+              onClick={onFlee}
+              className="px-4 py-1.5 bg-[#2a2d43]/90 hover:bg-[#383d5a] text-white border-2 border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-xs uppercase -skew-x-6 active:translate-y-0.5 active:shadow-none self-start"
+            >
+              ← RETREAT
+            </button>
+          )}
         </div>
         
         {/* Boss HP */}

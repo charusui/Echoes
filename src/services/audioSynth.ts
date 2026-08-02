@@ -198,11 +198,11 @@ export class AudioEngine {
     const filter = this.ctx.createBiquadFilter();
     const gain = this.ctx.createGain();
 
-    osc.type = 'sawtooth';
+    osc.type = 'triangle'; // Mellower wood/string tone
     osc.frequency.value = frequency;
     filter.type = 'lowpass';
-    filter.frequency.value = frequency * 3;
-    filter.Q.value = 2;
+    filter.frequency.value = frequency * 1.8; // Cut harsh harmonics for an acoustic sound
+    filter.Q.value = 1.2;
 
     gain.gain.setValueAtTime(0, t);
     gain.gain.linearRampToValueAtTime(0.4, t + attack);
@@ -373,47 +373,68 @@ export class AudioEngine {
   playDrum(profile: AcousticProfile, frequency: number, atTime?: number): { stop: () => void; setFrequency?: (newFreq: number) => void } {
     if (!this.ctx || !this.masterGain) return { stop: () => {} };
     const t = atTime ?? this.ctx.currentTime;
-    const attack = Math.max(0.005, profile.attackTime);
-    const decay = Math.max(0.1, profile.decayTime);
+    const attack = Math.max(0.002, profile.attackTime * 0.2); // Extremely fast attack for natural strike transient
+    const decay = Math.max(0.08, profile.decayTime);
 
-    // Pitch sweep sine
-    const osc = this.ctx.createOscillator();
-    osc.type = 'sine';
-    const oscGain = this.ctx.createGain();
-    
-    osc.frequency.setValueAtTime(frequency * 2.5, t);
-    osc.frequency.exponentialRampToValueAtTime(frequency, t + attack * 2);
-    
-    oscGain.gain.setValueAtTime(0, t);
-    oscGain.gain.linearRampToValueAtTime(0.8, t + attack);
-    oscGain.gain.exponentialRampToValueAtTime(0.001, t + attack + decay);
+    // Clamp and downscale the base pitch so it stays low and organic (bass/tenor range of real drums)
+    const baseFreq = Math.max(65, Math.min(180, frequency * 0.4));
 
-    // Noise burst
-    const noiseBuffer = this._createNoiseBuffer(0.5);
+    // 1. Resonant Drum Body (Sine)
+    const bodyOsc = this.ctx.createOscillator();
+    bodyOsc.type = 'sine';
+    bodyOsc.frequency.setValueAtTime(baseFreq * 2.0, t);
+    // Instantaneous sweep (15ms) to simulate skin tension impact deflection
+    bodyOsc.frequency.exponentialRampToValueAtTime(baseFreq, t + 0.015);
+
+    const bodyGain = this.ctx.createGain();
+    bodyGain.gain.setValueAtTime(0, t);
+    bodyGain.gain.linearRampToValueAtTime(0.85, t + attack);
+    bodyGain.gain.exponentialRampToValueAtTime(0.001, t + attack + decay);
+
+    // 2. Hollow Bamboo/Wood Resonance (Triangle)
+    const woodOsc = this.ctx.createOscillator();
+    woodOsc.type = 'triangle';
+    woodOsc.frequency.setValueAtTime(baseFreq * 1.62, t); // Inharmonic multiple for woody bamboo timbre
+
+    const woodGain = this.ctx.createGain();
+    woodGain.gain.setValueAtTime(0, t);
+    woodGain.gain.linearRampToValueAtTime(0.4, t + attack);
+    woodGain.gain.exponentialRampToValueAtTime(0.001, t + attack + decay * 0.4); // Wood resonance decays faster
+
+    // 3. Stick/Mallet strike transient (Bandpassed short noise burst)
+    const noiseBuffer = this._createNoiseBuffer(0.25);
     const noiseSource = this.ctx.createBufferSource();
     noiseSource.buffer = noiseBuffer;
     
     const noiseFilter = this.ctx.createBiquadFilter();
-    noiseFilter.type = 'lowpass';
-    noiseFilter.frequency.value = frequency * 4;
+    noiseFilter.type = 'bandpass';
+    noiseFilter.frequency.value = 1000; // Simulated wood block knock/stick click
+    noiseFilter.Q.value = 4.0; // Resonant transient
     
     const noiseGain = this.ctx.createGain();
     noiseGain.gain.setValueAtTime(0, t);
-    noiseGain.gain.linearRampToValueAtTime(0.6, t + attack);
-    noiseGain.gain.exponentialRampToValueAtTime(0.001, t + attack + decay * 0.2);
+    noiseGain.gain.linearRampToValueAtTime(0.7, t + attack);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, t + attack + 0.035); // Dry, ultra-short knock (35ms)
 
-    osc.connect(oscGain);
+    // Connections
+    bodyOsc.connect(bodyGain);
+    woodOsc.connect(woodGain);
     noiseSource.connect(noiseFilter);
     noiseFilter.connect(noiseGain);
     
     const masterDrumGain = this.ctx.createGain();
-    oscGain.connect(masterDrumGain);
+    bodyGain.connect(masterDrumGain);
+    woodGain.connect(masterDrumGain);
     noiseGain.connect(masterDrumGain);
     masterDrumGain.connect(this.masterGain);
 
-    osc.start(t);
+    bodyOsc.start(t);
+    woodOsc.start(t);
     noiseSource.start(t);
-    osc.stop(t + attack + decay + 0.1);
+    
+    bodyOsc.stop(t + attack + decay + 0.1);
+    woodOsc.stop(t + attack + decay + 0.1);
+    noiseSource.stop(t + attack + decay + 0.1);
 
     return {
       stop: () => {
@@ -421,7 +442,8 @@ export class AudioEngine {
         const now = this.ctx.currentTime;
         masterDrumGain.gain.cancelScheduledValues(now);
         masterDrumGain.gain.linearRampToValueAtTime(0, now + 0.05);
-        osc.stop(now + 0.1);
+        bodyOsc.stop(now + 0.1);
+        woodOsc.stop(now + 0.1);
         noiseSource.stop(now + 0.1);
       }
     };
@@ -435,9 +457,9 @@ export class AudioEngine {
     const attack = Math.max(0.05, profile.attackTime);
     const decay = Math.max(0.1, profile.decayTime);
 
-    // Sawtooth base
+    // Warm triangle base representing breathy horn/wooden reed
     const osc = this.ctx.createOscillator();
-    osc.type = 'sawtooth';
+    osc.type = 'triangle';
     osc.frequency.value = frequency;
 
     // Resonant lowpass that opens up (brass swell)
@@ -488,14 +510,14 @@ export class AudioEngine {
     const attack = Math.max(0.01, profile.attackTime);
     const decay = Math.max(0.2, profile.decayTime);
 
-    // Dual oscillators
+    // Dual organic oscillators for a woody acoustic sound (e.g. bamboo zither/reed)
     const osc1 = this.ctx.createOscillator();
-    osc1.type = 'square';
+    osc1.type = 'triangle';
     osc1.frequency.value = frequency;
     
     const osc2 = this.ctx.createOscillator();
-    osc2.type = 'sawtooth';
-    osc2.frequency.value = frequency * 1.01; // slight detune
+    osc2.type = 'sine';
+    osc2.frequency.value = frequency * 2.0; // Harmonic octave for natural wooden timbre
 
     const gain = this.ctx.createGain();
     gain.gain.setValueAtTime(0, t);

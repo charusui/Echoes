@@ -61,6 +61,7 @@ function InnerApp() {
   const [quests, setQuests] = useState<Record<string, ExpeditionQuest>>({ ...EXPEDITION_QUESTS });
   
   const [isDiscoveryNew, setIsDiscoveryNew] = useState(false);
+  const [freestyleBackView, setFreestyleBackView] = useState<'discoveryCard' | 'collection'>('discoveryCard');
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -190,6 +191,39 @@ function InnerApp() {
     setInstrumentName(profile.instrument.name);
     setIsDiscoveryNew(false);
     setView('discoveryCard');
+  }, []);
+
+  const handleTryOutInstrument = useCallback((selectedInstrumentName: string) => {
+    const INSTRUMENT_CATEGORIES: Record<string, 'string' | 'wind' | 'percussion'> = {
+      'tultugan': 'percussion', 'buktot': 'string', 'pasiyak': 'wind', 'tulali': 'wind', 'tugo': 'percussion', 'litguit': 'percussion',
+      'cebuano gitara': 'string', 'bandurria': 'string', 'laud': 'string', 'octavina': 'string', 'bajo de uñas': 'string',
+      'lantoy': 'wind', 'subing': 'percussion', 'korlong': 'string',
+    };
+
+    const nameLower = selectedInstrumentName.toLowerCase();
+    const category = INSTRUMENT_CATEGORIES[nameLower] || 'percussion';
+    const profileTemplate = FALLBACK_PROFILES[category];
+
+    const profile: ActiveInstrumentProfile = {
+       ...profileTemplate,
+       isFallback: true,
+       fallbackReason: 'map-selection',
+       imageBase64: '',
+       imageMimeType: ''
+    };
+    
+    profile.instrument = {
+      ...profileTemplate.instrument,
+      name: selectedInstrumentName,
+      localName: selectedInstrumentName,
+      region: MASTER_INSTRUMENTS.find(i => i.name.toLowerCase() === nameLower)?.region || 'Visayas',
+    };
+    
+    setActiveProfile(profile);
+    setInstrumentName(selectedInstrumentName);
+    setIsDiscoveryNew(false);
+    setFreestyleBackView('collection');
+    setView('freestyle');
   }, []);
 
   const processImage = useCallback(async (base64: string, mimeType: string, verificationResult: VerificationResult) => {
@@ -435,6 +469,7 @@ function InnerApp() {
           onSelectCustomProfile={handleSelectCustomProfile}
           onOpenKorlongHunt={() => setView('korlongHunt')}
           onOpenScanner={tryOpenScanner}
+          onTryOut={handleTryOutInstrument}
         />
       )}
 
@@ -501,7 +536,7 @@ function InnerApp() {
         <DiscoveryCard 
           profile={activeProfile}
           isNew={isDiscoveryNew}
-          onContinue={() => setView('freestyle')}
+          onContinue={() => { setFreestyleBackView('discoveryCard'); setView('freestyle'); }}
           onBack={handleQuit}
         />
       )}
@@ -509,7 +544,7 @@ function InnerApp() {
       {view === 'freestyle' && activeProfile && (
         <FreestylePlayScreen
           profile={activeProfile}
-          onBack={() => setView('discoveryCard')}
+          onBack={() => setView(freestyleBackView)}
         />
       )}
 

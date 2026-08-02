@@ -17,6 +17,7 @@ export function ExpeditionCombat(props: ExpeditionCombatProps) {
         onComplete={(result) => {
           props.onCombatResult(result);
         }} 
+        onFlee={props.onFlee}
       />
     );
   }

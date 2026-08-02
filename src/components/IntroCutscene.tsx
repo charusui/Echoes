@@ -48,6 +48,17 @@ export const IntroCutscene: React.FC<IntroCutsceneProps> = ({ onComplete }) => {
   const [typewriterText, setTypewriterText] = useState('');
   const [isTyping, setIsTyping] = useState(true);
 
+  useEffect(() => {
+    const bgm = new Audio('/assets/audio/bgm/prologue_bgm.mp3');
+    bgm.loop = true;
+    bgm.volume = 0.4;
+    bgm.play().catch(() => {});
+    return () => {
+      bgm.pause();
+      bgm.currentTime = 0;
+    };
+  }, []);
+
   const currentScene = SCENES[sceneIndex];
   const fullText = currentScene?.dialogues[dialogueIndex] || '';
 
