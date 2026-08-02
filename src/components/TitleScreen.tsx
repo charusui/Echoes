@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { useGemini } from '../context/GeminiProvider';
 
 // Running animation frames
 import one from '../assets/running animation/1.png?v=2';
@@ -73,6 +74,8 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
     setMouseOffset({ x: 0, y: 0 });
   };
 
+  const { isElectron, showApiKeyPrompt } = useGemini();
+
   const handleStartGame = () => {
     setIsStarting(true);
     
@@ -91,6 +94,16 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
+      {/* API Key Configure Button (Only shown inside Electron) */}
+      {isElectron && !isStarting && (
+        <button
+          onClick={showApiKeyPrompt}
+          className="absolute top-4 right-4 z-50 bg-[#1f2335] text-white/80 hover:text-white border-[2px] border-[#0f0c0c] px-3 py-1.5 font-space-mono text-[10px] uppercase tracking-wider shadow-[4px_4px_0px_0px_#0f0c0c] hover:bg-[#2a2d43] active:translate-y-1 active:shadow-none transition-all cursor-pointer -skew-x-2"
+        >
+          <span className="skew-x-2 block">Configure API Key</span>
+        </button>
+      )}
+
       {/* ── BACKGROUND LAYER ── */}
       <img
         src={bg}
