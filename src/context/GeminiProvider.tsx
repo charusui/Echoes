@@ -3,8 +3,13 @@ import { GoogleGenAI } from '@google/genai';
 
 // ─── Context Types ─────────────────────────────────────────────────────────────
 
+const isElectron = typeof window !== 'undefined' && navigator.userAgent.toLowerCase().includes('electron');
+
 interface GeminiContextValue {
   client: GoogleGenAI;
+  isElectron: boolean;
+  showApiKeyPrompt: () => void;
+  clearApiKey: () => void;
 }
 
 const GeminiContext = createContext<GeminiContextValue | null>(null);
@@ -17,11 +22,11 @@ const ENV_API_KEY = (import.meta.env.VITE_GEMINI_API_KEY as string) || '';
 export function GeminiProvider({ children }: { children: React.ReactNode }) {
   const [apiKey, setApiKey] = useState(() => ENV_API_KEY || localStorage.getItem('filinstruments_gemini_key') || '');
   const [showPrompt, setShowPrompt] = useState(false);
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState(() => localStorage.getItem('filinstruments_gemini_key') || '');
 
-  // Only show prompt if there is no key at all (from ENV or LocalStorage)
+  // Only show prompt in Electron if there is no key at all (from ENV or LocalStorage)
   useEffect(() => {
-    if (!ENV_API_KEY && !localStorage.getItem('filinstruments_gemini_key') && !localStorage.getItem('filinstruments_gemini_skipped')) {
+    if (isElectron && !ENV_API_KEY && !localStorage.getItem('filinstruments_gemini_key') && !localStorage.getItem('filinstruments_gemini_skipped')) {
       setShowPrompt(true);
     }
   }, []);
@@ -31,6 +36,7 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
   const handleSave = () => {
     if (inputValue.trim()) {
       localStorage.setItem('filinstruments_gemini_key', inputValue.trim());
+      localStorage.removeItem('filinstruments_gemini_skipped');
       setApiKey(inputValue.trim());
       setShowPrompt(false);
     }
@@ -41,8 +47,20 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
     setShowPrompt(false);
   };
 
+  const showApiKeyPrompt = () => {
+    setInputValue(localStorage.getItem('filinstruments_gemini_key') || '');
+    setShowPrompt(true);
+  };
+
+  const clearApiKey = () => {
+    localStorage.removeItem('filinstruments_gemini_key');
+    localStorage.removeItem('filinstruments_gemini_skipped');
+    setApiKey('');
+    setInputValue('');
+  };
+
   return (
-    <GeminiContext.Provider value={{ client }}>
+    <GeminiContext.Provider value={{ client, isElectron, showApiKeyPrompt, clearApiKey }}>
       {children}
       
       {showPrompt && (
@@ -64,13 +82,23 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
                 className="w-full bg-[#0f0c0c] border-[3px] border-[#888ea1] p-3 font-space-mono text-[#e0e5ed] outline-none focus:border-[#da2d46] transition-colors placeholder:opacity-50"
               />
               
-              <button 
-                onClick={handleSave}
-                disabled={!inputValue.trim()}
-                className="w-full bg-[#da2d46] hover:bg-[#ff3b56] text-[#0f0c0c] border-[3px] border-[#0f0c0c] p-3 font-orbitron font-black uppercase tracking-widest shadow-[4px_4px_0px_0px_#0f0c0c] active:translate-y-1 active:shadow-none transition-all disabled:opacity-50 disabled:pointer-events-none"
-              >
-                Save Key
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={handleSave}
+                  disabled={!inputValue.trim()}
+                  className="flex-1 bg-[#da2d46] hover:bg-[#ff3b56] text-[#0f0c0c] border-[3px] border-[#0f0c0c] p-3 font-orbitron font-black uppercase tracking-widest shadow-[4px_4px_0px_0px_#0f0c0c] active:translate-y-1 active:shadow-none transition-all disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  Save Key
+                </button>
+                {localStorage.getItem('filinstruments_gemini_key') && (
+                  <button 
+                    onClick={() => { clearApiKey(); setShowPrompt(false); }}
+                    className="bg-[#da2d46]/20 hover:bg-[#da2d46]/40 text-[#da2d46] border-[3px] border-[#da2d46] p-3 font-orbitron font-black uppercase tracking-widest transition-all"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
               
               <button 
                 onClick={handleSkip}
