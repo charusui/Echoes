@@ -66,9 +66,10 @@ interface CollectionScreenProps {
   onSelectCustomProfile: (profile: any) => void;
   onOpenKorlongHunt: () => void;
   onOpenScanner: () => void;
+  onTryOut?: (name: string) => void;
 }
 
-export function CollectionScreen({ onBack, onSelectInstrument, onSelectCustomProfile, onOpenKorlongHunt, onOpenScanner }: CollectionScreenProps) {
+export function CollectionScreen({ onBack, onSelectInstrument, onSelectCustomProfile, onOpenKorlongHunt, onOpenScanner, onTryOut }: CollectionScreenProps) {
   const { progress } = useProgress();
   const [activeTab, setActiveTab] = useState<'Western Visayas' | 'Central Visayas' | 'Eastern Visayas'>('Western Visayas');
   const [selectedHintInstrument, setSelectedHintInstrument] = useState<any | null>(null);
@@ -596,12 +597,14 @@ export function CollectionScreen({ onBack, onSelectInstrument, onSelectCustomPro
 
                         {/* Bottom Buttons (Tight gap) */}
                         <div className="mt-auto flex flex-col gap-2">
-                          <button
-                            onClick={() => { playSound('sick'); audioEngine.playHitSFX('sick'); }}
-                            className="w-full py-2 bg-white text-black border-[3px] border-black shadow-[3px_3px_0px_0px_#000] font-orbitron font-black text-[10px] xl:text-[11px] tracking-widest uppercase hover:bg-gray-100 transition-all duration-300 ease-out flex items-center justify-center gap-1.5 active:translate-y-0.5 active:translate-x-0.5 active:shadow-none"
-                          >
-                            <Volume2 size={14} className="stroke-[3px]" /> AUDIO PREVIEW
-                          </button>
+                          {isUnlocked && (
+                            <button
+                              onClick={() => { playSound('pop'); onTryOut?.(inst.name); }}
+                              className="w-full py-2 bg-white text-black border-[3px] border-black shadow-[3px_3px_0px_0px_#000] font-orbitron font-black text-[10px] xl:text-[11px] tracking-widest uppercase hover:bg-gray-100 transition-all duration-300 ease-out flex items-center justify-center gap-1.5 active:translate-y-0.5 active:translate-x-0.5 active:shadow-none"
+                            >
+                              <Music size={14} className="stroke-[3px]" /> TRY OUT
+                            </button>
+                          )}
 
                           {isUnlocked && (
                             <button 

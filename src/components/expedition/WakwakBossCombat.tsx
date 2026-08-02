@@ -45,11 +45,54 @@ export function WakwakBossCombat(props: ExpeditionCombatProps) {
 
   const [showItemsMenu, setShowItemsMenu] = useState(false);
   
-  const getHeroSprite = (name: string) => {
-    const n = name.toLowerCase();
-    if (n.includes('gustave')) return '/boy1_idle.gif';
-    if (n.includes('maelle')) return '/girl_idle.gif';
-    return '/boy2_idle.gif'; 
+  const getHeroSprite = (hero: HeroProfile) => {
+    const n = hero.name.toLowerCase();
+    let folder = 'Male 2'; // Default to Male 2 (Lune)
+    
+    if (n.includes('gustave')) {
+      folder = 'Male 1';
+    } else if (n.includes('maelle')) {
+      folder = 'Female';
+    }
+    
+    // Defeated state
+    if (hero.hp <= 0) {
+      const standardFolder = n.includes('gustave') ? 'boy1_gifs' : n.includes('maelle') ? 'girl_gifs' : 'boy2_gifs';
+      return `/assets/expedition/${standardFolder}/Defeated.gif`;
+    }
+    
+    // Taking damage
+    const isTakingDamage = damagePopups.some(p => !p.isEnemy && p.heroId === hero.id);
+    if (isTakingDamage) {
+      return `/assets/expedition/wakwak_gifs/${folder}/Taking damage.gif`;
+    }
+    
+    const isThisHeroActive = activeHero && activeHero.id === hero.id;
+    
+    // Block / Defend
+    if (isThisHeroActive && (activeAction === 'parry' || parryStanceActive)) {
+      if (folder === 'Male 1') {
+        return `/assets/expedition/wakwak_gifs/Male 1/Idle_custom-Create_a_smooth_combat_animati_north.gif`;
+      }
+      return `/assets/expedition/wakwak_gifs/${folder}/Block.gif`;
+    }
+    
+    // Attacking / Playing instrument skills
+    if (isThisHeroActive && (activeAction === 'rhythm' || activeAction === 'spell' || activeAction === 'attune' || activeAction === 'post_attack_anim')) {
+      const inst = dex[hero.equippedId];
+      if (inst) {
+        if (inst.category === 'percussion') {
+          return `/assets/expedition/wakwak_gifs/${folder}/Drum.gif`;
+        }
+        if (inst.category === 'woodwind' || inst.category === 'wind') {
+          return `/assets/expedition/wakwak_gifs/${folder}/Flute.gif`;
+        }
+      }
+      return `/assets/expedition/wakwak_gifs/${folder}/Guitar.gif`;
+    }
+    
+    // Idle stance for all characters is Fighting stance.gif
+    return `/assets/expedition/wakwak_gifs/${folder}/Fighting stance.gif`;
   };
   const onFlee = props.onFlee;
   const onCombatResult = props.onCombatResult;
@@ -543,18 +586,28 @@ export function WakwakBossCombat(props: ExpeditionCombatProps) {
           </button>
         </div>
 
-        {isShrineBandit && !isBoss ? (
-          <div className="absolute bottom-[22%] left-6 sm:left-10 flex items-end justify-center z-20 pointer-events-none transition-all duration-300">
-            <div key={activeHero.id} className="flex flex-col items-center gap-0 z-30 animate-in fade-in slide-in-from-left-4 duration-300">
-              <div className="relative origin-bottom flex items-center justify-center">
-                <img src={getHeroSprite(activeHero.name)} alt={activeHero.name} className="w-48 h-48 sm:w-56 sm:h-56 object-contain drop-shadow-[0px_8px_16px_rgba(0,0,0,0.8)]" />
+        {/* Mobile Party Display (All 3 Heroes) */}
+        <div className="absolute bottom-[20%] left-[50%] -translate-x-1/2 flex items-end justify-center gap-1.5 sm:gap-3 z-20 pointer-events-none transition-all duration-300">
+          {partyList.map((hero) => {
+            const isActive = activeHero && activeHero.id === hero.id;
+            return (
+              <div key={hero.id} className={`flex flex-col items-center gap-0 transition-all duration-300 ${isActive ? 'z-30 scale-105' : 'z-20 opacity-85'}`}>
+                <div className="relative origin-bottom flex items-center justify-center">
+                  <img 
+                    src={getHeroSprite(hero)} 
+                    alt={hero.name} 
+                    className={`w-24 h-24 sm:w-32 sm:h-32 object-contain ${isActive ? 'drop-shadow-[0px_0px_10px_rgba(250,204,21,0.9)]' : 'drop-shadow-[0px_4px_8px_rgba(0,0,0,0.8)]'}`} 
+                  />
+                </div>
+                <span className={`relative z-30 -mt-5 sm:-mt-7 font-orbitron font-black text-[7px] sm:text-[8px] uppercase tracking-wider px-1.5 py-0.5 border-[1.5px] shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 truncate text-center ${
+                  isActive ? 'text-[#facc15] bg-[#0f0c0c] border-[#facc15]' : 'text-slate-300 bg-[#151828] border-slate-600'
+                }`}>
+                  {hero.name}
+                </span>
               </div>
-              <span className="relative z-30 -mt-12 sm:-mt-16 font-orbitron font-black text-[8px] sm:text-[9px] uppercase tracking-wider text-[#facc15] bg-[#0f0c0c] px-2 py-0.5 border-[2px] border-[#facc15] shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 truncate text-center">
-                {activeHero.name}
-              </span>
-            </div>
-          </div>
-        ) : null}
+            );
+          })}
+        </div>
 
         {!isBoss ? (
           <div className="absolute bottom-[22%] right-4 flex items-end gap-2 sm:gap-4 z-20">
@@ -663,18 +716,28 @@ export function WakwakBossCombat(props: ExpeditionCombatProps) {
           })}
         </div>
 
-        {isShrineBandit && !isBoss ? (
-          <div className="flex items-end justify-center translate-x-16 lg:translate-x-24 -translate-y-4 lg:-translate-y-8 z-20 pointer-events-none">
-            <div key={activeHero.id} className="flex flex-col items-center gap-0 z-30 animate-in fade-in slide-in-from-left-8 duration-300">
-              <div className="relative origin-bottom transition-transform flex items-center justify-center">
-                <img src={getHeroSprite(activeHero.name)} alt={activeHero.name} className="w-[470px] h-[470px] object-contain drop-shadow-[0px_12px_24px_rgba(0,0,0,0.8)]" />
+        {/* Desktop Party Display (All 3 Heroes) */}
+        <div className="absolute bottom-[10%] left-[50%] -translate-x-1/2 xl:left-[52%] z-20 pointer-events-none flex items-end justify-center gap-3 lg:gap-5 xl:gap-8 transition-all duration-300">
+          {partyList.map((hero) => {
+            const isActive = activeHero && activeHero.id === hero.id;
+            return (
+              <div key={hero.id} className={`flex flex-col items-center gap-0 transition-all duration-300 ${isActive ? 'z-30 scale-105' : 'z-20 opacity-90'}`}>
+                <div className="relative origin-bottom flex items-center justify-center">
+                  <img 
+                    src={getHeroSprite(hero)} 
+                    alt={hero.name} 
+                    className={`w-32 h-32 lg:w-44 lg:h-44 xl:w-52 xl:h-52 object-contain ${isActive ? 'drop-shadow-[0px_0px_16px_rgba(250,204,21,0.9)]' : 'drop-shadow-[0px_8px_16px_rgba(0,0,0,0.8)]'}`} 
+                  />
+                </div>
+                <span className={`relative z-30 -mt-8 lg:-mt-12 font-orbitron font-black text-[8px] lg:text-xs uppercase tracking-wider px-2.5 py-0.5 border-[2px] shadow-[3px_3px_0px_0px_#0f0c0c] -skew-x-6 text-center ${
+                  isActive ? 'text-[#facc15] bg-[#0f0c0c] border-[#facc15]' : 'text-slate-300 bg-[#151828] border-slate-600'
+                }`}>
+                  {hero.name}
+                </span>
               </div>
-              <span className="relative z-30 -mt-36 font-orbitron font-black text-xs uppercase tracking-wider text-[#facc15] bg-[#0f0c0c] px-6 py-1 border-[2px] border-[#facc15] shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6 text-center">
-                {activeHero.name}
-              </span>
-            </div>
-          </div>
-        ) : null}
+            );
+          })}
+        </div>
 
         {!isBoss ? (
           <div className="flex items-end justify-center gap-4 -translate-x-20 z-10">

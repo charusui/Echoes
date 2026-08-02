@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Sword, Sparkles, Shield, Disc, Zap, ArrowLeft, Users, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react';
+import { Sword, Sparkles, Shield, Disc, Zap, ArrowLeft, Users, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Package } from 'lucide-react';
 import { audioEngine } from '../../services/audioSynth';
+import { useProgress } from '../../context/ProgressProvider';
 import {
   EXPEDITION_INSTRUMENTS,
   getTypeMultiplier,
@@ -14,6 +15,7 @@ import { UltimateSequenceOverlay } from './UltimateSequenceOverlay';
 import { ParryQteOverlay } from './ParryQteOverlay';
 import { AttuneCaptureOverlay } from './AttuneCaptureOverlay';
 import { WingSlamCounterMinigame } from './WingSlamCounterMinigame';
+import { ItemMenuOverlay } from './ItemMenuOverlay';
 
 export interface TurnUpdateInfo {
   queue: { isHero: boolean; avatar: string }[];
@@ -101,6 +103,8 @@ export function HarmonyStage({
   });
 
   const [targetEnemyIndex, setTargetEnemyIndex] = useState(0);
+  const [showItemsMenu, setShowItemsMenu] = useState(false);
+  const { progress, updateInventory } = useProgress();
 
   useEffect(() => {
     if (enemies[targetEnemyIndex]?.hp <= 0) {
@@ -670,6 +674,8 @@ export function HarmonyStage({
   }, [activeAction, isBoss, bossAttackVariation]);
 
   useEffect(() => {
+    if (isEndingBattle) return;
+
     const bgm = new Audio('/assets/audio/bgm/bakunawa_bgm.mp3');
     bgm.loop = true;
     bgm.volume = 0.45;
@@ -680,7 +686,7 @@ export function HarmonyStage({
       bgm.pause();
       bgm.currentTime = 0;
     };
-  }, []);
+  }, [isEndingBattle]);
 
   const checkPostTurnStates = useCallback((targetHp: number | null, currentParty: HeroProfile[]) => {
     const tempEnemies = [...enemies];
@@ -767,6 +773,30 @@ export function HarmonyStage({
   useEffect(() => {
     advanceTurnRef.current = advanceTurn;
   }, [advanceTurn]);
+
+  const handleUseItem = useCallback((itemId: string) => {
+    onUpdateParty(prev => {
+      const newParty = { ...prev };
+      if (itemId === 'turmeric_tonic') {
+        Object.values(newParty).forEach(h => { h.hp = Math.min(h.hp + 150, h.maxHp); });
+      } else if (itemId === 'reverse_potion') {
+        Object.values(newParty).forEach(h => { h.hp = h.maxHp; h.ap = h.maxAp; });
+      } else if (itemId === 'cadence_fork') {
+        Object.values(newParty).forEach(h => { h.ap = h.maxAp; });
+      } else if (itemId === 'solar_spice') {
+        Object.values(newParty).forEach(h => { (h as any).overdrive = Math.min(((h as any).overdrive || 0) + 40, 100); });
+      }
+      return newParty;
+    });
+
+    updateInventory(itemId, -1);
+    audioEngine.playHitSFX('good');
+
+    setTimeout(() => {
+      setActiveAction('none');
+      advanceTurn();
+    }, 500);
+  }, [updateInventory, onUpdateParty, advanceTurn]);
 
   const handleCommandAttack = () => { if (!isHeroTurn || activeHero.ap < 1 || isEndingBattle) return; setActiveAction('rhythm'); };
   const handleCommandSkill = () => { if (!isHeroTurn || activeHero.ap < 2 || isEndingBattle) return; setActiveAction('spell'); };
@@ -1607,9 +1637,11 @@ export function HarmonyStage({
                 <span className="text-[6px] sm:text-2xs font-bold opacity-80 leading-tight hidden sm:block">Flee Battle</span>
               </div>
             </button>
-            <button onClick={() => onCombatResult({ victory: true, xpGained: 1000 })} disabled={isEndingBattle} className="col-span-2 sm:col-span-1 px-1.5 py-1.5 sm:px-4 sm:py-3 bg-fuchsia-600 text-white border-[2px] sm:border-[4px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-[8px] sm:text-sm uppercase -skew-x-6 hover:bg-fuchsia-500 transition-all flex items-center justify-center sm:justify-start gap-1 sm:gap-2 active:translate-y-0.5 active:shadow-none">
-              <div className="flex flex-col text-left justify-center">
-                <span className="leading-tight text-white">SKIP BATTLE ()</span>
+            <button onClick={() => setShowItemsMenu(true)} disabled={isEndingBattle || !isHeroTurn} className="col-span-2 sm:col-span-1 px-1.5 py-1.5 sm:px-4 sm:py-3 bg-[#7c3aed] text-white border-[2px] sm:border-[4px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-[8px] sm:text-sm uppercase -skew-x-6 hover:bg-[#9f5ffc] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center sm:justify-start gap-1 sm:gap-2 active:translate-y-0.5 active:shadow-none">
+              <Package className="w-3 h-3 sm:w-4 sm:h-4 shrink-0 hidden xs:block" />
+              <div className="flex flex-col text-left justify-center overflow-hidden">
+                <span className="leading-tight truncate">ITEMS</span>
+                <span className="text-[6px] sm:text-2xs font-bold opacity-80 leading-tight hidden sm:block">Open Inventory</span>
               </div>
             </button>
           </div>
@@ -1657,10 +1689,11 @@ export function HarmonyStage({
                 <span className="text-2xs font-bold opacity-80">Flee Battle</span>
               </div>
             </button>
-            <button onClick={() => onCombatResult({ victory: true, xpGained: 1000 })} disabled={isEndingBattle} className="px-4 py-3 bg-fuchsia-600 text-white border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-fuchsia-500 transition-all flex items-center gap-2 active:translate-y-0.5 active:shadow-none">
+            <button onClick={() => setShowItemsMenu(true)} disabled={isEndingBattle || !isHeroTurn} className="px-4 py-3 bg-[#7c3aed] text-white border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#9f5ffc] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2 active:translate-y-0.5 active:shadow-none">
+              <Package className="w-4 h-4" />
               <div className="flex flex-col text-left">
-                <span>SKIP BATTLE</span>
-                <span className="text-2xs font-bold opacity-80 text-white">Instant Win</span>
+                <span>ITEMS</span>
+                <span className="text-2xs font-bold opacity-80">Open Inventory</span>
               </div>
             </button>
           </div>
@@ -1677,6 +1710,14 @@ export function HarmonyStage({
             {activeAction === 'attune' && <AttuneCaptureOverlay enemy={enemy} onComplete={handleAttuneComplete} />}
           </div>
         </div>
+      )}
+
+      {showItemsMenu && (
+        <ItemMenuOverlay
+          inventory={progress?.inventory ?? {}}
+          onClose={() => setShowItemsMenu(false)}
+          onUseItem={(id) => { handleUseItem(id); setShowItemsMenu(false); }}
+        />
       )}
     </div>
   );

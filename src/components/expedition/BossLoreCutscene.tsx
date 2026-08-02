@@ -124,8 +124,16 @@ export const BossLoreCutscene: React.FC<BossLoreCutsceneProps> = ({ bossId, onCo
   const isLast = slideIndex === lore.slides.length - 1;
 
   useEffect(() => {
-    const t = setTimeout(() => setShowFlash(false), 600);
-    return () => clearTimeout(t);
+    const t = setTimeout(() => setShowFlash(false), 50);
+    const bgm = new Audio('/assets/audio/bgm/before_boss_fight_bgm.mp3');
+    bgm.loop = true;
+    bgm.volume = 0.4;
+    bgm.play().catch(() => {});
+    return () => {
+      clearTimeout(t);
+      bgm.pause();
+      bgm.currentTime = 0;
+    };
   }, []);
 
   useEffect(() => {
@@ -158,15 +166,15 @@ export const BossLoreCutscene: React.FC<BossLoreCutsceneProps> = ({ bossId, onCo
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-[#0a0b0f] overflow-hidden"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0a0b0f] overflow-hidden"
       onClick={handleNext}
     >
-      {showFlash && (
-        <div
-          className="absolute inset-0 z-50 pointer-events-none"
-          style={{ backgroundColor: lore.tagColor, opacity: 0.8 }}
-        />
-      )}
+      <div
+        className={`absolute inset-0 z-50 pointer-events-none transition-opacity duration-700 ease-out ${
+          showFlash ? 'opacity-80' : 'opacity-0'
+        }`}
+        style={{ backgroundColor: lore.tagColor }}
+      />
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -181,10 +189,18 @@ export const BossLoreCutscene: React.FC<BossLoreCutsceneProps> = ({ bossId, onCo
 
       {/* Styled header bar with thick border and shadow */}
       <div className="w-full border-b-[4px] border-[#0f0c0c] shadow-[0_4px_0_0_#0f0c0c] relative z-10">
-        <div className="flex items-center gap-3 px-6 py-3" style={{ backgroundColor: lore.tagColor }}>
-          <span className="font-space-mono font-black text-[10px] text-white/90 uppercase tracking-[0.3em] drop-shadow-[1px_1px_0_rgba(0,0,0,0.5)]">CODEX ENTRY</span>
-          <span className="font-space-mono font-black text-[10px] text-white/90 uppercase tracking-[0.3em] drop-shadow-[1px_1px_0_rgba(0,0,0,0.5)]">//</span>
-          <span className="font-space-mono font-black text-[10px] text-white uppercase tracking-[0.3em] drop-shadow-[1px_1px_0_rgba(0,0,0,0.5)]">{lore.origin}</span>
+        <div className="flex items-center justify-between px-6 py-3" style={{ backgroundColor: lore.tagColor }}>
+          <div className="flex items-center gap-3">
+            <span className="font-space-mono font-black text-[10px] text-white/90 uppercase tracking-[0.3em] drop-shadow-[1px_1px_0_rgba(0,0,0,0.5)]">CODEX ENTRY</span>
+            <span className="font-space-mono font-black text-[10px] text-white/90 uppercase tracking-[0.3em] drop-shadow-[1px_1px_0_rgba(0,0,0,0.5)]">//</span>
+            <span className="font-space-mono font-black text-[10px] text-white uppercase tracking-[0.3em] drop-shadow-[1px_1px_0_rgba(0,0,0,0.5)]">{lore.origin}</span>
+          </div>
+          <button
+            onClick={(e) => { e.stopPropagation(); onComplete(); }}
+            className="px-3 py-1 bg-black/40 hover:bg-black/60 text-white font-orbitron font-black text-[10px] uppercase tracking-wider border-[2px] border-white/80 hover:border-white transition-all shadow-[2px_2px_0px_0px_#000] -skew-x-6"
+          >
+            <span className="skew-x-6 block">SKIP LORE</span>
+          </button>
         </div>
       </div>
 
@@ -250,7 +266,7 @@ export const BossLoreCutscene: React.FC<BossLoreCutsceneProps> = ({ bossId, onCo
               {isLast && !isTyping ? (
                 <><Swords className="w-5 h-5" /><span>ENTER BATTLE</span></>
               ) : (
-                <><span>{isTyping ? 'SKIP' : 'NEXT'}</span><ChevronRight className="w-5 h-5" /></>
+                <><span>NEXT</span><ChevronRight className="w-5 h-5" /></>
               )}
             </div>
           </button>

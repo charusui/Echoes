@@ -260,6 +260,8 @@ export function useCombatEngine({
   }, [activeAction, isBoss, bossAttackVariation]);
 
   useEffect(() => {
+    if (isEndingBattle) return;
+
     let bgmPath = '/assets/expedition/battle_bg_music.mp3';
     let firstEnemyId = '';
     if (customEnemies && customEnemies.length > 0) {
@@ -288,7 +290,7 @@ export function useCombatEngine({
       bgm.pause();
       bgm.currentTime = 0;
     };
-  }, [enemyId, enemyGauntlet, customEnemies]);
+  }, [enemyId, enemyGauntlet, customEnemies, isEndingBattle]);
 
   const checkPostTurnStates = useCallback((targetHp: number | null, currentParty: HeroProfile[]) => {
     const tempEnemies = [...enemies];

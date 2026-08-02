@@ -48,10 +48,18 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
   const [loadingText, setLoadingText] = useState('INITIALIZING...');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Mount animation trigger
+  // Mount animation trigger & Title BGM
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 150);
-    return () => clearTimeout(t);
+    const bgm = new Audio('/assets/audio/bgm/menu_bgm.mp3');
+    bgm.loop = true;
+    bgm.volume = 0.35;
+    bgm.play().catch(() => {});
+    return () => {
+      clearTimeout(t);
+      bgm.pause();
+      bgm.currentTime = 0;
+    };
   }, []);
 
   // Character running animation loop

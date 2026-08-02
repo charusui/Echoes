@@ -199,6 +199,17 @@ export function LocationServicesScreen({ onBack }: { onBack: () => void }) {
   const [isLocating, setIsLocating] = useState(false);
   const [isSearchingAI, setIsSearchingAI] = useState(false);
 
+  useEffect(() => {
+    const bgm = new Audio('/assets/audio/bgm/shop_bgm.mp3');
+    bgm.loop = true;
+    bgm.volume = 0.3;
+    bgm.play().catch(() => {});
+    return () => {
+      bgm.pause();
+      bgm.currentTime = 0;
+    };
+  }, []);
+
   // Helper to query Gemini for museums
   const searchMuseumsWithAI = async (promptText: string, _fallbackCenter: [number, number]) => {
     setIsSearchingAI(true);
