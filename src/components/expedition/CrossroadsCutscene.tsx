@@ -10,27 +10,27 @@ export function CrossroadsCutscene({ onComplete }: CrossroadsCutsceneProps) {
   const dialogue = useMemo(() => [
     { 
       name: "Lolo Boy", 
-      avatar: "/assets/expedition/merchant_normal.png", 
+      avatar: "/assets/expedition/merchant_normal.png?v=2", 
       text: "Hey there, travelers! I'm Lolo Boy, a traveling merchant. Thank you so much for saving me from those bandits!" 
     },
     { 
       name: "Lolo Boy", 
-      avatar: "/assets/expedition/merchant_normal.png", 
+      avatar: "/assets/expedition/merchant_normal.png?v=2", 
       text: "I was on my way to Cadence Town, but you should know... things are bad at Echo Village." 
     },
     { 
       name: "Lolo Boy", 
-      avatar: "/assets/expedition/merchant_normal.png", 
+      avatar: "/assets/expedition/merchant_normal.png?v=2", 
       text: "Rumors say a colossal beast has nested there!" 
     },
     { 
       name: "Lolo Boy", 
-      avatar: "/assets/expedition/merchant_giving.png", 
+      avatar: "/assets/expedition/merchant_giving.png?v=2", 
       text: "Here are some supplies I sent ahead to Maria's shop to help you on your journey. Thank you again!" 
     },
     { 
       name: "System", 
-      avatar: "/assets/expedition/merchant_giving.png", 
+      avatar: "/assets/expedition/merchant_giving.png?v=2", 
       text: "New items unlocked in the Shop! (Mystery Key & Reverse Potion)" 
     }
   ], []);
@@ -51,7 +51,7 @@ export function CrossroadsCutscene({ onComplete }: CrossroadsCutsceneProps) {
       {/* Background */}
       <div 
         className="absolute inset-0 bg-cover bg-center opacity-80"
-        style={{ backgroundImage: `url('/assets/expedition/crossroads_bg.png')` }}
+        style={{ backgroundImage: `url('/assets/expedition/crossroads_bg.png?v=2')` }}
       />
       
       {/* Large Merchant Sprite */}

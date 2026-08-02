@@ -150,7 +150,7 @@ export function CombatResultModal({ result, onContinue }: CombatResultModalProps
                   
                   <div className="flex items-center gap-4 mt-2">
                     <div className="w-16 h-16 bg-white border-[2px] border-[#38bdf8] flex items-center justify-center shadow-[inset_0_0_10px_rgba(0,0,0,0.8)] overflow-hidden p-1">
-                      <img src={`/assets/instruments/${capturedEntry.id}.png`} alt={capturedEntry.name} className="w-full h-full object-contain scale-110 mix-blend-multiply" />
+                      <img src={`/assets/instruments/${capturedEntry.id}.png?v=2`} alt={capturedEntry.name} className="w-full h-full object-contain scale-110 mix-blend-multiply" />
                     </div>
                     <div className="flex flex-col">
                       <span className="font-orbitron font-black text-lg text-white leading-tight uppercase">

@@ -250,7 +250,7 @@ export function CollectionScreen({ onBack, onSelectInstrument, onSelectCustomPro
                         <div className="flex-1 w-full relative bg-[#1e2230] flex items-center justify-center overflow-hidden">
                           {unlocked && <div className="absolute inset-0 opacity-20 z-20" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, #000 10px, #000 12px)' }} />}
                           <img 
-                            src={unlocked ? `${IMAGE_BASE}${inst.id}.png` : `${IMAGE_BASE}locked_${inst.id}.png`} 
+                            src={unlocked ? `${IMAGE_BASE}${inst.id}.png?v=2` : `${IMAGE_BASE}locked_${inst.id}.png?v=2`} 
                             alt={inst.name}
                             className={`w-full h-full object-cover relative z-10 transition-transform duration-300 ease-out ${
                               unlocked ? 'group-hover:scale-110' : 'opacity-40 grayscale'
@@ -289,11 +289,14 @@ export function CollectionScreen({ onBack, onSelectInstrument, onSelectCustomPro
                           className="aspect-square border-[4px] border-dashed border-gray-600 bg-[#11131a] relative flex flex-col items-center justify-center overflow-hidden opacity-0 group"
                           style={{ animation: `popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both ${0.4 + index * 0.05}s` }}
                         >
-                          <img
-                            src={`${IMAGE_BASE}locked_${inst.id}.png`}
-                            alt={inst.name}
-                            className="absolute inset-0 w-full h-full object-cover opacity-30 grayscale transition-transform duration-500 group-hover:scale-105 z-0"
-                          />
+                          <div className={`w-full h-full relative z-10 transition-transform duration-500 group-hover:scale-105 ${unlocked ? 'opacity-80' : 'opacity-30 grayscale'}`}>
+                            {unlocked && <div className="absolute inset-0 opacity-20 z-20" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, #000 10px, #000 12px)' }} />}
+                            <img
+                              src={unlocked ? `${IMAGE_BASE}${inst.id}.png?v=2` : `${IMAGE_BASE}locked_${inst.id}.png?v=2`}
+                              alt={inst.name}
+                              className="absolute inset-0 w-full h-full object-cover z-0"
+                            />
+                          </div>
                           <div className="relative z-10 text-center bg-black/80 px-3 py-1.5 border-[2px] border-gray-600 mt-4 shadow-[2px_2px_0px_0px_#000]">
                             <p className="font-orbitron font-black text-[9px] text-gray-300 tracking-widest uppercase leading-tight">
                               {unlocked ? inst.name : '???'}
@@ -342,7 +345,7 @@ export function CollectionScreen({ onBack, onSelectInstrument, onSelectCustomPro
                     <div className="flex items-center gap-4 relative z-10">
                       <div className="w-16 h-16 border-[4px] border-black flex items-center justify-center shrink-0 bg-[#11131a] shadow-[4px_4px_0px_0px_#ef4444] overflow-hidden">
                         <img
-                          src={`${IMAGE_BASE}locked_${KORLONG_INSTRUMENT.id}.png`}
+                          src={korlongUnlocked ? `${IMAGE_BASE}${KORLONG_INSTRUMENT.id}.png?v=2` : `${IMAGE_BASE}locked_${KORLONG_INSTRUMENT.id}.png?v=2`}
                           alt={KORLONG_INSTRUMENT.name}
                           className={`w-full h-full object-cover transition-all duration-500 hover:scale-110 ${korlongUnlocked ? 'opacity-100' : 'opacity-40 grayscale'}`}
                         />
@@ -505,7 +508,7 @@ export function CollectionScreen({ onBack, onSelectInstrument, onSelectCustomPro
                       <div className="relative h-[160px] xl:h-[180px] bg-[#1e2230] border-b-[4px] border-black flex items-center justify-center shrink-0 z-10 overflow-hidden">
                         {isUnlocked && <div className="absolute inset-0 opacity-20 z-0" style={{ backgroundImage: 'linear-gradient(#000 2px, transparent 2px), linear-gradient(90deg, #000 2px, transparent 2px)', backgroundSize: '16px 16px' }} />}
                         <img 
-                          src={isUnlocked ? `${IMAGE_BASE}${inst.id}.png` : `${IMAGE_BASE}locked_${inst.id}.png`} 
+                          src={isUnlocked ? `${IMAGE_BASE}${inst.id}.png?v=2` : `${IMAGE_BASE}locked_${inst.id}.png?v=2`} 
                           className={`w-full h-full object-cover relative z-10 transition-transform duration-700 ease-out ${isUnlocked ? '' : 'opacity-40 grayscale'}`} 
                           alt={inst.name}
                         />

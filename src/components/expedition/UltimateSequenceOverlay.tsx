@@ -20,7 +20,7 @@ export function UltimateSequenceOverlay({ hero, instrument, onComplete }: Ultima
   const [rhythmStats, setRhythmStats] = useState<GameplayState | null>(null);
   
   // Local hit indicator state (similar to GameBoard)
-  const [hitIndicator, setHitIndicator] = useState<{ type: HitJudgement | 'Sablay', text: string, id: number } | null>(null);
+  const [hitIndicator, setHitIndicator] = useState<{ type: HitJudgement | 'Miss', text: string, id: number } | null>(null);
   const [activeLanes, setActiveLanes] = useState<Set<number>>(new Set());
 
   // 1) Dynamically build the perfect profile from our handcrafted manual dictionary
@@ -32,7 +32,7 @@ export function UltimateSequenceOverlay({ hero, instrument, onComplete }: Ultima
 
   // 2) Initialize the rhythm game hook for exactly 8 seconds (8000ms)
   const handlePassiveMiss = useCallback(() => {
-    setHitIndicator({ type: 'Sablay', text: 'SABLAY', id: Math.random() });
+    setHitIndicator({ type: 'Miss', text: 'MISS', id: Math.random() });
     setTimeout(() => setHitIndicator(null), 400);
   }, []);
 
@@ -70,7 +70,7 @@ export function UltimateSequenceOverlay({ hero, instrument, onComplete }: Ultima
     const hitResult = hitLane(laneId);
     
     if (hitResult) {
-      const textMap = { perfect: 'TADHANA!', good: 'GANDA!' };
+      const textMap = { perfect: 'SICK!', good: 'GOOD!' };
       const jType = hitResult.judgement as 'perfect' | 'good';
       
       setHitIndicator({
@@ -81,8 +81,8 @@ export function UltimateSequenceOverlay({ hero, instrument, onComplete }: Ultima
       setTimeout(() => setHitIndicator(null), 500);
     } else if (gameState.isPlaying) {
       setHitIndicator({
-        type: 'Sablay',
-        text: 'SABLAY!',
+        type: 'Miss',
+        text: 'MISS!',
         id: Math.random()
       });
       setTimeout(() => setHitIndicator(null), 400);
@@ -188,7 +188,7 @@ export function UltimateSequenceOverlay({ hero, instrument, onComplete }: Ultima
                     {hitIndicator.text}
                   </span>
                 )}
-                {hitIndicator.type === 'Sablay' && (
+                {hitIndicator.type === 'Miss' && (
                   <span className="font-orbitron font-black italic tracking-widest block text-4xl md:text-6xl text-[#6b7280] drop-shadow-[3px_3px_0_#0f0c0c] animate-comic-glitch line-through decoration-[#da2d46] decoration-[8px]">
                     {hitIndicator.text}
                   </span>

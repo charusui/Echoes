@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronLeft, MapPin, RefreshCw, Star } from 'lucide-react';
 import { KorlongCutscene } from './KorlongCutscene';
-import visayasMap from '../assets/png/visayas_map.png';
+import visayasMap from '../assets/png/visayas_map.png?v=2';
 import {
   loadKorlongSpawn,
   generateKorlongSpawn,

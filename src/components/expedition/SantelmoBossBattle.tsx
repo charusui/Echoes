@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { audioEngine } from '../../services/audioSynth';
-import wildSummit_bg from '../../assets/boss_bg/wildSummit_bg.png';
+import wildSummit_bg from '../../assets/boss_bg/wildSummit_bg.png?v=2';
 import { type HeroProfile, type HarmonydexEntry } from '../../types/expedition';
 import { UltimateSequenceOverlay } from './UltimateSequenceOverlay';
 
@@ -462,7 +462,7 @@ export default function SantelmoBossBattle({
             >
               {/* Pulsing Glow behind the boss */}
               <div className="absolute inset-8 bg-orange-600 rounded-full blur-[30px] opacity-40 animate-pulse -z-10" />
-              <img src="/assets/expedition/santelmo_boss.png" alt="Santelmo" className="w-full h-full object-contain drop-shadow-[0_0_15px_rgba(255,200,0,0.4)]" />
+              <img src="/assets/expedition/santelmo_boss.png?v=2" alt="Santelmo" className="w-full h-full object-contain drop-shadow-[0_0_15px_rgba(255,200,0,0.4)]" />
             </div>
           </div>
 
@@ -477,7 +477,7 @@ export default function SantelmoBossBattle({
                 transform: `translate(-50%, -85%) scale(${s.boss.phase === 2 ? 1.5 : 1.0})`
               }}
             >
-              <img src="/assets/expedition/crater.png" alt="crater" className="w-full h-full object-contain" />
+              <img src="/assets/expedition/crater.png?v=2" alt="crater" className="w-full h-full object-contain" />
               <div className="absolute inset-0 bg-orange-500 rounded-[100%] opacity-40 blur-md animate-pulse pointer-events-none" />
             </div>
           ))}
@@ -562,7 +562,7 @@ export default function SantelmoBossBattle({
                   }} 
                 >
                   <img 
-                    src="/assets/expedition/ancestral_gold_bat.png" 
+                    src="/assets/expedition/ancestral_gold_bat.png?v=2" 
                     alt="Ancestral Golden Bat"
                     className="w-full h-full object-contain pointer-events-none"
                     style={{ 
@@ -627,10 +627,10 @@ export default function SantelmoBossBattle({
               <img 
                 src={fb.state === 'deflected' 
                   ? (fb.vy < 0 
-                      ? (fb.vx > 0 ? '/assets/expedition/fireball_top_left.png' : '/assets/expedition/fireball_bottom_left.png') 
-                      : (fb.vx > 0 ? '/assets/expedition/fireball_top_right.png' : '/assets/expedition/fireball_bottom_right.png')
+                      ? (fb.vx > 0 ? '/assets/expedition/fireball_top_left.png?v=2' : '/assets/expedition/fireball_bottom_left.png?v=2') 
+                      : (fb.vx > 0 ? '/assets/expedition/fireball_top_right.png?v=2' : '/assets/expedition/fireball_bottom_right.png?v=2')
                     ) 
-                  : (fb.vy < 0 ? '/assets/expedition/fireball_top.png' : '/assets/expedition/fireball_bottom.png')}
+                  : (fb.vy < 0 ? '/assets/expedition/fireball_top.png?v=2' : '/assets/expedition/fireball_bottom.png?v=2')}
                 alt="Fireball"
                 className={`w-full h-full object-contain ${fb.type === 'sky' ? 'hue-rotate-[270deg] brightness-125' : fb.state === 'deflected' ? 'hue-rotate-[180deg] saturate-200 brightness-150' : ''}`}
               />
@@ -642,7 +642,7 @@ export default function SantelmoBossBattle({
             className="absolute bottom-0 w-full z-30 pointer-events-none bg-repeat-x bg-bottom"
             style={{ 
               height: `${((GAME_H - GROUND_Y) / GAME_H) * 100}%`,
-              backgroundImage: `url('/assets/expedition/volcano_ground.png')`,
+              backgroundImage: `url('/assets/expedition/volcano_ground.png?v=2')`,
               backgroundSize: 'auto 100%',
             }}
           />

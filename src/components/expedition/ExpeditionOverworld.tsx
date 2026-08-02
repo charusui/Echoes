@@ -1,22 +1,22 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Play, MessageSquare, Compass, ShieldAlert, Camera, Map, Flame, X, ChevronUp } from 'lucide-react';
 import { type MapNode, type ExpeditionQuest } from '../../types/expedition';
-import visayasMap from '../../assets/png/visayas_map.png';
-import corruptedVisayasMap from '../../assets/png/corrupted_visayas_map.png';
+import visayasMap from '../../assets/png/visayas_map.png?v=2';
+import corruptedVisayasMap from '../../assets/png/corrupted_visayas_map.png?v=2';
 import { DevMenu } from '../DevMenu'; 
 import { audioEngine } from '../../services/audioSynth';
 
-import bakunawa_prev from '../../assets/png/bakunawa_prev.png';
-import wakwak_prev from '../../assets/png/wakwak_prev.png';
-import bandit_prev from '../../assets/png/bandit_prev.png';
-import town_prev from '../../assets/png/town_prev.png';
-import whisper_prev from '../../assets/png/whisper_prev.png';
-import santelmo_prev from '../../assets/png/santelmo_prev.png';
+import bakunawa_prev from '../../assets/png/bakunawa_prev.png?v=2';
+import wakwak_prev from '../../assets/png/wakwak_prev.png?v=2';
+import bandit_prev from '../../assets/png/bandit_prev.png?v=2';
+import town_prev from '../../assets/png/town_prev.png?v=2';
+import whisper_prev from '../../assets/png/whisper_prev.png?v=2';
+import santelmo_prev from '../../assets/png/santelmo_prev.png?v=2';
 
-import cloud_one from '../../assets/png/cloud_one.png';
-import cloud_two from '../../assets/png/cloud_two.png';
-import cloud_three from '../../assets/png/cloud_three.png';
-import cloud_four from '../../assets/png/cloud_four.png';
+import cloud_one from '../../assets/png/cloud_one.png?v=2';
+import cloud_two from '../../assets/png/cloud_two.png?v=2';
+import cloud_three from '../../assets/png/cloud_three.png?v=2';
+import cloud_four from '../../assets/png/cloud_four.png?v=2';
 
 interface ExpeditionOverworldProps {
   nodes: Record<string, MapNode>;
@@ -175,13 +175,13 @@ export function ExpeditionOverworld({
         {
           speaker: 'Rescued Traveler',
           avatar: '🧑',
-          text: 'Thank you for saving me! Those bandits were fierce.',
+          text: 'Thank you! Those Bandits were using dissonant instruments to stun their victims — I have never seen anything like it.',
           choice: 'Are you hurt?',
         },
         {
           speaker: 'Rescued Traveler',
           avatar: '🧑',
-          text: 'I am fine... but be careful on your way to Echo Village. There is a Wakwak boss wreaking havoc there!',
+          text: 'Please be careful on your way to Echo Village. A Wakwak boss is nesting there — its sonic screech can disorient an entire party.',
           choice: 'A Wakwak? We will be ready.',
         }
       ];
@@ -192,14 +192,14 @@ export function ExpeditionOverworld({
         {
           speaker: 'Wandering Merchant',
           avatar: '🧕',
-          text: 'You head toward the Harmonic Shrine? I would reconsider.',
-          choice: 'Why? What is there?',
+          text: 'You are heading toward Echo Village? You are brave — or foolish. The Wakwak there has been attuning corrupted instruments to amplify its screech.',
+          choice: 'What do you know about it?',
         },
         {
           speaker: 'Wandering Merchant',
           avatar: '🧕',
-          text: 'Rumors say the Shrine is guarded by a massive brass beast that hypnotizes travelers with deep, resonant shockwaves.',
-          choice: 'Hypnosis? Thanks for the warning.',
+          text: 'Weaken it in battle first — get its HP below 35% — then use your ATTUNE command to capture it. That is how Conductors seal instruments.',
+          choice: 'Thanks for the tip!',
         }
       ];
     }
@@ -208,19 +208,19 @@ export function ExpeditionOverworld({
       {
         speaker: 'Elder Cadence',
         avatar: '👴',
-        text: 'Welcome to the Silent Valley, brave harmonist. The dissonance anomaly has twisted the local instruments.',
-        choice: 'We are ready to restore harmony, Elder.',
+        text: 'Welcome, brave Conductors. The Great Dissonance has corrupted the traditional instruments of the Visayas — you must restore harmony.',
+        choice: 'We are ready, Elder.',
       },
       {
         speaker: 'Elder Cadence',
         avatar: '👴',
-        text: 'To restore equilibrium, you must engage the anomalies in turn-based acoustic combat and seal their resonance.',
-        choice: 'Understood! We will head to Echo Village.',
+        text: 'Scan instruments using the AI Scanner to capture them to your Dex. In battle, weaken enemies then use ATTUNE to seal their instrument.',
+        choice: 'How do we get stronger?',
       },
       {
         speaker: 'Elder Cadence',
         avatar: '👴',
-        text: 'Beware Lord Cacophony at The Wild Peak Summit! His brass shockwaves can shatter an unprepared party in seconds.',
+        text: 'Defeat enemies to earn Harmonic Shards — spend them at Maria\'s Shop in Cadence Town. The road to Echo Village is long. Stay in tune.',
         choice: 'To battle!',
       },
     ];

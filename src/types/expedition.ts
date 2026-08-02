@@ -37,6 +37,7 @@ export interface HarmonydexEntry {
   audioPreset: string;
   rhythmSpeed: number;
   lore: string;
+  isEnemy?: boolean;
   skillName: string;
   skillCost: number;
   skillDesc: string;
@@ -72,7 +73,7 @@ export interface EnemyProfile {
   isBoss?: boolean;
 }
 
-export type TurnUnit = 
+export type TurnUnit =
   | { isHero: true; unit: HeroProfile }
   | { isHero: false; unit: EnemyProfile };
 
@@ -100,6 +101,51 @@ export interface ExpeditionQuest {
 }
 
 export const EXPEDITION_INSTRUMENTS: Record<string, HarmonydexEntry> = {
+  generic_guitar: {
+    id: 'generic_guitar',
+    name: 'Standard Guitar',
+    type: 'string',
+    baseDmg: 15,
+    icon: '🎸',
+    desc: 'A basic acoustic guitar. Good for learning chords.',
+    captured: true,
+    audioPreset: 'pluck-distortion',
+    rhythmSpeed: 1.0,
+    lore: 'Standard mass-produced instrument.',
+    skillName: 'Basic Strum',
+    skillCost: 1,
+    skillDesc: 'A simple strum that deals minor damage.',
+  },
+  generic_flute: {
+    id: 'generic_flute',
+    name: 'Wooden Flute',
+    type: 'woodwind',
+    baseDmg: 12,
+    icon: '🪈',
+    desc: 'A simple wooden flute. Produces a soft tone.',
+    captured: true,
+    audioPreset: 'sine-breath',
+    rhythmSpeed: 1.0,
+    lore: 'A common woodwind instrument.',
+    skillName: 'Soft Blow',
+    skillCost: 1,
+    skillDesc: 'Heals the party for a small amount.',
+  },
+  generic_drum: {
+    id: 'generic_drum',
+    name: 'Practice Drum',
+    type: 'percussion',
+    baseDmg: 18,
+    icon: '🥁',
+    desc: 'A standard snare drum for keeping time.',
+    captured: true,
+    audioPreset: 'sub-percussion',
+    rhythmSpeed: 1.0,
+    lore: 'A reliable percussion instrument for beginners.',
+    skillName: 'Steady Beat',
+    skillCost: 1,
+    skillDesc: 'A steady strike with minor stagger.',
+  },
   cebuano_gitara: {
     id: 'cebuano_gitara',
     name: 'Cebuano Gitara',
@@ -153,6 +199,7 @@ export const EXPEDITION_INSTRUMENTS: Record<string, HarmonydexEntry> = {
     icon: '👺',
     desc: 'A rogue musician that ambushes travelers.',
     captured: false,
+    isEnemy: true,
     audioPreset: 'pluck-distortion',
     rhythmSpeed: 1.0,
     lore: 'These rogues travel the woods to steal instruments.',
@@ -273,6 +320,7 @@ export const EXPEDITION_INSTRUMENTS: Record<string, HarmonydexEntry> = {
     icon: '🦇',
     desc: 'A terrifying avian anomaly with devastating wing slam attacks.',
     captured: false,
+    isEnemy: true,
     audioPreset: 'saw-horn',
     rhythmSpeed: 1.3,
     lore: 'The Wakwak is known for its loud, echoing calls and devastating slam attacks.',
@@ -325,6 +373,21 @@ export const EXPEDITION_INSTRUMENTS: Record<string, HarmonydexEntry> = {
     skillCost: 1,
     skillDesc: 'A fast attack that ignores a portion of enemy defense.',
   },
+  korlong: {
+    id: 'korlong',
+    name: 'Korlong',
+    type: 'string',
+    baseDmg: 45,
+    icon: '🎻',
+    desc: 'Critically endangered two-stringed fiddle.',
+    captured: false,
+    audioPreset: 'pluck-distortion',
+    rhythmSpeed: 1.15,
+    lore: 'Played by women to accompany epic chanting and storytelling.',
+    skillName: 'Epic Chant',
+    skillCost: 2,
+    skillDesc: 'A mystical attack that pierces armor.',
+  },
   bakunawa: {
     id: 'bakunawa',
     name: 'Bakunawa',
@@ -333,6 +396,7 @@ export const EXPEDITION_INSTRUMENTS: Record<string, HarmonydexEntry> = {
     icon: '🐉',
     desc: 'The mythical moon-eating sea dragon.',
     captured: false,
+    isEnemy: true,
     audioPreset: 'sub-percussion',
     rhythmSpeed: 1.4,
     lore: 'A gigantic sea dragon from Philippine mythology, believed to cause eclipses.',
@@ -352,7 +416,7 @@ export const DEFAULT_HEROES: Record<string, HeroProfile> = {
     ap: 4,
     maxAp: 6,
     shield: 0,
-    equippedId: 'cebuano_gitara',
+    equippedId: 'generic_guitar',
     avatar: '/assets/expedition/gustave_avatar.png',
     bio: 'Lead guitarist and expedition commander. Specialist in String overdrive.',
   },
@@ -365,7 +429,7 @@ export const DEFAULT_HEROES: Record<string, HeroProfile> = {
     ap: 5,
     maxAp: 6,
     shield: 0,
-    equippedId: 'tulali',
+    equippedId: 'generic_flute',
     avatar: '/assets/expedition/maelle_avatar.png',
     bio: 'Wind prodigy capable of manipulating sonic frequency shields.',
   },
@@ -378,7 +442,7 @@ export const DEFAULT_HEROES: Record<string, HeroProfile> = {
     ap: 4,
     maxAp: 6,
     shield: 0,
-    equippedId: 'tultugan',
+    equippedId: 'generic_drum',
     avatar: '/assets/expedition/lune_avatar.png',
     bio: 'Healer who channeled ancestral rhythms into healing magic.',
   },

@@ -19,7 +19,7 @@ interface GameBoardProps {
 
 export function GameBoard({ profile, onQuit, onFinish, onKorlongHunt }: GameBoardProps) {
   const [activeLanes, setActiveLanes] = useState<Set<number>>(new Set());
-  const [hitIndicator, setHitIndicator] = useState<{ type: 'Tadhana' | 'Ganda' | 'Sablay', text: string, id: number } | null>(null);
+  const [hitIndicator, setHitIndicator] = useState<{ type: 'Sick' | 'Good' | 'Miss', text: string, id: number } | null>(null);
   const [showAlert, setShowAlert] = useState(true);
   const [showKorlongPopup, setShowKorlongPopup] = useState(false);
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | null>(null);
@@ -95,8 +95,8 @@ export function GameBoard({ profile, onQuit, onFinish, onKorlongHunt }: GameBoar
 
   const handlePassiveMiss = useCallback(() => {
     setHitIndicator({
-      type: 'Sablay',
-      text: 'SABLAY',
+      type: 'Miss',
+      text: 'MISS',
       id: Math.random()
     });
     setTimeout(() => setHitIndicator(null), 400);
@@ -149,8 +149,8 @@ export function GameBoard({ profile, onQuit, onFinish, onKorlongHunt }: GameBoar
     const hitResult = hitLane(laneId);
     
     if (hitResult) {
-      const typeMap = { perfect: 'Tadhana', good: 'Ganda' } as const;
-      const textMap = { perfect: 'TADHANA', good: 'GANDA' };
+      const typeMap = { perfect: 'Sick', good: 'Good' } as const;
+      const textMap = { perfect: 'SICK', good: 'GOOD' };
       const jType = hitResult.judgement as 'perfect' | 'good';
       
       setHitIndicator({
@@ -161,8 +161,8 @@ export function GameBoard({ profile, onQuit, onFinish, onKorlongHunt }: GameBoar
       setTimeout(() => setHitIndicator(null), 500);
     } else if (gameState.isPlaying) {
       setHitIndicator({
-        type: 'Sablay',
-        text: 'SABLAY',
+        type: 'Miss',
+        text: 'MISS',
         id: Math.random()
       });
       setTimeout(() => setHitIndicator(null), 400);
@@ -336,7 +336,7 @@ export function GameBoard({ profile, onQuit, onFinish, onKorlongHunt }: GameBoar
               key={hitIndicator.id}
               className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 pointer-events-none flex items-center justify-center"
             >
-              {hitIndicator.type === 'Tadhana' && (
+              {hitIndicator.type === 'Sick' && (
                 <div className="relative animate-comic-hit-pop">
                   <div className="absolute inset-0 bg-[#da2d46] blur-md scale-125 -z-10" />
                   <span 
@@ -347,7 +347,7 @@ export function GameBoard({ profile, onQuit, onFinish, onKorlongHunt }: GameBoar
                   </span>
                 </div>
               )}
-              {hitIndicator.type === 'Ganda' && (
+              {hitIndicator.type === 'Good' && (
                 <span 
                   className="font-orbitron font-black text-[#e0e5ed] text-4xl md:text-5xl italic tracking-tight block animate-comic-hit-pop"
                   style={{ textShadow: '4px 4px 0px #0f0c0c' }}
@@ -355,7 +355,7 @@ export function GameBoard({ profile, onQuit, onFinish, onKorlongHunt }: GameBoar
                   {hitIndicator.text}
                 </span>
               )}
-              {hitIndicator.type === 'Sablay' && (
+              {hitIndicator.type === 'Miss' && (
                 <span 
                   className="font-orbitron font-black italic tracking-widest block text-4xl md:text-6xl animate-comic-glitch line-through decoration-[#da2d46] decoration-[8px]"
                 >

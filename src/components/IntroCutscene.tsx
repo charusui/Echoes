@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import scene1 from '../assets/intro/scene1.png';
-import scene2 from '../assets/intro/scene2.png';
-import scene3 from '../assets/intro/scene3.png';
-import scene4 from '../assets/intro/scene4.png';
+import scene1 from '../assets/intro/scene1.png?v=2';
+import scene2 from '../assets/intro/scene2.png?v=2';
+import scene3 from '../assets/intro/scene3.png?v=2';
+import scene4 from '../assets/intro/scene4.png?v=2';
 import { ChevronRight, FastForward } from 'lucide-react';
 
 interface IntroCutsceneProps {

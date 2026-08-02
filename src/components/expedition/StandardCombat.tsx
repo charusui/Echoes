@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Sword, Sparkles, Shield, Disc, Zap, ArrowLeft, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Sword, Sparkles, Shield, Disc, Zap, ArrowLeft, Users, ChevronLeft, ChevronRight, Package } from 'lucide-react';
+import { ItemMenuOverlay } from './ItemMenuOverlay';
 import { audioEngine } from '../../services/audioSynth';
 import { 
   EXPEDITION_INSTRUMENTS, 
@@ -38,8 +39,11 @@ export function StandardCombat(props: ExpeditionCombatProps) {
     canCounterAttack, parryResolved, isBoss, isShrineBandit, enemy, baseEnemyInst, partyList,
     turnQueue, currentTurnUnit, isHeroTurn, activeHero, activeAttackingEnemy,
     handleCommandAttack, handleCommandSkill, handleCommandAttune, handleCommandDefend,
-    handleRhythmComplete, handleSpellComplete, handleParryResult, handleWingSlamCounterComplete, handleAttuneComplete, isRightSweepAttack
+    handleRhythmComplete, handleSpellComplete, handleParryResult, handleWingSlamCounterComplete, handleAttuneComplete, isRightSweepAttack,
+    handleUseItem, inventory,
   } = engine;
+
+  const [showItemsMenu, setShowItemsMenu] = useState(false);
   
   // NEW LOGIC FROM PULLED CODE: Dynamic hero sprites based on combat state
   const getHeroSprite = (hero: HeroProfile) => {
@@ -526,7 +530,7 @@ export function StandardCombat(props: ExpeditionCombatProps) {
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 text-[8px] font-bold font-orbitron">
-                      <span className="truncate">HP: {hero.hp}/{hero.maxHp}</span>
+                      <span className="truncate flex items-center">HP: {hero.hp}/{hero.maxHp}{hero.shield > 0 && <span className="text-blue-400 ml-1 flex items-center gap-0.5"><Shield className="w-2 h-2 fill-current" />{hero.shield}</span>}</span>
                       <span className="truncate">AP: {hero.ap}/{hero.maxAp}</span>
                     </div>
                     <div className="flex gap-0.5 mt-0.5">
@@ -654,7 +658,7 @@ export function StandardCombat(props: ExpeditionCombatProps) {
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-2xs font-bold font-orbitron">
-                    <span>HP: {hero.hp}/{hero.maxHp}</span>
+                    <span className="flex items-center">HP: {hero.hp}/{hero.maxHp}{hero.shield > 0 && <span className="text-blue-400 ml-1 flex items-center gap-0.5"><Shield className="w-2.5 h-2.5 fill-current" />{hero.shield}</span>}</span>
                     <span>AP: {hero.ap}/{hero.maxAp}</span>
                   </div>
                   <div className="flex gap-1 mt-1">
@@ -787,8 +791,16 @@ export function StandardCombat(props: ExpeditionCombatProps) {
           <button onClick={handleCommandDefend} disabled={!isHeroTurn || activeAction !== 'none' || isEndingBattle} className="col-span-1 px-1.5 py-1.5 sm:px-4 sm:py-3 bg-[#4ade80] text-[#0f0c0c] border-[2px] sm:border-[4px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-[8px] sm:text-sm uppercase -skew-x-6 hover:bg-[#6bee9c] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-1 sm:gap-2 active:translate-y-0.5 active:shadow-none">
             <Shield className="w-3 h-3 sm:w-4 sm:h-4 fill-current shrink-0 hidden xs:block" />
             <div className="flex flex-col text-left justify-center overflow-hidden">
-              <span className="leading-tight truncate">PARRY STANCE</span>
+              <span className="leading-tight truncate">DEFEND</span>
               <span className="text-[6px] sm:text-2xs font-bold opacity-80 leading-tight truncate">(+2 AP) Block</span>
+            </div>
+          </button>
+
+          <button onClick={() => setShowItemsMenu(true)} disabled={isEndingBattle || !isHeroTurn} className="col-span-1 sm:col-span-1 px-1.5 py-1.5 sm:px-4 sm:py-3 bg-[#7c3aed] text-white border-[2px] sm:border-[4px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-[8px] sm:text-sm uppercase -skew-x-6 hover:bg-[#9f5ffc] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center sm:justify-start gap-1 sm:gap-2 active:translate-y-0.5 active:shadow-none">
+            <Package className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
+            <div className="flex flex-col text-left justify-center">
+              <span className="leading-tight">ITEMS</span>
+              <span className="text-[6px] sm:text-2xs font-bold opacity-80 leading-tight hidden sm:block">Open Inventory</span>
             </div>
           </button>
 
@@ -797,13 +809,6 @@ export function StandardCombat(props: ExpeditionCombatProps) {
             <div className="flex flex-col text-left justify-center">
               <span className="leading-tight">RETREAT</span>
               <span className="text-[6px] sm:text-2xs font-bold opacity-80 leading-tight hidden sm:block">Flee Battle</span>
-            </div>
-          </button>
-
-          <button onClick={() => onCombatResult({ victory: true, xpGained: 150 * enemies.length })} disabled={isEndingBattle} className="col-span-1 sm:col-span-1 px-1.5 py-1.5 sm:px-4 sm:py-3 bg-[#eab308] text-[#0f0c0c] border-[2px] sm:border-[4px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-[8px] sm:text-sm uppercase -skew-x-6 hover:bg-[#facc15] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center sm:justify-start gap-1 sm:gap-2 active:translate-y-0.5 active:shadow-none">
-            <div className="flex flex-col text-left justify-center">
-              <span className="leading-tight">SKIP (TEST)</span>
-              <span className="text-[6px] sm:text-2xs font-bold opacity-80 leading-tight hidden sm:block">Auto Win</span>
             </div>
           </button>
         </div>
@@ -863,8 +868,20 @@ export function StandardCombat(props: ExpeditionCombatProps) {
           >
             <Shield className="w-4 h-4 fill-current" />
             <div className="flex flex-col text-left">
-              <span>PARRY STANCE</span>
+              <span>DEFEND</span>
               <span className="text-2xs font-bold opacity-80">(+2 AP) Block &amp; Counter</span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => setShowItemsMenu(true)}
+            disabled={isEndingBattle || !isHeroTurn}
+            className="px-4 py-3 bg-[#7c3aed] text-white border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#9f5ffc] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2 active:translate-y-0.5 active:shadow-none"
+          >
+            <Package className="w-4 h-4 stroke-[2.5px]" />
+            <div className="flex flex-col text-left">
+              <span>ITEMS</span>
+              <span className="text-2xs font-bold opacity-80">Use consumables</span>
             </div>
           </button>
 
@@ -877,17 +894,6 @@ export function StandardCombat(props: ExpeditionCombatProps) {
             <div className="flex flex-col text-left">
               <span>RETREAT</span>
               <span className="text-2xs font-bold opacity-80">Flee Battle</span>
-            </div>
-          </button>
-
-          <button
-            onClick={() => onCombatResult({ victory: true, xpGained: 150 * enemies.length })}
-            disabled={isEndingBattle}
-            className="px-4 py-3 bg-[#eab308] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#facc15] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2 active:translate-y-0.5 active:shadow-none"
-          >
-            <div className="flex flex-col text-left">
-              <span>SKIP (TEST)</span>
-              <span className="text-2xs font-bold opacity-80">Auto Win</span>
             </div>
           </button>
         </div>
@@ -926,6 +932,13 @@ export function StandardCombat(props: ExpeditionCombatProps) {
             <AttuneCaptureOverlay 
               enemy={enemy}
               onComplete={handleAttuneComplete}
+            />
+          )}
+          {showItemsMenu && (
+            <ItemMenuOverlay
+              inventory={inventory}
+              onClose={() => setShowItemsMenu(false)}
+              onUseItem={(id) => { handleUseItem(id); setShowItemsMenu(false); }}
             />
           )}
         </div>

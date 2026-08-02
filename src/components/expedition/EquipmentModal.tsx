@@ -18,8 +18,7 @@ export function EquipmentModal({
   const heroList = Object.values(party);
   const [selectedHeroId, setSelectedHeroId] = useState<string>(heroList[0]?.id || 'gustave');
   const activeHero = party[selectedHeroId] || heroList[0]!;
-
-  const capturedInstruments = Object.values(dex).filter(i => i.captured);
+  const capturedInstruments = Object.values(dex).filter(i => i.captured && !i.isEnemy);
 
   return (
     <div className="fixed inset-0 z-50 bg-[#0f0c0c]/80 flex items-center justify-center p-4 overflow-y-auto">
@@ -53,10 +52,10 @@ export function EquipmentModal({
                   isSelected ? 'bg-[#facc15] text-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] scale-105' : 'bg-[#2a2d43] text-white hover:bg-[#383d5a]'
                 }`}
               >
-                <span className="text-lg">{hero.avatar}</span>
+                <img src={hero.avatar} alt={hero.name} className="w-6 h-6 object-cover" />
                 <span>{hero.name}</span>
                 <span className="px-1.5 py-0.5 bg-white text-[#facc15] text-[10px] skew-x-6 flex items-center justify-center overflow-hidden">
-                  <img src={`/assets/instruments/${inst.id}.png`} alt={inst.name} className="w-5 h-5 object-contain scale-110 mix-blend-multiply" />
+                  <img src={`/assets/instruments/${inst.id}.png?v=2`} alt={inst.name} className="w-5 h-5 object-contain scale-110 mix-blend-multiply" />
                 </span>
               </button>
             );
@@ -68,8 +67,8 @@ export function EquipmentModal({
           {/* Left: Hero Stats & Bio */}
           <div className="w-full md:w-5/12 p-6 border-b md:border-b-0 md:border-r-[4px] border-[#0f0c0c] flex flex-col gap-4 bg-[#151828]">
             <div className="flex items-center gap-3">
-              <div className="text-5xl bg-[#0f0c0c] p-3 border-[3px] border-[#4ade80] shadow-[3px_3px_0px_0px_#4ade80]">
-                {activeHero.avatar}
+              <div className="w-24 h-24 bg-[#0f0c0c] p-2 border-[3px] border-[#4ade80] shadow-[3px_3px_0px_0px_#4ade80] shrink-0">
+                <img src={activeHero.avatar} alt={activeHero.name} className="w-full h-full object-cover" />
               </div>
               <div>
                 <h3 className="font-orbitron font-black text-xl text-white tracking-wider">
@@ -134,7 +133,7 @@ export function EquipmentModal({
                   >
                     <div className="flex items-center gap-3">
                       <span className="bg-white border border-[#0f0c0c] flex items-center justify-center w-14 h-14 overflow-hidden shadow-[inset_0_0_8px_rgba(0,0,0,0.2)] p-1">
-                        <img src={`/assets/instruments/${item.id}.png`} alt={item.name} className="w-full h-full object-contain scale-110 mix-blend-multiply" />
+                        <img src={`/assets/instruments/${item.id}.png?v=2`} alt={item.name} className="w-full h-full object-contain scale-110 mix-blend-multiply" />
                       </span>
                       <div className="flex flex-col">
                         <div className="flex items-center gap-2">

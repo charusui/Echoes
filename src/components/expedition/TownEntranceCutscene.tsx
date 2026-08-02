@@ -7,24 +7,24 @@ interface TownEntranceCutsceneProps {
 
 const SCENES = [
   {
-    image: '/assets/story/chieftess_scene1.png',
+    image: '/assets/story/chieftess_scene1.png?v=2',
     dialogues: [
-      "Welcome to Cadence Town, brave travelers.",
-      "Please, accept these fruits as a token of our hospitality. You must be weary from your journey."
+      "Welcome to Cadence Town, brave Conductors.",
+      "Please, accept these fruits as a token of our hospitality. You must be weary from the road."
     ]
   },
   {
-    image: '/assets/story/chieftess_scene2.png',
+    image: '/assets/story/chieftess_scene2.png?v=2',
     dialogues: [
-      "Recently, our merchants and supply lines have been experiencing vicious attacks on the roads.",
-      "Without these vital supplies, I fear the harmony of our happy town will shatter, and people will soon turn on each other."
+      "Our town has been under siege. Bandits armed with corrupted, dissonant instruments are ambushing travelers on every road out of Cadence Town.",
+      "They disrupt the harmony of the region — and without harmony, even our folk instruments are falling silent. The people are frightened."
     ]
   },
   {
-    image: '/assets/story/chieftess_scene3.png',
+    image: '/assets/story/chieftess_scene3.png?v=2',
     dialogues: [
-      "But seeing your strength gives me hope.",
-      "I believe you can put an end to these attacks, save the day, and protect our beloved town."
+      "You are Conductors — the only ones who can fight fire with music. Please, restore order to these roads.",
+      "Head east to the Crossroads first. From there, the path leads to Echo Village — and the source of this dissonance."
     ]
   }
 ];
