@@ -41,7 +41,7 @@ import {
 } from './types/expedition';
 
 function InnerApp() {
-  const { client } = useGemini();
+  const { client, isElectron, showApiKeyPrompt } = useGemini();
   const [view, setView] = useState<AppView>('title');
   const [isTransitioning, setIsTransitioning] = useState(false);
   
@@ -68,6 +68,15 @@ function InnerApp() {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   }, []);
+
+  const tryOpenScanner = useCallback(() => {
+    if (isElectron && !localStorage.getItem('filinstruments_gemini_key')) {
+      showToast('Configure your Gemini API Key first!');
+      showApiKeyPrompt();
+      return;
+    }
+    setView('scanner');
+  }, [isElectron, showApiKeyPrompt, showToast]);
 
   const { recordScan, updateStreak, addXP, progress, saveCustomProfile, addPendingReview } = useProgress();
 
@@ -399,7 +408,7 @@ function InnerApp() {
           nodes={nodes} setNodes={setNodes}
           quests={quests} setQuests={setQuests}
           onBack={() => setView('title')}
-          onOpenScanner={() => setView('scanner')}
+          onOpenScanner={tryOpenScanner}
           onOpenLocationServices={() => setView('locationServices')}
           onOpenCollection={() => setView('collection')}
           onOpenBadges={() => setView('badges')}
@@ -425,7 +434,7 @@ function InnerApp() {
           onSelectInstrument={handleSelectInstrument}
           onSelectCustomProfile={handleSelectCustomProfile}
           onOpenKorlongHunt={() => setView('korlongHunt')}
-          onOpenScanner={() => setView('scanner')}
+          onOpenScanner={tryOpenScanner}
         />
       )}
 
