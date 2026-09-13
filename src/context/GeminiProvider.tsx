@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useMemo, useState, useEffect } from 'react';
 import { GoogleGenAI } from '@google/genai';
+import { Key } from 'pixelarticons/react';
+import { PixelButton, PixelModal } from '../components/ui';
 
 // ─── Context Types ─────────────────────────────────────────────────────────────
 
@@ -64,51 +66,39 @@ export function GeminiProvider({ children }: { children: React.ReactNode }) {
       {children}
       
       {showPrompt && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0f0c0c]/90 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md bg-[#2a2d43] border-[6px] border-[#0f0c0c] shadow-[12px_12px_0px_0px_#da2d46] p-6 sm:p-8 relative -skew-x-2">
-            <h2 className="font-orbitron font-black text-2xl text-[#e0e5ed] uppercase tracking-widest mb-4 skew-x-2 text-center">
-              API Key Required
-            </h2>
-            <p className="font-space-mono text-sm text-[#888ea1] mb-6 skew-x-2 text-center">
-              To use the AI Scanner and AI Companions, you must provide your own Google Gemini API Key. This key is saved locally in your browser.
-            </p>
-            
-            <div className="flex flex-col gap-4 skew-x-2">
-              <input 
-                type="password"
-                placeholder="AIzaSy..."
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                className="w-full bg-[#0f0c0c] border-[3px] border-[#888ea1] p-3 font-space-mono text-[#e0e5ed] outline-none focus:border-[#da2d46] transition-colors placeholder:opacity-50"
-              />
-              
-              <div className="flex gap-2">
-                <button 
-                  onClick={handleSave}
-                  disabled={!inputValue.trim()}
-                  className="flex-1 bg-[#da2d46] hover:bg-[#ff3b56] text-[#0f0c0c] border-[3px] border-[#0f0c0c] p-3 font-orbitron font-black uppercase tracking-widest shadow-[4px_4px_0px_0px_#0f0c0c] active:translate-y-1 active:shadow-none transition-all disabled:opacity-50 disabled:pointer-events-none"
-                >
-                  Save Key
-                </button>
-                {localStorage.getItem('filinstruments_gemini_key') && (
-                  <button 
-                    onClick={() => { clearApiKey(); setShowPrompt(false); }}
-                    className="bg-[#da2d46]/20 hover:bg-[#da2d46]/40 text-[#da2d46] border-[3px] border-[#da2d46] p-3 font-orbitron font-black uppercase tracking-widest transition-all"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-              
-              <button 
-                onClick={handleSkip}
-                className="w-full bg-transparent hover:bg-[#888ea1]/20 text-[#888ea1] border-[3px] border-[#888ea1] p-3 font-orbitron font-black uppercase tracking-widest transition-all"
-              >
-                Play Without AI
-              </button>
-            </div>
-          </div>
-        </div>
+        <PixelModal
+          onClose={handleSkip}
+          title="Gemini API Key"
+          subtitle="Needed for the AI scanner and companions"
+          icon={<Key />}
+          maxWidth="max-w-md"
+          footer={
+            <>
+              {localStorage.getItem('filinstruments_gemini_key') && (
+                <PixelButton variant="danger" size="sm" className="mr-auto" onClick={() => { clearApiKey(); setShowPrompt(false); }}>
+                  Clear Key
+                </PixelButton>
+              )}
+              <PixelButton variant="ghost" onClick={handleSkip}>Play Without AI</PixelButton>
+              <PixelButton variant="primary" disabled={!inputValue.trim()} onClick={handleSave}>Save Key</PixelButton>
+            </>
+          }
+        >
+          <p className="text-base text-parchment-300">
+            Paste your own Google Gemini API key. It stays on this device and is only used to talk to Gemini.
+          </p>
+          <label className="mt-4 block">
+            <span className="text-sm text-parchment-300">API key</span>
+            <input
+              type="password"
+              placeholder="AIzaSy..."
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); }}
+              className="mt-1 w-full h-12 px-3 bg-plum-950 border-[3px] border-ink text-base text-parchment-100 placeholder:text-parchment-500 focus:border-gold-300 focus:outline-none"
+            />
+          </label>
+        </PixelModal>
       )}
     </GeminiContext.Provider>
   );

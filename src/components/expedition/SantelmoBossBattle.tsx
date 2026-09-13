@@ -3,6 +3,9 @@ import { audioEngine } from '../../services/audioSynth';
 import wildSummit_bg from '../../assets/boss_bg/wildSummit_bg.png?v=2';
 import { type HeroProfile, type HarmonydexEntry } from '../../types/expedition';
 import { UltimateSequenceOverlay } from './UltimateSequenceOverlay';
+import { ArrowLeft as PxArrowLeft, ArrowRight as PxArrowRight, Tablet as PxDeviceTablet } from 'pixelarticons/react';
+import { Kbd, PixelBar, PixelButton, PixelPanel } from '../ui';
+import { cn } from '../../lib/cn';
 
 interface SantelmoBossBattleProps {
   party: Record<string, HeroProfile>;
@@ -419,63 +422,54 @@ export default function SantelmoBossBattle({
   const avatar = '/girl_idle.gif'; // Fixed player sprite
 
   return (
-    <div className="w-full h-full flex flex-col bg-black relative select-none overflow-hidden touch-none font-orbitron">
+    <div className="w-full h-full flex flex-col bg-plum-950 relative select-none overflow-hidden touch-none">
       {/* PORTRAIT LOCK OVERLAY FOR MOBILE DEVICES - conditionally hidden when game is over */}
       {!gameResult && (
-        <div className="portrait:flex hidden absolute inset-0 z-[9999] bg-[#0f0c0c] flex-col items-center justify-center p-6 text-center shadow-inner overflow-hidden pointer-events-auto">
-          <div className="animate-bounce mb-6">
-            <svg className="w-20 h-20 text-[#facc15]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-          </div>
-          <h2 className="text-white font-orbitron font-black text-3xl mb-4 tracking-wider text-shadow-md">ROTATE DEVICE</h2>
-          <p className="text-slate-300 font-sans text-lg">This boss encounter requires landscape mode for the intended layout.</p>
+        <div className="portrait:flex hidden absolute inset-0 z-[9999] bg-plum-950 flex-col items-center justify-center gap-4 p-6 text-center pointer-events-auto">
+          <PxDeviceTablet className="size-16 text-gold-300 rotate-90" aria-hidden />
+          <h2 className="font-bold text-3xl leading-none text-parchment-100">Rotate your device</h2>
+          <p className="text-base text-parchment-300">This boss battle is played in landscape.</p>
         </div>
       )}
 
       {/* HUD */}
-      <div className="absolute top-4 left-4 right-4 flex justify-between z-50 pointer-events-none">
+      <div className="absolute top-4 left-4 right-4 flex justify-between items-start gap-4 z-50 pointer-events-none">
         <div className="flex flex-col gap-2 pointer-events-auto">
-          <div className="flex flex-col gap-1">
-            <span className="text-white font-black text-sm drop-shadow-md">PARTY HP</span>
-            <div className="w-48 h-4 bg-gray-900 border-2 border-black">
-              <div 
-                className="h-full bg-green-500 transition-all duration-200" 
-                style={{ width: `${Math.max(0, (s.partyHp / s.maxPartyHp) * 100)}%` }} 
+          <PixelPanel padding="sm" small className="w-52">
+            <PixelBar kind="heal" height={10} segments={0} label="Party" valueText={`${Math.max(0, Math.round(s.partyHp))} / ${s.maxPartyHp}`} value={s.partyHp} max={s.maxPartyHp} transition="width 200ms" />
+          </PixelPanel>
+          {onFlee && !gameResult && (
+            <PixelButton size="sm" variant="ghost" icon={<PxArrowLeft />} onClick={onFlee} className="self-start [text-shadow:0_2px_0_var(--color-ink)]">
+              Retreat
+            </PixelButton>
+          )}
+        </div>
+
+        {/* Boss HP */}
+        <PixelPanel padding="sm" small className="w-72 pointer-events-auto">
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <span className="font-bold text-lg leading-none text-parchment-100">{bossName}</span>
+            {s.boss.phase === 2 && <span className="px-1.5 py-0.5 border-2 border-ink bg-hp text-xs font-semibold leading-none text-parchment-100">Phase 2 · Enraged</span>}
+          </div>
+          <div className="px-frame px-frame-inset px-frame-sm overflow-hidden">
+            <div className="relative h-3.5">
+              {/* Lower half of the health pool */}
+              <div
+                className="absolute top-0 right-0 h-full bg-el-brass transition-all duration-300"
+                style={{ width: `${Math.max(0, Math.min((s.boss.hp / (s.boss.maxHp / 2)) * 100, 100))}%` }}
+              />
+              {/* Upper half of the health pool */}
+              <div
+                className="absolute top-0 right-0 h-full bg-hp shadow-[inset_0_-3px_0_var(--color-hp-dark)] transition-all duration-300"
+                style={{ width: `${Math.max(0, ((s.boss.hp - s.boss.maxHp / 2) / (s.boss.maxHp / 2)) * 100)}%` }}
               />
             </div>
           </div>
-          {onFlee && !gameResult && (
-            <button
-              onClick={onFlee}
-              className="px-4 py-1.5 bg-[#2a2d43]/90 hover:bg-[#383d5a] text-white border-2 border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-xs uppercase -skew-x-6 active:translate-y-0.5 active:shadow-none self-start"
-            >
-              ← RETREAT
-            </button>
-          )}
-        </div>
-        
-        {/* Boss HP */}
-        <div className="flex flex-col gap-1 w-64 items-end">
-          <span className="text-[#facc15] font-bold text-sm tracking-wider uppercase">{bossName}</span>
-          <div className="relative w-full h-4 bg-[#0f0c0c] border-2 border-[#facc15] overflow-hidden">
-            {/* Orange layer (Bottom 50%) */}
-            <div 
-              className="absolute top-0 right-0 h-full bg-orange-500 transition-all duration-300" 
-              style={{ width: `${Math.max(0, Math.min((s.boss.hp / (s.boss.maxHp / 2)) * 100, 100))}%` }} 
-            />
-            {/* Red layer (Top 50%) */}
-            <div 
-              className="absolute top-0 right-0 h-full bg-red-600 transition-all duration-300" 
-              style={{ width: `${Math.max(0, ((s.boss.hp - s.boss.maxHp / 2) / (s.boss.maxHp / 2)) * 100)}%` }} 
-            />
-          </div>
-          {s.boss.phase === 2 && (
-            <span className="text-red-500 font-bold text-xs animate-pulse">PHASE 2: ENRAGED</span>
-          )}
-        </div>
+        </PixelPanel>
       </div>
 
       {/* Game Window */}
-      <div className="flex-1 w-full h-full flex items-center justify-center relative z-10 bg-black overflow-hidden">
+      <div className="flex-1 w-full h-full flex items-center justify-center relative z-10 bg-plum-950 overflow-hidden">
         {/* Fullscreen Container */}
         <div 
           className="relative w-full h-full overflow-hidden"
@@ -483,7 +477,7 @@ export default function SantelmoBossBattle({
           {/* Background */}
           <div className="absolute inset-0 z-0">
             <img src={wildSummit_bg} alt="BG" className="w-full h-full object-cover opacity-80" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-plum-950 to-transparent" />
           </div>
 
           {/* Boss */}
@@ -496,7 +490,7 @@ export default function SantelmoBossBattle({
             }}
           >
             <div 
-              className="flex items-center justify-center overflow-visible drop-shadow-[0_0_30px_rgba(255,0,0,0.8)] transition-[filter] duration-1000"
+              className="flex items-center justify-center overflow-visible transition-[filter] duration-1000"
               style={{ 
                 width: `${(BOSS_R * 3.5 / GAME_W) * 100}vw`, 
                 maxWidth: `${BOSS_R * 3.5}px`, 
@@ -512,8 +506,8 @@ export default function SantelmoBossBattle({
               }}
             >
               {/* Pulsing Glow behind the boss */}
-              <div className="absolute inset-8 bg-orange-600 rounded-full blur-[30px] opacity-40 animate-pulse -z-10" />
-              <img src="/assets/expedition/santelmo_boss.png?v=2" alt="Santelmo" className="w-full h-full object-contain drop-shadow-[0_0_15px_rgba(255,200,0,0.4)]" />
+              <div className="absolute inset-8 bg-orange-500 rounded-full blur-[30px] opacity-40 animate-pulse -z-10" />
+              <img src="/assets/expedition/santelmo_boss.png?v=2" alt="Santelmo" className="w-full h-full object-contain" />
             </div>
           </div>
 
@@ -529,7 +523,7 @@ export default function SantelmoBossBattle({
               }}
             >
               <img src="/assets/expedition/crater.png?v=2" alt="crater" className="w-full h-full object-contain" />
-              <div className="absolute inset-0 bg-orange-500 rounded-[100%] opacity-40 blur-md animate-pulse pointer-events-none" />
+              <div className="absolute inset-0 bg-orange-500 opacity-40 blur-md animate-pulse pointer-events-none" />
             </div>
           ))}
 
@@ -566,7 +560,7 @@ export default function SantelmoBossBattle({
           {(s.windParticles || []).map(wp => (
             <div
               key={wp.id}
-              className="absolute z-25 bg-white/70 rounded-full blur-[1px] pointer-events-none"
+              className="absolute z-25 bg-parchment-100/70 rounded-full blur-[1px] pointer-events-none"
               style={{
                 left: `${(wp.x / GAME_W) * 100}%`,
                 top: `${(wp.y / GAME_H) * 100}%`,
@@ -661,7 +655,7 @@ export default function SantelmoBossBattle({
 
           {/* Fireballs */}
           {s.fireballs.map(fb => {
-            const glowColor = fb.type === 'sky' ? 'bg-purple-500' : fb.state === 'deflected' ? 'bg-blue-500' : 'bg-orange-600';
+            const glowColor = fb.type === 'sky' ? 'bg-purple-500' : fb.state === 'deflected' ? 'bg-xp' : 'bg-orange-500';
             return (
             <div 
               key={fb.id}
@@ -702,32 +696,39 @@ export default function SantelmoBossBattle({
 
       {/* Ultimate Selection Overlay */}
       {transitionState.startsWith('select_') && (
-        <div className="absolute inset-0 z-50 bg-black/80 flex flex-col items-center justify-center font-orbitron animate-in fade-in duration-300">
-          <h2 className="text-3xl text-red-500 font-bold mb-8 animate-pulse shadow-black drop-shadow-md">
-            {transitionState === 'select_p1' ? 'PHASE 2 UNLOCKED' : 'FINISHING BLOW'}
-          </h2>
-          <p className="text-xl text-white mb-8">Select a party member to perform an Ultimate Attack!</p>
-          <div className="flex gap-6">
-            {Object.values(party).map(hero => {
-              const inst = dex[hero.equippedId];
-              const canSelect = inst && inst.baseDmg > 0;
-              return (
-                <button
-                  key={hero.id}
-                  disabled={!canSelect}
-                  onClick={() => {
-                    setActiveHeroId(hero.id);
-                    setTransitionState('ultimate');
-                  }}
-                  className={`flex flex-col items-center p-4 border-2 rounded-lg transition-transform ${canSelect ? 'border-[#facc15] hover:scale-110 cursor-pointer shadow-[0_0_15px_#facc15]' : 'border-gray-600 opacity-50 cursor-not-allowed'}`}
-                >
-                  <img src={hero.avatar || '/boy2_idle.gif'} alt={hero.name} className="w-16 h-16 object-contain mb-2" />
-                  <span className="text-[#f0dde0] text-lg font-bold">{hero.name}</span>
-                  <span className="text-xs text-gray-400 mt-1">{canSelect ? 'Damaging Ultimate' : 'Healing/Support'}</span>
-                </button>
-              );
-            })}
-          </div>
+        <div className="absolute inset-0 z-50 bg-plum-950/85 flex items-center justify-center p-4 px-fade-in">
+          <PixelPanel frame="wood" padding="lg" className="flex flex-col items-center gap-5 text-center max-w-2xl">
+            <div>
+              <h2 className="font-bold text-3xl leading-none text-hp-light">
+                {transitionState === 'select_p1' ? 'Phase 2 unlocked' : 'Finishing blow'}
+              </h2>
+              <p className="mt-2 text-base text-parchment-300">Choose a hero to perform their Ultimate.</p>
+            </div>
+            <div className="flex flex-wrap justify-center gap-3">
+              {Object.values(party).map(hero => {
+                const inst = dex[hero.equippedId];
+                const canSelect = inst && inst.baseDmg > 0;
+                return (
+                  <button
+                    key={hero.id}
+                    disabled={!canSelect}
+                    onClick={() => {
+                      setActiveHeroId(hero.id);
+                      setTransitionState('ultimate');
+                    }}
+                    className={cn(
+                      'px-frame w-36 flex flex-col items-center gap-2 p-3 focus-visible:outline-[3px] focus-visible:outline-gold-300',
+                      canSelect ? 'px-frame-parchment hover:brightness-105' : 'px-frame-inset opacity-50 cursor-not-allowed',
+                    )}
+                  >
+                    <img src={hero.avatar || '/boy2_idle.gif'} alt="" className="size-16 object-contain border-2 border-ink pixelated" />
+                    <span className={cn('font-bold text-lg leading-none', canSelect ? 'text-ink' : 'text-parchment-300')}>{hero.name}</span>
+                    <span className={cn('text-xs leading-none', canSelect ? 'text-wood-700' : 'text-parchment-500')}>{canSelect ? 'Damage ultimate' : 'Support only'}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </PixelPanel>
         </div>
       )}
 
@@ -762,86 +763,92 @@ export default function SantelmoBossBattle({
 
       {/* Result Overlays */}
       {gameResult && (
-        <div className="absolute inset-0 z-50 bg-black/80 flex items-center justify-center animate-fadeIn">
-          <h1 className={`font-black text-6xl md:text-8xl tracking-widest drop-shadow-[0_0_20px_rgba(0,0,0,1)] ${gameResult === 'victory' ? 'text-yellow-400' : 'text-red-600'}`}>
-            {gameResult === 'victory' ? 'VICTORY' : 'DEFEATED'}
+        <div className="absolute inset-0 z-50 bg-plum-950/85 flex items-center justify-center px-fade-in">
+          <h1 className={cn('font-bold text-6xl md:text-8xl leading-none [text-shadow:0_6px_0_var(--color-ink)]', gameResult === 'victory' ? 'text-gold-300' : 'text-hp-light')}>
+            {gameResult === 'victory' ? 'Victory' : 'Defeat'}
           </h1>
         </div>
       )}
 
       {/* Mobile Controls Overlay */}
-      <div className="lg:hidden absolute bottom-4 inset-x-4 flex justify-between z-40 opacity-80 pointer-events-auto">
+      <div className="lg:hidden absolute bottom-4 inset-x-4 flex justify-between items-end z-40 opacity-90 pointer-events-auto">
         <div className="flex gap-2">
-          <button 
-            className="w-16 h-16 bg-[#2a2d43] border-4 border-black rounded-lg active:bg-slate-500 flex items-center justify-center touch-none select-none"
+          <button
+            aria-label="Move left"
+            className="px-btn px-btn-secondary size-16 p-0 touch-none select-none"
             onPointerDown={(e) => { e.preventDefault(); onButtonDown('left'); }}
             onPointerUp={(e) => { e.preventDefault(); onButtonUp('left'); }}
             onPointerCancel={(e) => { e.preventDefault(); onButtonUp('left'); }}
           >
-            <span className="text-white font-black text-2xl">←</span>
+            <PxArrowLeft className="size-7" />
           </button>
-          <button 
-            className="w-16 h-16 bg-[#2a2d43] border-4 border-black rounded-lg active:bg-slate-500 flex items-center justify-center touch-none select-none"
+          <button
+            aria-label="Move right"
+            className="px-btn px-btn-secondary size-16 p-0 touch-none select-none"
             onPointerDown={(e) => { e.preventDefault(); onButtonDown('right'); }}
             onPointerUp={(e) => { e.preventDefault(); onButtonUp('right'); }}
             onPointerCancel={(e) => { e.preventDefault(); onButtonUp('right'); }}
           >
-            <span className="text-white font-black text-2xl">→</span>
+            <PxArrowRight className="size-7" />
           </button>
         </div>
 
-        <div className="flex gap-2">
-          <button 
-            className="w-16 h-16 bg-cyan-600 border-4 border-black rounded-full active:bg-cyan-400 flex items-center justify-center touch-none select-none"
+        <div className="flex gap-2 items-end">
+          <button
+            className="px-btn px-btn-secondary size-16 p-0 text-sm touch-none select-none"
             onPointerDown={(e) => { e.preventDefault(); onButtonDown('dash'); }}
             onPointerUp={(e) => { e.preventDefault(); onButtonUp('dash'); }}
             onPointerCancel={(e) => { e.preventDefault(); onButtonUp('dash'); }}
           >
-            <span className="text-white font-black text-xs">DASH</span>
+            Dash
           </button>
-          <button 
-            className="w-16 h-16 bg-blue-600 border-4 border-black rounded-full active:bg-blue-400 flex items-center justify-center touch-none select-none"
+          <button
+            className="px-btn px-btn-secondary size-16 p-0 text-sm touch-none select-none"
             onPointerDown={(e) => { e.preventDefault(); onButtonDown('up'); }}
             onPointerUp={(e) => { e.preventDefault(); onButtonUp('up'); }}
             onPointerCancel={(e) => { e.preventDefault(); onButtonUp('up'); }}
           >
-            <span className="text-white font-black text-xs">JUMP</span>
+            Jump
           </button>
-          <button 
-            className="w-20 h-20 bg-red-600 border-4 border-black rounded-full active:bg-red-400 flex items-center justify-center touch-none select-none -translate-y-4"
+          <button
+            className="px-btn px-btn-primary size-20 p-0 text-base touch-none select-none"
             onPointerDown={(e) => { e.preventDefault(); onButtonDown('swing'); }}
             onPointerUp={(e) => { e.preventDefault(); onButtonUp('swing'); }}
             onPointerCancel={(e) => { e.preventDefault(); onButtonUp('swing'); }}
           >
-            <span className="text-white font-black text-sm">BAT</span>
+            Swing
           </button>
         </div>
       </div>
       
       {/* Intro Tutorial Pop-up */}
       {introStep === 'hint' && (
-        <div className="absolute inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm pointer-events-auto transition-opacity">
-          <div className="flex flex-col items-center gap-4 bg-[#0f0c0c]/95 border-[4px] border-[#4ade80] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.8)] p-6 sm:p-8 max-w-2xl w-[95%] text-center -skew-x-3">
-            <h2 className="font-orbitron font-black text-2xl sm:text-4xl text-[#4ade80] uppercase tracking-widest drop-shadow-md">Boss Battle Rules</h2>
-            <div className="text-white font-sans text-sm sm:text-lg leading-relaxed space-y-3 mt-4 text-left">
-              <p><span className="text-[#facc15] font-bold">MOVE:</span> Use <strong className="text-[#38bdf8]">W / A / S / D</strong> or <strong className="text-[#38bdf8]">Arrow Keys</strong> to run and jump.</p>
-              <p><span className="text-[#facc15] font-bold">DASH:</span> Press <strong className="text-[#38bdf8]">E</strong> to dash and avoid damage.</p>
-              <p><span className="text-[#facc15] font-bold">DEFLECT:</span> Press <strong className="text-[#38bdf8]">SPACE</strong> or tap <strong className="text-[#38bdf8]">BAT</strong> to swing. Hit the ground fireballs back at Santelmo!</p>
-              <p className="text-[#da2d46] font-bold mt-2 text-sm italic">Avoid the purple sky fireballs, they cannot be deflected!</p>
-            </div>
-            <button 
-              onClick={() => setIntroStep('combat')}
-              className="mt-6 px-8 py-3 bg-[#facc15] text-[#0f0c0c] font-orbitron font-black text-xl uppercase tracking-widest border-[3px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] hover:bg-[#ffdf3d] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#0f0c0c] transition-all"
-            >
-              START BATTLE
-            </button>
-          </div>
+        <div className="absolute inset-0 z-[100] flex items-center justify-center p-4 bg-plum-950/80 pointer-events-auto px-fade-in">
+          <PixelPanel frame="wood" padding="lg" className="w-full max-w-xl flex flex-col gap-4" role="dialog" aria-modal="true" aria-labelledby="santelmo-rules-title">
+            <h2 id="santelmo-rules-title" className="font-bold text-2xl sm:text-3xl leading-none text-parchment-100">How to fight Santelmo</h2>
+            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-3 text-base leading-snug">
+              <dt className="font-label text-base text-gold-300">Move</dt>
+              <dd className="text-parchment-300"><Kbd>W</Kbd> <Kbd>A</Kbd> <Kbd>S</Kbd> <Kbd>D</Kbd> or arrow keys to run and jump.</dd>
+              <dt className="font-label text-base text-gold-300">Dash</dt>
+              <dd className="text-parchment-300"><Kbd>E</Kbd> to dash through danger.</dd>
+              <dt className="font-label text-base text-gold-300">Deflect</dt>
+              <dd className="text-parchment-300"><Kbd>Space</Kbd> or tap Swing to hit ground fireballs back at Santelmo.</dd>
+            </dl>
+            <p className="px-frame px-frame-inset px-frame-sm px-3 py-2 text-sm text-parchment-100">
+              <span className="font-semibold text-hp-light">Watch out:</span> purple sky fireballs can't be deflected. Dodge them.
+            </p>
+            <PixelButton variant="primary" size="lg" className="self-end" onClick={() => setIntroStep('combat')}>
+              Start Battle
+            </PixelButton>
+          </PixelPanel>
         </div>
       )}
 
       {/* Keyboard Hint for Desktop */}
-      <div className="hidden lg:block absolute bottom-4 left-1/2 -translate-x-1/2 z-40 text-white/50 text-xs font-space-mono pointer-events-none">
-        [W/A/D] Move & Jump • [SPACE] Swing Bat • [E] Dash
+      <div className="hidden lg:flex absolute bottom-4 left-1/2 -translate-x-1/2 z-40 items-center gap-4 text-sm text-parchment-300 pointer-events-none [text-shadow:0_2px_0_var(--color-ink)]">
+        <span><Kbd>W</Kbd> <Kbd>A</Kbd> <Kbd>D</Kbd> Move</span>
+        <span><Kbd>Space</Kbd> Swing</span>
+        <span><Kbd>E</Kbd> Dash</span>
       </div>
     </div>
   );

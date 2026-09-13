@@ -1,5 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
+import { Key, Play } from 'pixelarticons/react';
 import { useGemini } from '../context/GeminiProvider';
+import { PixelBar, PixelButton, PixelPanel } from './ui';
 
 // Running animation frames
 import one from '../assets/running animation/1.png?v=2';
@@ -98,18 +100,15 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
 
   return (
     <div
-      className="relative w-full h-[100dvh] overflow-hidden flex flex-col bg-[#0f0c0c] selection:bg-transparent"
+      className="relative w-full h-[100dvh] overflow-hidden flex flex-col bg-plum-950 selection:bg-transparent"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
       {/* API Key Configure Button (Only shown inside Electron) */}
       {isElectron && !isStarting && (
-        <button
-          onClick={showApiKeyPrompt}
-          className="absolute top-4 right-4 z-50 bg-[#1f2335] text-white/80 hover:text-white border-[2px] border-[#0f0c0c] px-3 py-1.5 font-space-mono text-[10px] uppercase tracking-wider shadow-[4px_4px_0px_0px_#0f0c0c] hover:bg-[#2a2d43] active:translate-y-1 active:shadow-none transition-all cursor-pointer -skew-x-2"
-        >
-          <span className="skew-x-2 block">Configure API Key</span>
-        </button>
+        <PixelButton size="sm" icon={<Key />} onClick={showApiKeyPrompt} className="absolute top-4 right-4 z-50">
+          Configure API Key
+        </PixelButton>
       )}
 
       {/* ── BACKGROUND LAYER ── */}
@@ -136,15 +135,6 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
         }}
       />
 
-      {/* ── SUBTLE DOT OVERLAY ── */}
-      <div
-        className="absolute inset-0 pointer-events-none z-[3] opacity-40 mix-blend-overlay"
-        style={{
-          backgroundImage: 'radial-gradient(rgba(0,0,0,0.8) 1.5px, transparent 1.5px)',
-          backgroundSize: '4px 4px',
-        }}
-      />
-
       {/* ── MAIN UI LAYER ── */}
       <div 
         className={`relative z-10 w-full h-full flex flex-col items-center justify-between pt-[1vh] pb-[6vh] px-4 transition-all duration-700 ease-in-out ${mounted && !isStarting ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-8 pointer-events-none'}`}
@@ -155,7 +145,7 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
           <img 
             src={title} 
             alt="Musikultura Title" 
-            className="w-[80vw] sm:w-[60vw] md:w-[45vw] max-w-[600px] h-auto object-contain drop-shadow-[6px_6px_0px_rgba(0,0,0,0.7)] transition-transform duration-200"
+            className="w-[80vw] sm:w-[60vw] md:w-[45vw] max-w-[600px] h-auto object-contain transition-transform duration-200"
             style={{
               transform: `translate3d(${mouseOffset.x * -5}px, ${mouseOffset.y * -3}px, 0)`,
             }}
@@ -164,18 +154,16 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
 
         {/* BOTTOM CENTER: Single Play Button */}
         <div className="flex flex-col items-center justify-center shrink-0 w-full mb-[5vh]">
-          <button
+          <PixelButton
+            variant="primary"
+            size="lg"
+            icon={<Play />}
             onClick={handleStartGame}
             disabled={isStarting}
-            className="group relative flex items-center justify-center gap-3 sm:gap-4 bg-[#e52b35] text-[#0d0d12] border-[4px] border-[#0d0d12] px-10 py-4 sm:px-14 sm:py-5 shadow-[8px_8px_0px_0px_#0d0d12] hover:bg-[#ff3b46] active:translate-y-[8px] active:translate-x-[8px] active:shadow-none transition-all outline-none cursor-pointer disabled:opacity-50 -skew-x-2"
+            className="min-w-56 sm:min-w-64 sm:text-2xl"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="shrink-0 sm:w-[22px] sm:h-[22px] skew-x-2">
-              <path d="M4 2v20l17-10z" />
-            </svg>
-            <span className="font-['Press_Start_2P',_monospace] text-sm sm:text-lg uppercase tracking-widest leading-none pt-1 skew-x-2">
-              Play Game
-            </span>
-          </button>
+            Play
+          </PixelButton>
         </div>
 
       </div>
@@ -190,32 +178,19 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
           <img
             src={FRAMES[frameIdx]}
             alt="Loading Character"
-            className="h-[clamp(80px,15vh,160px)] w-auto object-contain mb-3 drop-shadow-[4px_4px_0px_rgba(0,0,0,0.8)]"
+            className="h-[clamp(80px,15vh,160px)] w-auto object-contain mb-3"
             style={{ imageRendering: 'pixelated' }}
           />
 
-          {/* Progress Section */}
-          <div className="w-[85%] max-w-md flex flex-col gap-3">
-            
-            {/* Pixelated Text Row */}
-            <div className="flex justify-between items-end px-1">
-              <span className="font-['Press_Start_2P',_monospace] text-white text-[8px] sm:text-[10px] uppercase tracking-wider animate-pulse drop-shadow-[2px_2px_0px_#000]">
-                {loadingText}
-              </span>
-              <span className="font-['Press_Start_2P',_monospace] text-white text-[8px] sm:text-[10px] tracking-wider drop-shadow-[2px_2px_0px_#000]">
-                {isStarting ? '100%' : '0%'}
-              </span>
-            </div>
-            
-            {/* Comic Style Progress Bar */}
-            <div className="w-full h-5 sm:h-7 bg-[#f8fafc] border-[3px] sm:border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] sm:shadow-[6px_6px_0px_0px_#0f0c0c] p-1 -skew-x-3">
-              <div 
-                className="h-full bg-[#facc15] border-r-[3px] sm:border-r-[4px] border-[#0f0c0c] transition-all duration-[2400ms] ease-out" 
-                style={{ width: isStarting ? '100%' : '0%' }}
-              />
-            </div>
-
-          </div>
+          <PixelPanel padding="md" className="w-[85%] max-w-md">
+            <PixelBar
+              kind="gold"
+              height={14}
+              value={isStarting ? 100 : 0}
+              label={<span className="text-sm text-parchment-100">{loadingText}</span>}
+              transition="width 2400ms steps(24)"
+            />
+          </PixelPanel>
 
         </div>
       </div>

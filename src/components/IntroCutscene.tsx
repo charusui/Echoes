@@ -3,7 +3,7 @@ import scene1 from '../assets/intro/scene1.png?v=2';
 import scene2 from '../assets/intro/scene2.png?v=2';
 import scene3 from '../assets/intro/scene3.png?v=2';
 import scene4 from '../assets/intro/scene4.png?v=2';
-import { ChevronRight, FastForward } from 'lucide-react';
+import { ChevronRight, Forward as FastForward } from 'pixelarticons/react';
 
 interface IntroCutsceneProps {
   onComplete: () => void;
@@ -112,23 +112,16 @@ export const IntroCutscene: React.FC<IntroCutsceneProps> = ({ onComplete }) => {
 
   return (
     <div 
-      className="fixed inset-0 z-50 bg-[#11111a] flex flex-col items-center justify-center font-sans select-none cursor-pointer overflow-hidden p-4 md:p-8"
+      className="fixed inset-0 z-50 bg-plum-950 flex flex-col items-center justify-center select-none cursor-pointer overflow-hidden p-4 md:p-8"
       onClick={handleNext}
     >
-      {/* Comic Halftone Background Pattern */}
-      <div 
-        className="absolute inset-0 opacity-30 pointer-events-none"
-        style={{
-          backgroundImage: 'radial-gradient(#2a2d43 2px, transparent 2px)',
-          backgroundSize: '24px 24px'
-        }}
-      />
+
 
       {/* Main Content Wrapper - Fixes the gap issue by stacking elements directly */}
       <div className="relative w-full max-w-5xl flex flex-col items-center gap-8 md:gap-12 z-20 mt-8 md:mt-0">
         
         {/* Comic Panel Frame - Taller on mobile (4/3) to prevent it looking like a sliver */}
-        <div className="relative w-full aspect-[4/3] md:aspect-video bg-[#0f0c0c] border-[4px] md:border-[8px] border-[#2a2d43] shadow-[6px_6px_0_0_rgba(0,0,0,1)] md:shadow-[12px_12px_0_0_rgba(0,0,0,1)] transition-transform duration-300">
+        <div className="relative w-full aspect-[4/3] md:aspect-video bg-plum-950 border-[3px] md:border-[3px] border-plum-700 transition-transform duration-300">
           
           {/* Scene Image */}
           <div 
@@ -147,27 +140,27 @@ export const IntroCutscene: React.FC<IntroCutsceneProps> = ({ onComplete }) => {
 
         {/* Comic Caption Dialogue Box */}
         <div 
-          className="bg-[#0f0c0c] border-[4px] border-[#facc15] w-full p-5 md:p-8 shadow-[6px_6px_0_0_rgba(0,0,0,1)] md:shadow-[8px_8px_0_0_rgba(0,0,0,1)] relative transition-all duration-300"
+          className="bg-plum-950 border-[3px] border-gold-300 w-full p-5 md:p-8 relative transition-all duration-300"
           style={{ minHeight: '130px' }}
         >
           {/* Narrator Badge */}
-          <div className="absolute -top-4 md:-top-5 left-4 md:left-8 bg-[#facc15] text-black font-orbitron font-black uppercase tracking-wider px-3 md:px-4 py-1 border-[3px] border-black shadow-[3px_3px_0_0_rgba(0,0,0,1)] md:shadow-[4px_4px_0_0_rgba(0,0,0,1)] text-[10px] md:text-sm">
+          <div className="absolute -top-4 md:-top-5 left-4 md:left-8 bg-gold-500 text-ink font-bold px-3 md:px-4 py-1 border-[3px] border-ink text-xs md:text-sm">
             Narrator
           </div>
 
           {/* Dialogue Text */}
-          <div className="font-orbitron font-bold text-white text-sm sm:text-base md:text-xl lg:text-2xl leading-relaxed tracking-wide uppercase mt-2 md:mt-1 min-h-[60px]">
+          <div className="font-bold text-parchment-100 text-sm sm:text-base md:text-xl lg:text-2xl leading-relaxed mt-2 md:mt-1 min-h-[60px]">
             {typewriterText}
           </div>
 
           {/* Next indicator */}
           {!isTyping && (
             <div className="absolute bottom-3 right-3 md:bottom-6 md:right-6 animate-bounce">
-              <ChevronRight className="w-6 h-6 md:w-8 md:h-8 text-[#facc15]" strokeWidth={3} />
+              <ChevronRight className="w-6 h-6 md:w-8 md:h-8 text-gold-300" />
             </div>
           )}
           
-          <div className="absolute -bottom-6 md:-bottom-8 right-0 text-[#a1a1aa] text-[10px] md:text-xs font-mono uppercase tracking-widest opacity-70 font-bold bg-[#11111a] px-2 py-1">
+          <div className="absolute -bottom-6 md:-bottom-8 right-0 text-parchment-500 text-xs md:text-xs opacity-70 font-bold bg-plum-950 px-2 py-1">
             Click anywhere to continue
           </div>
         </div>
@@ -176,14 +169,14 @@ export const IntroCutscene: React.FC<IntroCutsceneProps> = ({ onComplete }) => {
       
       {/* Skip button - Scaled down slightly for mobile layout */}
       <button 
-        className="absolute top-4 right-4 md:top-6 md:right-6 px-3 py-1.5 md:px-4 md:py-2 bg-[#ef4444] text-white border-[3px] border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] md:shadow-[6px_6px_0_0_rgba(0,0,0,1)] font-orbitron font-bold uppercase tracking-widest z-30 hover:translate-y-[2px] hover:translate-x-[2px] hover:shadow-[2px_2px_0_0_rgba(0,0,0,1)] transition-all flex items-center gap-1 md:gap-2 group text-xs md:text-sm"
+        className="px-btn px-btn-secondary absolute top-4 right-4 md:top-6 md:right-6 z-30 min-h-10 px-3 text-sm [&_svg]:size-4"
         onClick={(e) => {
           e.stopPropagation();
           onComplete();
         }}
       >
         <span>Skip</span>
-        <FastForward className="w-3 h-3 md:w-4 md:h-4 group-hover:text-black transition-colors" />
+        <FastForward className="w-3 h-3 md:w-4 md:h-4 group-hover:text-ink transition-colors" />
       </button>
     </div>
   );

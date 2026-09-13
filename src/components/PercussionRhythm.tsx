@@ -48,14 +48,14 @@ export function PercussionRhythm({ profile, notes, gameState, onLaneHit, activeL
       
       // RESTORED: Render a heavy comic-style drum hit zone
       const visualContent = (
-        <div className={`w-16 h-16 md:w-24 md:h-24 border-[4px] md:border-[6px] border-[#0f0c0c] transition-all duration-75 flex items-center justify-center z-20 rounded-full
+        <div className={`w-16 h-16 md:w-24 md:h-24 border-[3px] md:border-[3px] border-ink transition-all duration-75 flex items-center justify-center z-20 rounded-full
             ${isActive 
-              ? 'bg-[#da2d46] scale-95 shadow-[0px_0px_0px_0px_#0f0c0c] translate-y-1.5 translate-x-1.5' 
-              : 'bg-[#e0e5ed] shadow-[6px_6px_0px_0px_#0f0c0c]'
+              ? 'bg-gold-500 scale-95 translate-y-1' 
+              : 'bg-parchment-100 '
             }
         `}>
           {/* Inner ring to make it look like a drum head or target */}
-          <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full border-[3px] border-[#0f0c0c] transition-colors ${isActive ? 'bg-[#f0dde0]' : 'bg-[#888ea1]'}`} />
+          <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full border-[3px] border-ink transition-colors ${isActive ? 'bg-parchment-100' : 'bg-plum-600'}`} />
           
           {/* Comic impact speedlines inside the drum */}
           {isActive && (
@@ -72,8 +72,8 @@ export function PercussionRhythm({ profile, notes, gameState, onLaneHit, activeL
           key={lane.id}
           onPointerDown={(e) => { e.preventDefault(); handleHit(lane.id); }}
           className={`
-            relative h-full border-r-[3px] border-[#0f0c0c]/40 last:border-r-0 flex-1 flex flex-col items-center justify-center
-            ${isActive ? 'bg-[#da2d46]/10' : 'bg-transparent'}
+            relative h-full border-r-[3px] border-ink/40 last:border-r-0 flex-1 flex flex-col items-center justify-center
+            ${isActive ? 'bg-gold-500/15' : 'bg-transparent'}
             transition-colors duration-75 cursor-pointer touch-none
           `}
         >
@@ -83,8 +83,8 @@ export function PercussionRhythm({ profile, notes, gameState, onLaneHit, activeL
           </div>
 
           {/* Key Binding Hint - Styled as a skewed comic tag */}
-          <div className="absolute bottom-[5%] pointer-events-none bg-[#0f0c0c] border-[3px] border-[#da2d46] px-3 py-1 -skew-x-6 shadow-[3px_3px_0px_0px_#da2d46]">
-            <span className="font-orbitron font-black text-[#e0e5ed] text-sm md:text-lg skew-x-6 block">
+          <div className="absolute bottom-[5%] pointer-events-none bg-plum-950 border-[3px] border-gold-300 px-3 py-1">
+            <span className="font-bold text-parchment-100 text-sm md:text-lg block">
               {lane.keyBinding}
             </span>
           </div>
@@ -113,10 +113,10 @@ export function PercussionRhythm({ profile, notes, gameState, onLaneHit, activeL
       return (
         <div
           key={note.id}
-          className={`absolute w-12 h-12 md:w-16 md:h-16 rounded-full border-[4px] border-[#0f0c0c] -translate-x-1/2 -translate-y-1/2 z-10 flex items-center justify-center ${
+          className={`absolute w-12 h-12 md:w-16 md:h-16 rounded-full border-[3px] border-ink -translate-x-1/2 -translate-y-1/2 z-10 flex items-center justify-center ${
             isMissed 
-              ? 'bg-[#888ea1] opacity-50 grayscale' 
-              : 'bg-[#da2d46] shadow-[4px_4px_0px_0px_#0f0c0c]'
+              ? 'bg-plum-600 opacity-50 grayscale' 
+              : 'bg-gold-500 '
           }`}
           style={{
             left: leftPos,
@@ -124,7 +124,7 @@ export function PercussionRhythm({ profile, notes, gameState, onLaneHit, activeL
           }}
         >
           {/* Inner marking for the note to make it look like a physical puck */}
-          <div className={`w-4 h-4 md:w-6 md:h-6 rounded-full border-[3px] border-[#0f0c0c] ${isMissed ? 'bg-[#2a2d43]' : 'bg-[#f0dde0]'}`} />
+          <div className={`w-4 h-4 md:w-6 md:h-6 rounded-full border-[3px] border-ink ${isMissed ? 'bg-plum-800' : 'bg-parchment-100'}`} />
         </div>
       );
     });
@@ -132,7 +132,7 @@ export function PercussionRhythm({ profile, notes, gameState, onLaneHit, activeL
 
   return (
     // Replaced transparent blur with solid Dark Slate and heavy border
-    <div className="w-full h-full relative overflow-hidden bg-[#2a2d43] border-[6px] border-[#0f0c0c]">
+    <div className="w-full h-full relative overflow-hidden bg-plum-800 border-[3px] border-ink">
       
       <div className="absolute inset-0 flex flex-row">
         {renderLanes()}
@@ -140,7 +140,7 @@ export function PercussionRhythm({ profile, notes, gameState, onLaneHit, activeL
 
       {/* Heavy Graphic Novel Hit Line */}
       <div 
-        className="absolute left-0 right-0 h-2 bg-[#0f0c0c] border-t-4 border-[#da2d46] z-0 pointer-events-none -skew-x-12" 
+        className="absolute left-0 right-0 h-2 bg-plum-950 border-t-4 border-gold-300 z-0 pointer-events-none" 
         style={{ bottom: '15%' }} 
       />
 
@@ -149,15 +149,15 @@ export function PercussionRhythm({ profile, notes, gameState, onLaneHit, activeL
       </div>
 
       {!gameState.isPlaying && !gameState.isFinished && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#0f0c0c]/80 z-50 backdrop-blur-sm">
+        <div className="absolute inset-0 flex items-center justify-center bg-plum-950/80 z-50">
           <div className="text-center flex flex-col items-center">
-            <div className="bg-[#da2d46] border-[6px] border-[#0f0c0c] px-8 py-3 -skew-x-6 shadow-[8px_8px_0px_0px_#0f0c0c] mb-6">
-              <h2 className="font-orbitron font-black text-4xl md:text-5xl text-[#0f0c0c] skew-x-6 uppercase tracking-widest">
+            <div className="bg-gold-500 text-ink border-[3px] border-ink px-8 py-3 mb-6">
+              <h2 className="font-bold text-4xl md:text-5xl text-ink">
                 Ready
               </h2>
             </div>
-            <p className="font-space-mono font-bold text-[#e0e5ed] text-sm md:text-base bg-[#2a2d43] border-[3px] border-[#0f0c0c] px-4 py-2 -skew-x-2 shadow-[4px_4px_0px_0px_#0f0c0c]">
-              <span className="skew-x-2 block">Press any mapped key or tap a drum to start</span>
+            <p className="font-bold text-parchment-100 text-sm md:text-base bg-plum-800 border-[3px] border-ink px-4 py-2">
+              <span className="block">Press any mapped key or tap a drum to start</span>
             </p>
           </div>
         </div>

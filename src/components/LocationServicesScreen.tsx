@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { ChevronLeft, MapPin, Search, Navigation, Sparkles } from 'lucide-react';
+import { ChevronLeft, MapPin, Search, Compass as Navigation, Sparkles , Loader } from 'pixelarticons/react';
+import { PixelButton, PixelChip, PixelIconButton, PixelPanel } from './ui';
 import L from 'leaflet';
 import { useGemini } from '../context/GeminiProvider';
 import { GEMINI_MODEL } from '../constants';
@@ -39,8 +40,8 @@ function InvalidateMapSize() {
 const customMarkerIcon = L.divIcon({
   html: `
     <div style="position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-      <div style="position: absolute; width: 32px; height: 32px; border: 4px solid #da2d46; transform: rotate(45deg);"></div>
-      <div style="position: relative; width: 16px; height: 16px; background: #da2d46; border: 3px solid #0f0c0c; box-shadow: 4px 4px 0px 0px #0f0c0c;"></div>
+      <div style="position: absolute; width: 30px; height: 30px; border: 3px solid #1b1422; background: #f0a830; transform: rotate(45deg);"></div>
+      <div style="position: relative; width: 10px; height: 10px; background: #1b1422;"></div>
     </div>
   `,
   className: 'custom-marker-icon',
@@ -53,8 +54,8 @@ const customMarkerIcon = L.divIcon({
 const userMarkerIcon = L.divIcon({
   html: `
     <div style="position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-      <div style="position: absolute; width: 32px; height: 32px; border: 4px solid #66FCF1; border-radius: 50%; animation: comic-ping 2s steps(2) infinite;"></div>
-      <div style="position: relative; width: 16px; height: 16px; border-radius: 50%; background: #66FCF1; border: 3px solid #0f0c0c; box-shadow: 4px 4px 0px 0px #0f0c0c;"></div>
+      <div style="position: absolute; width: 32px; height: 32px; border: 3px solid #4f9fd1; animation: comic-ping 2s steps(4) infinite;"></div>
+      <div style="position: relative; width: 16px; height: 16px; background: #4f9fd1; border: 3px solid #1b1422;"></div>
     </div>
   `,
   className: 'user-marker-icon',
@@ -338,10 +339,10 @@ export function LocationServicesScreen({ onBack }: { onBack: () => void }) {
   };
 
   return (
-    <div className="h-screen w-screen bg-[#2a2d43] relative overflow-hidden">
+    <div className="h-screen w-screen bg-plum-800 relative overflow-hidden">
       
       {/* Map Container */}
-      <div className="absolute inset-0 z-0 border-[6px] md:border-[12px] border-[#0f0c0c] pointer-events-auto">
+      <div className="absolute inset-0 z-0 border-[3px] md:border-[12px] border-ink pointer-events-auto">
         <MapContainer center={mapCenter} zoom={mapZoom} style={{ height: '100%', width: '100%' }} zoomControl={false}>
           <InvalidateMapSize />
           <ChangeView center={mapCenter} zoom={mapZoom} />
@@ -354,30 +355,16 @@ export function LocationServicesScreen({ onBack }: { onBack: () => void }) {
           {museums.map(museum => (
             <Marker key={museum.id} position={[museum.lat, museum.lng]} icon={customMarkerIcon}>
               <Popup className="custom-popup">
-                <div className="p-1 max-w-[220px]">
-                  {/* Comic Header */}
-                  <div className="bg-[#0f0c0c] border-[3px] border-[#da2d46] px-2 py-1 -skew-x-2 shadow-[2px_2px_0px_0px_#da2d46] mb-3 w-fit">
-                    <h3 className="font-orbitron font-black text-[#f0dde0] text-[10px] md:text-xs leading-none skew-x-2 tracking-widest uppercase">
-                      {museum.name}
-                    </h3>
-                  </div>
-                  
-                  <p className="font-space-mono font-bold text-[9px] text-[#0f0c0c] mb-2 uppercase border-b-[2px] border-[#0f0c0c] pb-1 tracking-widest">
-                    LOC: {museum.region}
-                  </p>
-                  
+                <div className="max-w-[220px] flex flex-col gap-2">
+                  <h3 className="font-bold text-base leading-tight text-ink">{museum.name}</h3>
+                  <p className="text-xs text-wood-700">{museum.region}</p>
                   {museum.description && (
-                    <p className="font-space-mono text-[10px] text-[#0f0c0c] leading-relaxed mb-3">
-                      {museum.description}
-                    </p>
+                    <p className="text-sm leading-snug text-ink">{museum.description}</p>
                   )}
-
-                  <p className="font-space-mono text-[9px] font-black text-[#da2d46] mb-1.5 uppercase tracking-widest">ACQUIRED DATA:</p>
-                  <div className="flex flex-wrap gap-1 mt-1">
+                  <p className="mt-1 text-xs font-semibold text-wood-700">Instruments here</p>
+                  <div className="flex flex-wrap gap-1">
                     {museum.instruments.map((inst: string) => (
-                      <span key={inst} className="bg-[#e0e5ed] px-1.5 py-0.5 text-[9px] text-[#0f0c0c] border-[2px] border-[#0f0c0c] font-space-mono font-bold shadow-[2px_2px_0px_0px_#0f0c0c] uppercase">
-                        {inst}
-                      </span>
+                      <PixelChip key={inst} tone="dark">{inst}</PixelChip>
                     ))}
                   </div>
                 </div>
@@ -389,114 +376,84 @@ export function LocationServicesScreen({ onBack }: { onBack: () => void }) {
           {userLocation && (
             <Marker position={userLocation} icon={userMarkerIcon}>
               <Popup className="custom-popup user-popup">
-                <div className="p-1 text-[#0f0c0c] font-orbitron text-[10px] font-black uppercase tracking-widest text-center">
-                  USER SIGNAL
-                </div>
+                <p className="text-sm font-semibold text-center text-ink">You are here</p>
               </Popup>
             </Marker>
           )}
         </MapContainer>
-
-        {/* Diagonal Screen Tint Overlay (Pointer events none so you can still click the map) */}
-        <div className="absolute inset-0 z-10 pointer-events-none mix-blend-overlay opacity-30" style={{ backgroundImage: 'linear-gradient(45deg, #da2d46 25%, transparent 25%, transparent 50%, #da2d46 50%, #da2d46 75%, transparent 75%, transparent)' }} />
       </div>
 
       {/* Header Back Button */}
-      <div className="absolute top-4 left-4 z-[1000] pointer-events-none">
-        <button
-          onClick={onBack}
-          className="w-12 h-12 bg-[#f0dde0] border-[4px] border-[#0f0c0c] flex items-center justify-center text-[#0f0c0c] pointer-events-auto shadow-[4px_4px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all -skew-x-6"
-        >
-          <ChevronLeft size={28} className="skew-x-6 stroke-[4px]" />
-        </button>
+      <div className="absolute top-4 left-4 z-[1000]">
+        <PixelIconButton icon={<ChevronLeft />} label="Back to map" sound="ui_back" onClick={onBack} />
       </div>
 
       {/* Control Panel (Bottom) */}
       <div className="absolute bottom-4 inset-x-4 z-[1000] flex justify-center pointer-events-none">
-        <div className="w-full max-w-lg bg-[#2a2d43] border-[6px] border-[#0f0c0c] p-4 shadow-[12px_12px_0px_0px_#0f0c0c] pointer-events-auto -skew-x-1">
-          
-          <h2 className="font-orbitron font-black text-[#e0e5ed] text-sm tracking-widest mb-3 flex items-center justify-between skew-x-1 uppercase">
-            <span className="flex items-center gap-2">
-              <MapPin size={18} className="text-[#da2d46] stroke-[3px]" /> INDIGENOUS RADAR
-            </span>
+        <PixelPanel frame="wood" padding="md" className="w-full max-w-lg pointer-events-auto">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <h2 className="flex items-center gap-2 font-bold text-xl leading-none text-parchment-100">
+              <MapPin className="size-5 text-gold-300" aria-hidden /> Instrument Radar
+            </h2>
             {isSearchingAI && (
-              <span className="flex items-center gap-1 text-[10px] font-space-mono text-[#f0dde0] bg-[#da2d46] px-2 py-0.5 border-[2px] border-[#0f0c0c] animate-comic-pulse shadow-[2px_2px_0px_0px_#0f0c0c]">
-                <Sparkles size={12} className="stroke-[3px]" /> AI ACTIVE
-              </span>
+              <PixelChip tone="xp" icon={<Sparkles />}>Searching</PixelChip>
             )}
-          </h2>
-          
-          <form onSubmit={handleSearch} className="flex gap-2 mb-3 skew-x-1">
-            <div className="flex-1 relative">
-              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#888ea1] stroke-[3px]" />
+          </div>
+
+          <form onSubmit={handleSearch} className="flex gap-2 mb-3">
+            <label className="flex-1 relative">
+              <span className="sr-only">Search a region or museum</span>
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-parchment-500" aria-hidden />
               <input
                 type="text"
-                placeholder="SEARCH REGION OR MUSEUM..."
+                placeholder="Search a region or museum"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 disabled={isSearchingAI}
-                className="w-full bg-[#e0e5ed] border-[4px] border-[#0f0c0c] py-3 pl-10 pr-3 text-xs md:text-sm text-[#0f0c0c] font-space-mono font-bold focus:outline-none focus:border-[#da2d46] transition-all placeholder:text-[#888ea1] placeholder:uppercase shadow-[4px_4px_0px_0px_#0f0c0c] disabled:opacity-50"
+                className="w-full h-11 pl-9 pr-3 bg-plum-950 border-[3px] border-ink text-base text-parchment-100 placeholder:text-parchment-500 focus:border-gold-300 focus:outline-none disabled:opacity-50"
               />
-            </div>
-            <button 
-              type="submit" 
-              disabled={isSearchingAI || !searchQuery.trim()}
-              className="bg-[#da2d46] text-[#0f0c0c] border-[4px] border-[#0f0c0c] font-black px-4 md:px-6 text-sm font-orbitron shadow-[4px_4px_0px_0px_#0f0c0c] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all disabled:opacity-50 uppercase tracking-widest"
-            >
-              FIND
-            </button>
+            </label>
+            <PixelButton type="submit" disabled={isSearchingAI || !searchQuery.trim()}>
+              Find
+            </PixelButton>
           </form>
 
-          <button
-            onClick={handleUseMyLocation}
+          <PixelButton
+            variant="primary"
+            fullWidth
+            size="lg"
+            icon={isLocating ? <Loader className="animate-spin" /> : <Navigation />}
             disabled={isLocating || isSearchingAI}
-            className="w-full py-4 bg-[#e0e5ed] border-[4px] border-[#0f0c0c] text-[#0f0c0c] font-orbitron font-black text-sm tracking-widest flex items-center justify-center gap-3 shadow-[4px_4px_0px_0px_#0f0c0c] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all disabled:opacity-50 uppercase skew-x-1"
+            onClick={handleUseMyLocation}
           >
-            {isLocating ? (
-              <div className="w-5 h-5 border-[3px] border-[#0f0c0c] border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Navigation size={18} className="stroke-[3px]" />
-            )}
-            {isLocating ? 'DETERMINING GPS...' : 'SCAN NEAR MY POSITION'}
-          </button>
-        </div>
+            {isLocating ? 'Finding your location...' : 'Search Near Me'}
+          </PixelButton>
+        </PixelPanel>
       </div>
-
       {/* Global CSS for the Leaflet popup and animations */}
       <style>{`
         @keyframes comic-ping {
           0% { transform: scale(1); opacity: 1; border-width: 4px; }
           100% { transform: scale(2.5); opacity: 0; border-width: 1px; }
         }
-        @keyframes comic-pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(0.95); opacity: 0.9; }
-        }
-        .animate-comic-pulse { animation: comic-pulse 1s ease-in-out infinite; }
-        
-        /* Restyled Leaflet Popups for Comic Book Look */
+        /* Leaflet popups drawn as parchment pixel panels */
         .leaflet-popup-content-wrapper {
-          background-color: #f0dde0; /* pale pink */
-          color: #0f0c0c;
+          background-color: #f3e6c8;
+          color: #1b1422;
           border-radius: 0px !important;
-          border: 4px solid #0f0c0c !important;
-          box-shadow: 6px 6px 0px 0px #0f0c0c !important;
-          transform: skewX(-2deg);
+          border: 3px solid #1b1422 !important;
+          box-shadow: inset 0 -3px 0 #d6bf94 !important;
+          font-family: var(--font-pixel);
         }
         .leaflet-popup-tip {
-          background-color: #0f0c0c !important;
-          width: 20px !important;
-          height: 20px !important;
-          margin-top: -10px !important;
+          background-color: #1b1422 !important;
+          box-shadow: none !important;
         }
         .custom-popup .leaflet-popup-content {
           margin: 12px 14px !important;
-          transform: skewX(2deg);
         }
-        /* Specific override for user location popup */
         .user-popup .leaflet-popup-content-wrapper {
-          background-color: #66FCF1;
-          box-shadow: 4px 4px 0px 0px #0f0c0c !important;
+          background-color: #4f9fd1;
         }
       `}</style>
     </div>

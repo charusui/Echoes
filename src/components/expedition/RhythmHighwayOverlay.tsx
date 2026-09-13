@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Disc, Flame } from 'lucide-react';
+import { Music as Disc, Fire as Flame } from 'pixelarticons/react';
 import { audioEngine } from '../../services/audioSynth';
 
 export interface RhythmCompleteStats {
@@ -323,8 +323,8 @@ export function RhythmHighwayOverlay({
 
   return (
     <div 
-      className={`w-full max-w-xl mx-auto relative border-[3px] sm:border-[5px] border-[#0f0c0c] flex flex-col transition-all duration-75 ${
-        isCrazyMode ? 'bg-[#2a0808] shadow-[0_0_30px_#da2d46,inset_0_0_20px_#da2d46]' : 'bg-[#1e2238] shadow-[6px_6px_0px_0px_#0f0c0c] sm:shadow-[8px_8px_0px_0px_#0f0c0c]'
+      className={`w-full max-w-xl mx-auto relative border-[3px] sm:border-[3px] border-ink flex flex-col transition-all duration-75 ${
+        isCrazyMode ? 'bg-plum-950 ' : 'bg-plum-800'
       }`}
       style={{ transform: `translate(${shakeX}px, ${shakeY}px) rotate(${shakeRot}deg)` }}
     >
@@ -343,23 +343,23 @@ export function RhythmHighwayOverlay({
       {/* Chromatic Glitch Overlay */}
       {glitch && (
         <>
-          <div className="absolute inset-0 bg-[#da2d46] mix-blend-screen opacity-50 translate-x-[-6px] pointer-events-none z-[100]" />
-          <div className="absolute inset-0 bg-[#38bdf8] mix-blend-screen opacity-50 translate-x-[6px] pointer-events-none z-[100]" />
+          <div className="absolute inset-0 bg-hp mix-blend-screen opacity-50 translate-x-[-6px] pointer-events-none z-[100]" />
+          <div className="absolute inset-0 bg-xp mix-blend-screen opacity-50 translate-x-[6px] pointer-events-none z-[100]" />
         </>
       )}
 
       {/* ── TOP BANNER ── */}
-      <div className={`px-2 sm:px-3 py-1.5 sm:py-2 border-b-[3px] border-[#facc15] flex items-center justify-between z-10 relative ${isCrazyMode ? 'bg-[#da2d46] animate-pulse' : 'bg-[#0f0c0c]'}`}>
+      <div className={`px-2 sm:px-3 py-1.5 sm:py-2 border-b-[3px] border-gold-300 flex items-center justify-between z-10 relative ${isCrazyMode ? 'bg-hp animate-pulse' : 'bg-plum-950'}`}>
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {isCrazyMode ? <Flame className="text-[#facc15] animate-bounce w-4 h-4 sm:w-5 sm:h-5" /> : <span className="text-[#facc15] animate-pulse text-sm sm:text-base">⚡</span>}
-          <span className={`font-orbitron font-black text-[9px] sm:text-xs tracking-wider uppercase ${isCrazyMode ? 'text-white drop-shadow-[2px_2px_0px_#0f0c0c]' : 'text-[#facc15]'}`}>
+          {isCrazyMode ? <Flame className="text-gold-300 animate-bounce w-4 h-4 sm:w-5 sm:h-5" /> : <span className="text-gold-300 animate-pulse text-sm sm:text-base">⚡</span>}
+          <span className={` font-bold text-xs sm:text-xs   ${isCrazyMode ? 'text-parchment-100 ' : 'text-gold-300'}`}>
             {isCapture ? 'HARMONIC ATTUNEMENT' : isCrazyMode ? 'OVERDRIVE MAXIMUM!' : `RHYTHM ATTACK: ${preset}`}
           </span>
         </div>
         
         <div className="flex items-center gap-1.5 sm:gap-2">
-          <span className={`font-orbitron font-black text-[8px] sm:text-[10px] ${isCrazyMode ? 'text-white' : 'text-slate-400'}`}>COMBO</span>
-          <span className={`font-orbitron font-black text-lg sm:text-xl leading-none drop-shadow-[2px_2px_0px_#0f0c0c] w-6 text-center ${isCrazyMode ? 'text-[#facc15] scale-125' : 'text-[#38bdf8]'}`}>
+          <span className={` font-bold text-xs sm:text-xs ${isCrazyMode ? 'text-parchment-100' : 'text-parchment-500'}`}>COMBO</span>
+          <span className={` font-bold text-lg sm:text-xl leading-none  w-6 text-center ${isCrazyMode ? 'text-gold-300 scale-125' : 'text-xp'}`}>
             {combo}
           </span>
         </div>
@@ -367,23 +367,23 @@ export function RhythmHighwayOverlay({
 
       {/* ── CAPTURE GAUGE ── */}
       {isCapture && (
-        <div className="bg-[#0f0c0c] p-1.5 sm:p-2 border-b-[3px] border-[#38bdf8] flex flex-col gap-1 z-10">
-          <div className="flex justify-between items-center text-[8px] sm:text-[9px] font-orbitron font-black text-[#38bdf8] uppercase tracking-wider">
+        <div className="bg-plum-950 p-1.5 sm:p-2 border-b-[3px] border-xp flex flex-col gap-1 z-10">
+          <div className="flex justify-between items-center text-xs sm:text-xs font-bold text-xp">
             <span className="flex items-center gap-1"><Disc className="w-3 h-3 animate-spin" /> CAPTURE PROGRESS</span>
             <span>{captureProgress}%</span>
           </div>
-          <div className="w-full h-1.5 sm:h-2 bg-[#1e2238] border border-[#0f0c0c]">
-            <div className="h-full bg-gradient-to-r from-[#38bdf8] to-[#facc15] transition-all duration-200" style={{ width: `${captureProgress}%` }} />
+          <div className="w-full h-1.5 sm:h-2 bg-plum-800 border border-ink">
+            <div className="h-full bg-gradient-to-r from-xp to-gold-500 transition-all duration-200" style={{ width: `${captureProgress}%` }} />
           </div>
         </div>
       )}
 
       {/* ── PLAY AREA (Sleek Highway) ── */}
       {/* ADJUSTED: Added shrink-0 and ensured stable h-[340px] to prevent mobile squish */}
-      <div ref={highwayRef} className="relative border-y-[3px] sm:border-y-[4px] border-[#0f0c0c] h-[340px] sm:h-[360px] shrink-0 w-full overflow-hidden flex bg-[#0a0a12] shadow-[inset_0_0_40px_rgba(0,0,0,0.9)]">
+      <div ref={highwayRef} className="relative border-y-[3px] sm:border-y-[4px] border-ink h-[340px] sm:h-[360px] shrink-0 w-full overflow-hidden flex bg-plum-950 shadow-[inset_0_0_40px_rgba(0,0,0,0.9)]">
         
         {/* Sleek Vertical Highway Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a12] via-[#111424] to-[#1a1e36] pointer-events-none z-0" />
+        <div className="absolute inset-0 bg-gradient-to-b from-plum-950 via-plum-900 to-plum-900 pointer-events-none z-0" />
 
         {/* Speedlines / Overdrive Background */}
         <div 
@@ -402,7 +402,7 @@ export function RhythmHighwayOverlay({
           {floatTexts.map(f => (
             <div 
               key={f.id} 
-              className={`absolute font-orbitron font-black uppercase drop-shadow-[3px_3px_0px_#0f0c0c] ${f.fontSize}`}
+              className={`absolute  font-bold   ${f.fontSize}`}
               style={{
                 left: `${(f.lane * 25) + 12.5}%`,
                 top: f.y,
@@ -431,12 +431,12 @@ export function RhythmHighwayOverlay({
         {/* Lane Dividers */}
         <div className="absolute inset-0 flex pointer-events-none z-0">
           {LANES.map((_, i) => (
-            <div key={i} className={`flex-1 ${i < LANES.length - 1 ? 'border-r-[2px] border-white/10' : ''}`} />
+            <div key={i} className={`flex-1 ${i < LANES.length - 1 ? 'border-r-[2px] border-parchment-300/10' : ''}`} />
           ))}
         </div>
 
         {/* Glowing Hit Line */}
-        <div className="absolute left-0 right-0 h-1 bg-white/20 shadow-[0_0_15px_rgba(255,255,255,0.5)] z-10 pointer-events-none" style={{ top: RECEPTOR_Y + 15 }} />
+        <div className="absolute left-0 right-0 h-1 bg-parchment-100/20 z-10 pointer-events-none" style={{ top: RECEPTOR_Y + 15 }} />
 
         {/* Lanes */}
         {LANES.map(lane => {
@@ -464,11 +464,11 @@ export function RhythmHighwayOverlay({
               {notes.filter(n => n.lane === lane.index && !n.hit && !n.miss && n.y > -50 && n.y < 380).map(note => (
                 <div 
                   key={note.id}
-                  className="absolute left-1/2 -translate-x-1/2 w-12 h-8 sm:w-14 sm:h-10 border-[2px] sm:border-[3px] border-[#0f0c0c] -skew-x-6 flex items-center justify-center shadow-[0_4px_0_rgba(0,0,0,0.8)] z-10"
+                  className="absolute left-1/2 -translate-x-1/2 w-12 h-8 sm:w-14 sm:h-10 border-[2px] sm:border-[3px] border-ink flex items-center justify-center shadow-[0_4px_0_rgba(0,0,0,0.8)] z-10"
                   style={{ top: note.y, backgroundColor: lane.color }}
                 >
-                  <div className="absolute inset-0 border-[1px] sm:border-[2px] border-white/40 pointer-events-none" />
-                  <span className="font-orbitron font-black text-white text-sm sm:text-lg leading-none drop-shadow-[1px_1px_0px_#0f0c0c]">
+                  <div className="absolute inset-0 border-[1px] sm:border-[2px] border-parchment-300/40 pointer-events-none" />
+                  <span className="font-bold text-parchment-100 text-sm sm:text-lg leading-none">
                     {lane.symbol}
                   </span>
                 </div>
@@ -481,20 +481,20 @@ export function RhythmHighwayOverlay({
               >
                 {/* Receptor Box */}
                 <div 
-                  className={`w-12 h-10 sm:w-14 sm:h-12 border-[2px] sm:border-[3px] -skew-x-6 flex items-center justify-center transition-all ${
-                    isActive ? 'bg-white scale-[1.15] sm:scale-[1.2] shadow-[0_0_20px_currentColor]' : 'bg-[#151828]/90 scale-100 shadow-[inset_0_0_15px_rgba(0,0,0,0.8)]'
+                  className={`w-12 h-10 sm:w-14 sm:h-12 border-[2px] sm:border-[3px]  flex items-center justify-center transition-all ${
+                    isActive ? 'bg-parchment-100 scale-[1.15] sm:scale-[1.2] ' : 'bg-plum-900/90 scale-100 shadow-[inset_0_0_15px_rgba(0,0,0,0.8)]'
                   }`}
                   style={{ 
                     borderColor: isActive ? '#ffffff' : lane.color, 
                     color: isActive ? '#0f0c0c' : lane.color 
                   }}
                 >
-                  <span className="font-orbitron font-black text-lg sm:text-2xl">{lane.symbol}</span>
+                  <span className="font-bold text-lg sm:text-2xl">{lane.symbol}</span>
                 </div>
 
                 {/* Input Hint */}
                 <div className="mt-2 text-center pointer-events-none">
-                  <span className={`px-1.5 sm:px-2 py-0.5 border-[2px] border-[#0f0c0c] font-space-mono font-bold text-[9px] sm:text-[10px] -skew-x-6 transition-colors ${isActive ? 'bg-white text-black' : 'bg-[#0f0c0c] text-white'}`}>
+                  <span className={`px-1.5 sm:px-2 py-0.5 border-[2px] border-ink  font-bold text-xs sm:text-xs  transition-colors ${isActive ? 'bg-parchment-100 text-ink' : 'bg-plum-950 text-parchment-100'}`}>
                     {lane.label}
                   </span>
                 </div>
@@ -506,23 +506,23 @@ export function RhythmHighwayOverlay({
       </div>
 
       {/* ── FOOTER STATS ── */}
-      <div className={`p-1.5 sm:p-2 flex justify-between items-center z-10 transition-colors ${isCrazyMode ? 'bg-[#da2d46]' : 'bg-[#0f0c0c]'}`}>
-        <div className="flex gap-2 sm:gap-5 px-1 bg-[#0f0c0c]/50 rounded p-1 border border-white/10">
+      <div className={`p-1.5 sm:p-2 flex justify-between items-center z-10 transition-colors ${isCrazyMode ? 'bg-hp' : 'bg-plum-950'}`}>
+        <div className="flex gap-2 sm:gap-5 px-1 bg-plum-950/50 p-1 border border-parchment-300/10">
           {[
-            { key: 'sick' as const, label: 'SICK', color: 'text-[#facc15]' },
-            { key: 'good' as const, label: 'GOOD', color: 'text-[#4ade80]' },
-            { key: 'bad'  as const, label: 'BAD',  color: 'text-[#f97316]' },
-            { key: 'miss' as const, label: 'MISS', color: 'text-[#da2d46]' },
+            { key: 'sick' as const, label: 'SICK', color: 'text-gold-300' },
+            { key: 'good' as const, label: 'GOOD', color: 'text-heal' },
+            { key: 'bad'  as const, label: 'BAD',  color: 'text-orange-300' },
+            { key: 'miss' as const, label: 'MISS', color: 'text-hp-light' },
           ].map(({ key, label, color }) => (
             <div key={key} className="flex flex-col items-center">
-              <span className="font-space-mono font-bold text-[7px] sm:text-[9px] text-white leading-tight">{label}</span>
-              <span className={`font-orbitron font-black text-[10px] sm:text-sm leading-tight drop-shadow-[1px_1px_0px_#0f0c0c] ${color}`}>{hits[key]}</span>
+              <span className="font-bold text-xs sm:text-xs text-parchment-100 leading-tight">{label}</span>
+              <span className={` font-bold text-xs sm:text-sm leading-tight  ${color}`}>{hits[key]}</span>
             </div>
           ))}
         </div>
         
-        <div className={`px-2 sm:px-3 py-1 border-[2px] sm:border-[3px] border-[#0f0c0c] -skew-x-6 shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[3px_3px_0px_0px_#0f0c0c] ${isCrazyMode ? 'bg-[#facc15] text-[#0f0c0c] animate-bounce' : 'bg-[#da2d46] text-white'}`}>
-          <span className="font-orbitron font-black text-[8px] sm:text-xs skew-x-6 block">DMG: {comboMult}x</span>
+        <div className={`px-2 sm:px-3 py-1 border-[2px] sm:border-[3px] border-ink    ${isCrazyMode ? 'bg-gold-500 text-ink animate-bounce' : 'bg-hp text-parchment-100'}`}>
+          <span className="font-bold text-xs sm:text-xs block">DMG: {comboMult}x</span>
         </div>
       </div>
 

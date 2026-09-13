@@ -1,21 +1,48 @@
 @import "tailwindcss";
 
-/* ─── @theme Custom Tokens (Tailwind v4 syntax) ─────────────────────────────── */
+/* ─── @theme Tokens (Tailwind v4 syntax) ───────────────────────────────────── */
 
 @theme {
-  --color-obsidian: #0f0c0c;
-  --color-dark-slate: #2a2d43;
-  --color-pale-pink: #f0dde0;
-  --color-crimson: #da2d46;
-  --color-light-gray: #e0e5ed;
-  --color-slate-gray: #888ea1;
-  --color-danger: #E74C3C;
-  --color-purple: #A569BD;
-  --color-gold: #FED56B;
+  /* Pixel UI palette — sampled from the game's HD pixel environments */
+  --color-ink: #1b1422;
+  --color-plum-950: #17111f;
+  --color-plum-900: #211a2c;
+  --color-plum-800: #2d2340;
+  --color-plum-700: #3e3154;
+  --color-plum-600: #54456e;
+  --color-plum-400: #8f7fa8;
+  --color-wood-900: #2e1d13;
+  --color-wood-700: #4a2f1f;
+  --color-wood-500: #7a4e2d;
+  --color-wood-300: #b7834f;
+  --color-parchment-100: #f3e6c8;
+  --color-parchment-300: #d6bf94;
+  --color-parchment-500: #a8906a;
+  --color-gold-300: #ffd66b;
+  --color-gold-500: #f0a830;
+  --color-gold-700: #b8741a;
+  --color-hp: #b03b31;
+  --color-hp-dark: #7a241e;
+  --color-hp-light: #ef6f5f;
+  --color-heal: #6fb24f;
+  --color-heal-dark: #3f6e2c;
+  --color-xp: #4f9fd1;
+  --color-xp-dark: #2c5f82;
+  --color-purple-500: #6c48b8;
+  --color-purple-300: #a58be0;
+  --color-orange-500: #ee8a2f;
+  --color-orange-300: #f5a863;
+  --color-pink-500: #e4608f;
 
-  --font-family-orbitron: 'Orbitron', sans-serif;
-  --font-family-space-mono: 'Space Mono', monospace;
-  --font-family-inter: 'Inter', sans-serif;
+  /* Element chips (game data only) */
+  --color-el-string: #a4473b;
+  --color-el-perc: #c99a3c;
+  --color-el-brass: #c77a3a;
+  --color-el-synth: #6f5294;
+  --color-el-wood: #6b9a52;
+
+  --font-pixel: 'Pixelify Sans', ui-monospace, monospace;
+  --font-label: 'Silkscreen', 'Pixelify Sans', ui-monospace, monospace;
 }
 
 /* ─── Base ──────────────────────────────────────────────────────────────────── */
@@ -28,11 +55,16 @@
 }
 
 html {
-  background-color: #1E1614;
-  color: #FDEBD0;
-  font-family: 'Inter', sans-serif;
+  background-color: var(--color-plum-950);
+  color: var(--color-parchment-100);
+  font-family: var(--font-pixel);
+  /* Pixelify Sans' fi/fl ligatures read as a single "A"-like glyph. */
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "clig" 0;
   -webkit-font-smoothing: antialiased;
 }
+
+svg text { font-variant-ligatures: none; }
 
 body {
   margin: 0;
@@ -47,80 +79,250 @@ body {
 
 /* ─── Font Utilities ─────────────────────────────────────────────────────────── */
 
-.font-orbitron    { font-family: 'Orbitron', sans-serif; }
-.font-space-mono  { font-family: 'Space Mono', monospace; }
+.pixelated { image-rendering: pixelated; }
 
-/* ─── Glass Morphism Card ────────────────────────────────────────────────────── */
+/* ─── Pixel UI primitives ───────────────────────────────────────────────────── */
 
-.glass-card {
-  background: rgba(53, 37, 32, 0.60);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+@layer components {
+  /* Stepped-corner frame. Colors come from --frame-* vars so every variant is
+     the same geometry: ink outline, 1-unit bevel, flat fill. */
+  .px-frame {
+    --u: 3px;
+    --frame-bg: var(--color-plum-800);
+    --frame-hi: var(--color-plum-600);
+    --frame-lo: var(--color-plum-950);
+    --frame-ring: transparent;
+    position: relative;
+    background-color: var(--frame-bg);
+    border: var(--u) solid var(--color-ink);
+    box-shadow:
+      inset var(--u) var(--u) 0 var(--frame-hi),
+      inset calc(var(--u) * -1) calc(var(--u) * -1) 0 var(--frame-lo),
+      inset 0 0 0 calc(var(--u) * 2) var(--frame-ring);
+    clip-path: polygon(
+      var(--u) 0, calc(100% - var(--u)) 0, calc(100% - var(--u)) var(--u), 100% var(--u),
+      100% calc(100% - var(--u)), calc(100% - var(--u)) calc(100% - var(--u)), calc(100% - var(--u)) 100%, var(--u) 100%,
+      var(--u) calc(100% - var(--u)), 0 calc(100% - var(--u)), 0 var(--u), var(--u) var(--u)
+    );
+  }
+
+  .px-frame-sm { --u: 2px; }
+
+  .px-frame-plum {
+    --frame-bg: var(--color-plum-800);
+    --frame-hi: var(--color-plum-600);
+    --frame-lo: var(--color-plum-950);
+  }
+
+  .px-frame-wood {
+    --frame-bg: var(--color-plum-900);
+    --frame-hi: var(--color-wood-300);
+    --frame-lo: var(--color-wood-900);
+    --frame-ring: var(--color-wood-500);
+    border-width: var(--u);
+    padding: calc(var(--u) * 2);
+  }
+
+  .px-frame-parchment {
+    --frame-bg: var(--color-parchment-100);
+    --frame-hi: #fff6de;
+    --frame-lo: var(--color-parchment-300);
+    color: var(--color-ink);
+  }
+
+  .px-frame-inset {
+    --frame-bg: var(--color-plum-950);
+    --frame-hi: var(--color-ink);
+    --frame-lo: var(--color-plum-700);
+  }
+
+  /* Buttons share the frame geometry with a pressable lip. */
+  .px-btn {
+    --u: 3px;
+    --btn-bg: var(--color-wood-500);
+    --btn-hi: var(--color-wood-300);
+    --btn-lo: var(--color-wood-700);
+    --btn-fg: var(--color-parchment-100);
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: var(--font-pixel);
+    font-weight: 600;
+    line-height: 1;
+    color: var(--btn-fg);
+    background-color: var(--btn-bg);
+    border: var(--u) solid var(--color-ink);
+    box-shadow:
+      inset 0 var(--u) 0 var(--btn-hi),
+      inset 0 calc(var(--u) * -2) 0 var(--btn-lo);
+    clip-path: polygon(
+      var(--u) 0, calc(100% - var(--u)) 0, calc(100% - var(--u)) var(--u), 100% var(--u),
+      100% calc(100% - var(--u)), calc(100% - var(--u)) calc(100% - var(--u)), calc(100% - var(--u)) 100%, var(--u) 100%,
+      var(--u) calc(100% - var(--u)), 0 calc(100% - var(--u)), 0 var(--u), var(--u) var(--u)
+    );
+    transition: filter 80ms steps(2), transform 80ms steps(2);
+  }
+
+  .px-btn:hover:not(:disabled) { filter: brightness(1.12); }
+
+  .px-btn:active:not(:disabled) {
+    transform: translateY(var(--u));
+    box-shadow:
+      inset 0 var(--u) 0 var(--btn-lo),
+      inset 0 calc(var(--u) * -1) 0 var(--btn-lo);
+  }
+
+  /* clip-path hides outlines, so focus is drawn as an inset ring. */
+  .px-btn:focus-visible {
+    outline: none;
+    box-shadow:
+      inset 0 0 0 var(--u) var(--color-gold-300),
+      inset 0 calc(var(--u) * -2) 0 var(--btn-lo);
+  }
+
+  .px-btn:disabled {
+    cursor: not-allowed;
+    --btn-bg: var(--color-plum-700);
+    --btn-hi: var(--color-plum-600);
+    --btn-lo: var(--color-plum-800);
+    --btn-fg: var(--color-plum-400);
+  }
+
+  .px-btn-primary {
+    --btn-bg: var(--color-gold-500);
+    --btn-hi: var(--color-gold-300);
+    --btn-lo: var(--color-gold-700);
+    --btn-fg: var(--color-ink);
+  }
+
+  .px-btn-secondary {
+    --btn-bg: var(--color-wood-500);
+    --btn-hi: var(--color-wood-300);
+    --btn-lo: var(--color-wood-700);
+    --btn-fg: var(--color-parchment-100);
+  }
+
+  .px-btn-danger {
+    --btn-bg: var(--color-hp);
+    --btn-hi: #ef7a67;
+    --btn-lo: var(--color-hp-dark);
+    --btn-fg: var(--color-parchment-100);
+  }
+
+  /* Color-coded action buttons (battle commands). Text colors chosen for ≥5:1 contrast. */
+  .px-btn-purple {
+    --btn-bg: var(--color-purple-500);
+    --btn-hi: #9173d6;
+    --btn-lo: #4a2f85;
+    --btn-fg: var(--color-parchment-100);
+  }
+
+  .px-btn-blue {
+    --btn-bg: #4aa8e8;
+    --btn-hi: #86c9f4;
+    --btn-lo: #2a74a8;
+    --btn-fg: var(--color-ink);
+  }
+
+  .px-btn-green {
+    --btn-bg: #6cc04a;
+    --btn-hi: #a0dc7c;
+    --btn-lo: #3f8428;
+    --btn-fg: var(--color-ink);
+  }
+
+  .px-btn-pink {
+    --btn-bg: var(--color-pink-500);
+    --btn-hi: #f296b6;
+    --btn-lo: #a83a63;
+    --btn-fg: var(--color-ink);
+  }
+
+  /* Glossy variant: a periodic diagonal glint that sweeps across.
+     Children sit above the glint layer. */
+  .px-btn-gloss { overflow: hidden; isolation: isolate; }
+  .px-btn-gloss > * { position: relative; z-index: 2; }
+
+  .px-btn-gloss::after {
+    content: '';
+    position: absolute;
+    top: -20%;
+    bottom: -20%;
+    left: 0;
+    width: 28px;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      linear-gradient(90deg,
+        transparent 0 6px,
+        rgba(255, 255, 255, 0.7) 6px 12px,
+        transparent 12px 16px,
+        rgba(255, 255, 255, 0.45) 16px 20px,
+        transparent 20px);
+    transform: translateX(-60px) skewX(-20deg);
+  }
+
+  /* The glint only sweeps while the button is hovered (or keyboard-focused). */
+  .px-btn-gloss:is(:hover, :focus-visible):not(:disabled)::after {
+    animation: px-btn-glint 1s steps(12) infinite;
+  }
+  .px-btn-gloss:disabled::after { display: none; }
+
+  @keyframes px-btn-glint {
+    0%   { transform: translateX(-60px) skewX(-20deg); }
+    60%  { transform: translateX(calc(var(--glint-travel, 320px))) skewX(-20deg); }
+    100% { transform: translateX(calc(var(--glint-travel, 320px))) skewX(-20deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .px-btn-gloss::after { animation: none; display: none; }
+  }
+
+  /* RPG-menu style "cursor" ring marking the recommended action. Lives on a
+     wrapper because .px-btn's clip-path would cut off an outline. */
+  .px-cursor-ring {
+    --u: 3px;
+    position: absolute;
+    inset: calc(var(--u) * -2);
+    border: var(--u) solid var(--color-gold-300);
+    pointer-events: none;
+    clip-path: polygon(
+      var(--u) 0, calc(100% - var(--u)) 0, calc(100% - var(--u)) var(--u), 100% var(--u),
+      100% calc(100% - var(--u)), calc(100% - var(--u)) calc(100% - var(--u)), calc(100% - var(--u)) 100%, var(--u) 100%,
+      var(--u) calc(100% - var(--u)), 0 calc(100% - var(--u)), 0 var(--u), var(--u) var(--u)
+    );
+  }
+
+  .px-btn-ghost {
+    border-color: transparent;
+    background-color: transparent;
+    box-shadow: none;
+    clip-path: none;
+    color: var(--color-parchment-300);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+  }
+
+  .px-btn-ghost:hover:not(:disabled) { filter: none; color: var(--color-parchment-100); }
+  .px-btn-ghost:active:not(:disabled) { box-shadow: none; }
 }
-
-/* ─── Glow Effects ───────────────────────────────────────────────────────────── */
-
-.glow-crimson {
-  text-shadow: 0 0 10px rgba(254, 213, 107, 0.6),
-               0 0 30px rgba(254, 213, 107, 0.25);
-}
-
-.glow-pale-pink {
-  text-shadow: 0 0 10px rgba(214, 137, 16, 0.6),
-               0 0 30px rgba(214, 137, 16, 0.25);
-}
-
-.glow-danger {
-  text-shadow: 0 0 10px rgba(231, 76, 60, 0.7),
-               0 0 30px rgba(231, 76, 60, 0.3);
-}
-
-/* ─── Tailwind color shorthands ──────────────────────────────────────────────── */
-
-.bg-obsidian { background-color: #0f0c0c; }
-.bg-dark-slate { background-color: #2a2d43; }
-.text-light-gray { color: #e0e5ed; }
-.text-pale-pink   { color: #f0dde0; }
-.text-crimson   { color: #da2d46; }
-.text-danger { color: #E74C3C; }
 
 /* ─── Animations ─────────────────────────────────────────────────────────────── */
 
-@keyframes judgement-pop {
-  0%   { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-  40%  { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
-  70%  { transform: translate(-50%, -50%) scale(0.95); opacity: 1; }
-  100% { transform: translate(-50%, -50%) scale(1.0); opacity: 0; }
+@keyframes px-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
+.px-fade-in { animation: px-fade-in 160ms steps(4) both; }
 
-.judgement-pop {
-  animation: judgement-pop 0.6s ease-out forwards;
+@keyframes px-rise-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-
-@keyframes scanline {
-  0%   { transform: translateY(-100%); }
-  100% { transform: translateY(100vh); }
-}
-
-@keyframes glitch {
-  0%, 100% { clip-path: none; transform: none; }
-  10%       { clip-path: inset(20% 0 60% 0); transform: translate(-4px, 0); }
-  20%       { clip-path: inset(60% 0 10% 0); transform: translate(4px, 0); }
-  30%       { clip-path: none; transform: none; }
-}
-
-.glitch-filter {
-  animation: glitch 0.3s linear;
-}
-
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 8px rgba(254, 213, 107, 0.3); }
-  50%       { box-shadow: 0 0 20px rgba(254, 213, 107, 0.7); }
-}
-
-.pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
+.px-rise-in { animation: px-rise-in 180ms steps(3) both; }
 
 @keyframes boss-breathe {
   0%, 100% { transform: translateY(0) scale(1); }
@@ -157,32 +359,6 @@ body {
   100% { opacity: 0; }
 }
 
-/* ─── Scrollbar ──────────────────────────────────────────────────────────────── */
-
-::-webkit-scrollbar       { width: 4px; }
-::-webkit-scrollbar-track { background: #1E1614; }
-::-webkit-scrollbar-thumb { background: #D6891044; border-radius: 2px; }
-
-/* ─── Touch / Input ──────────────────────────────────────────────────────────── */
-
-button, [role="button"] {
-  cursor: pointer;
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: manipulation;
-}
-
-input[type="password"],
-input[type="text"],
-input[type="email"] {
-  outline: none;
-}
-
-/* Canvas touch — prevent scroll on game canvas */
-canvas {
-  touch-action: none;
-}
-
 @keyframes vibrate {
   0%, 100% { transform: translateY(0); }
   25% { transform: translateY(-1.5px); }
@@ -207,192 +383,6 @@ canvas {
 }
 .animate-sprite {
   animation: sprite-play 1s steps(9) infinite;
-}
-@import "tailwindcss";
-
-/* ─── @theme Custom Tokens (Tailwind v4 syntax) ─────────────────────────────── */
-
-@theme {
-  --color-obsidian: #0f0c0c;
-  --color-dark-slate: #2a2d43;
-  --color-pale-pink: #f0dde0;
-  --color-crimson: #da2d46;
-  --color-light-gray: #e0e5ed;
-  --color-slate-gray: #888ea1;
-  --color-danger: #E74C3C;
-  --color-purple: #A569BD;
-  --color-gold: #FED56B;
-
-  --font-family-orbitron: 'Orbitron', sans-serif;
-  --font-family-space-mono: 'Space Mono', monospace;
-  --font-family-inter: 'Inter', sans-serif;
-}
-
-/* ─── Base ──────────────────────────────────────────────────────────────────── */
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
-}
-
-html {
-  background-color: #1E1614;
-  color: #FDEBD0;
-  font-family: 'Inter', sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
-
-body {
-  margin: 0;
-  padding: 0;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-
-/* Safe area inset for iPhones */
-.pt-safe { padding-top: env(safe-area-inset-top, 0px); }
-.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
-
-/* ─── Font Utilities ─────────────────────────────────────────────────────────── */
-
-.font-orbitron    { font-family: 'Orbitron', sans-serif; }
-.font-space-mono  { font-family: 'Space Mono', monospace; }
-
-/* ─── Glass Morphism Card ────────────────────────────────────────────────────── */
-
-.glass-card {
-  background: rgba(53, 37, 32, 0.60);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
-/* ─── Glow Effects ───────────────────────────────────────────────────────────── */
-
-.glow-crimson {
-  text-shadow: 0 0 10px rgba(254, 213, 107, 0.6),
-               0 0 30px rgba(254, 213, 107, 0.25);
-}
-
-.glow-pale-pink {
-  text-shadow: 0 0 10px rgba(214, 137, 16, 0.6),
-               0 0 30px rgba(214, 137, 16, 0.25);
-}
-
-.glow-danger {
-  text-shadow: 0 0 10px rgba(231, 76, 60, 0.7),
-               0 0 30px rgba(231, 76, 60, 0.3);
-}
-
-/* ─── Tailwind color shorthands ──────────────────────────────────────────────── */
-
-.bg-obsidian { background-color: #0f0c0c; }
-.bg-dark-slate { background-color: #2a2d43; }
-.text-light-gray { color: #e0e5ed; }
-.text-pale-pink   { color: #f0dde0; }
-.text-crimson   { color: #da2d46; }
-.text-danger { color: #E74C3C; }
-
-/* ─── Animations ─────────────────────────────────────────────────────────────── */
-
-@keyframes judgement-pop {
-  0%   { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-  40%  { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
-  70%  { transform: translate(-50%, -50%) scale(0.95); opacity: 1; }
-  100% { transform: translate(-50%, -50%) scale(1.0); opacity: 0; }
-}
-
-.judgement-pop {
-  animation: judgement-pop 0.6s ease-out forwards;
-}
-
-@keyframes scanline {
-  0%   { transform: translateY(-100%); }
-  100% { transform: translateY(100vh); }
-}
-
-@keyframes glitch {
-  0%, 100% { clip-path: none; transform: none; }
-  10%       { clip-path: inset(20% 0 60% 0); transform: translate(-4px, 0); }
-  20%       { clip-path: inset(60% 0 10% 0); transform: translate(4px, 0); }
-  30%       { clip-path: none; transform: none; }
-}
-
-.glitch-filter {
-  animation: glitch 0.3s linear;
-}
-
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 8px rgba(254, 213, 107, 0.3); }
-  50%       { box-shadow: 0 0 20px rgba(254, 213, 107, 0.7); }
-}
-
-.pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-@keyframes boss-breathe {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-8px) scale(1.015); }
-}
-
-.animate-boss-breathe {
-  animation: boss-breathe 3.6s ease-in-out infinite;
-}
-
-@keyframes parry-arc {
-  0% { transform: scale(0.5); opacity: 0; }
-  20% { transform: scale(1.2); opacity: 1; }
-  100% { transform: scale(1.6); opacity: 0; }
-}
-
-.animate-parry-arc {
-  animation: parry-arc 0.25s ease-out forwards;
-}
-
-/* ─── Scrollbar ──────────────────────────────────────────────────────────────── */
-
-::-webkit-scrollbar       { width: 4px; }
-::-webkit-scrollbar-track { background: #1E1614; }
-::-webkit-scrollbar-thumb { background: #D6891044; border-radius: 2px; }
-
-/* ─── Touch / Input ──────────────────────────────────────────────────────────── */
-
-button, [role="button"] {
-  cursor: pointer;
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: manipulation;
-}
-
-input[type="password"],
-input[type="text"],
-input[type="email"] {
-  outline: none;
-}
-
-/* Canvas touch — prevent scroll on game canvas */
-canvas {
-  touch-action: none;
-}
-
-@keyframes vibrate {
-  0%, 100% { transform: translateY(0); }
-  25% { transform: translateY(-1.5px); }
-  75% { transform: translateY(1.5px); }
-}
-.animate-vibrate {
-  animation: vibrate 0.12s linear infinite;
-}
-
-@keyframes vibrate-x {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-1.5px); }
-  75% { transform: translateX(1.5px); }
-}
-.animate-vibrate-x {
-  animation: vibrate-x 0.12s linear infinite;
 }
 
 @keyframes sprite-5 {
@@ -423,4 +413,40 @@ canvas {
 }
 .animate-ken-burns {
   animation: ken-burns 20s ease-in-out infinite;
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────────────────────────── */
+
+::-webkit-scrollbar       { width: 6px; }
+::-webkit-scrollbar-track { background: var(--color-plum-950); }
+::-webkit-scrollbar-thumb { background: var(--color-plum-600); }
+
+/* ─── Touch / Input ──────────────────────────────────────────────────────────── */
+
+button, [role="button"] {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+input[type="password"],
+input[type="text"],
+input[type="email"] {
+  outline: none;
+}
+
+/* Canvas touch — prevent scroll on game canvas */
+canvas {
+  touch-action: none;
+}
+
+.dev-static *, .dev-static *::before, .dev-static *::after {
+  transition: none !important;
+  animation-duration: 0s !important;
+  animation-iteration-count: 1 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .px-fade-in, .px-rise-in { animation: none; }
 }

@@ -33,19 +33,19 @@ export class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-obsidian p-8 flex flex-col items-start justify-center">
-          <h1 className="text-danger font-orbitron font-bold text-2xl mb-4">Application Crashed</h1>
-          <div className="bg-dark-slate p-4 rounded text-light-gray font-space-mono text-sm w-full max-w-2xl overflow-auto whitespace-pre-wrap border border-danger/30">
-            {this.state.error?.toString()}
-            <br />
-            {this.state.errorInfo?.componentStack}
+        <div className="min-h-screen bg-plum-950 text-parchment-100 p-6 flex items-center justify-center">
+          <div className="px-frame px-frame-wood w-full max-w-2xl flex flex-col gap-4 p-6">
+            <h1 className="font-bold text-3xl leading-none">Oops! Something broke.</h1>
+            <p className="text-base text-parchment-300">Reload the game to keep playing. If this keeps happening, share the details below with the team.</p>
+            <pre className="px-frame px-frame-inset max-h-64 overflow-auto whitespace-pre-wrap p-3 font-label text-[8px] leading-relaxed text-parchment-300">
+              {this.state.error?.toString()}
+              {'\n'}
+              {this.state.errorInfo?.componentStack}
+            </pre>
+            <button type="button" onClick={() => window.location.reload()} className="px-btn px-btn-primary self-start min-h-11 px-5 text-base">
+              Reload Game
+            </button>
           </div>
-          <button 
-            onClick={() => window.location.reload()}
-            className="mt-6 px-6 py-2 bg-crimson rounded text-light-gray font-bold"
-          >
-            Reload App
-          </button>
         </div>
       );
     }

@@ -41,7 +41,7 @@ export function ScannerCombatScreen({
   }, [profile]);
 
   return (
-    <div className="absolute inset-0 z-[100] bg-black flex flex-col">
+    <div className="absolute inset-0 z-[100] bg-plum-950 flex flex-col">
       <ExpeditionCombat
         party={party}
         enemyId={customEnemies[0].id} // not strictly used since customEnemies is provided, but required by props

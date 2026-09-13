@@ -1,5 +1,7 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { Camera, Upload, ChevronRight, ChevronLeft, X } from 'lucide-react';
+import { Camera, Check, ChevronLeft, ChevronRight, Close as X, Reload, Upload } from 'pixelarticons/react';
+import { PixelButton, PixelChip, PixelIconButton, PixelPanel } from './ui';
+import { cn } from '../lib/cn';
 import type { ScanMode } from '../types';
 
 interface ScannerProps {
@@ -106,145 +108,92 @@ export function Scanner({ onImageReady, onBack }: ScannerProps) {
   }, [capturedData, onImageReady]);
 
   return (
-    <div className="min-h-screen bg-[#2a2d43] flex flex-col items-center justify-start px-4 pt-12 pb-20 relative z-0 overflow-hidden">
+    <div className="min-h-screen bg-plum-950 flex flex-col items-center px-4 pt-6 pb-10">
+      <header className="w-full max-w-md flex items-center justify-between gap-3 mb-6">
+        <PixelIconButton icon={<ChevronLeft />} label="Back" sound="ui_back" onClick={onBack} />
+        <h1 className="font-bold text-2xl leading-none text-parchment-100">Scan Instrument</h1>
+        <span className="size-11" aria-hidden />
+      </header>
 
-      {/* Halftone Dot Pattern Background */}
-      <div 
-        className="absolute inset-0 z-[-3] opacity-30 pointer-events-none" 
-        style={{ backgroundImage: 'radial-gradient(#da2d46 2px, transparent 2px)', backgroundSize: '20px 20px' }}
-      />
+      <p className="w-full max-w-md mb-4 text-center text-base text-parchment-300">
+        Point your camera at a traditional instrument, or upload a photo.
+      </p>
 
-      <div className="absolute top-0 left-0 w-[120%] h-[50%] bg-[#da2d46] -skew-y-6 -translate-y-20 z-[-2] border-b-[8px] border-[#0f0c0c]" />
-
-      <button 
-        onClick={onBack}
-        className="absolute top-6 left-6 md:top-8 md:left-8 w-12 h-12 bg-[#e0e5ed] border-[4px] border-[#0f0c0c] flex items-center justify-center text-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-[0px_0px_0px_0px_#0f0c0c] transition-all -skew-x-6 z-50"
-      >
-        <ChevronLeft size={28} className="skew-x-6 stroke-[3px]" />
-      </button>
-
-      <div className="w-full max-w-md text-center mb-8 mt-12 md:mt-6 relative z-10">
-        <div className="inline-block bg-[#0f0c0c] border-[3px] border-[#e0e5ed] px-4 py-1 mb-4 -skew-x-6 shadow-[4px_4px_0px_0px_#e0e5ed]">
-          <span className="text-[#e0e5ed] text-xs font-space-mono font-bold tracking-widest uppercase skew-x-6 block">
-            AI Game On! Hackathon
-          </span>
-        </div>
-        
-        <h1 
-          className="font-orbitron text-4xl md:text-5xl font-black text-[#0f0c0c] mb-2 tracking-wider leading-tight uppercase"
-          style={{ textShadow: '4px 4px 0px #e0e5ed, -2px 0px 0px #da2d46' }}
-        >
-          MUSIKULTURA
-        </h1>
-        
-        <div className="bg-[#0f0c0c] border-[4px] border-[#da2d46] p-3 -skew-x-2 shadow-[6px_6px_0px_0px_#da2d46] mx-auto w-fit mt-4">
-          <p className="text-[#f0dde0] text-sm md:text-base font-space-mono font-bold skew-x-2">
-            Target a traditional instrument.
-          </p>
-        </div>
-      </div>
-
-      <div className="w-full max-w-md mb-8 relative z-10">
-        <div className="bg-[#e0e5ed] border-[6px] border-[#0f0c0c] shadow-[12px_12px_0px_0px_#0f0c0c] p-2">
-
-          {previewUrl && !cameraActive && (
-            <div className="relative border-[4px] border-[#0f0c0c] overflow-hidden bg-[#0f0c0c]">
-              <img src={previewUrl} alt="Captured instrument" className="w-full object-cover max-h-80 opacity-90" />
-              <div className="absolute inset-0 pointer-events-none border-[8px] border-[#da2d46] mix-blend-overlay" />
-              
-              <button
-                id="retake-btn"
-                onClick={() => { 
-                  setPreviewUrl(null); 
-                  setCapturedData(null); 
-                  // FIX: Reset the input so they can re-upload the same file if needed
-                  if (fileInputRef.current) fileInputRef.current.value = ''; 
-                }}
-                className="absolute top-4 right-4 bg-[#e0e5ed] border-[3px] border-[#0f0c0c] text-[#0f0c0c] font-black font-space-mono px-4 py-2 -skew-x-6 shadow-[4px_4px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all uppercase"
-              >
-                <span className="skew-x-6 block">RETAKE</span>
-              </button>
-              
-              <div className="absolute bottom-4 left-4 bg-[#da2d46] border-[3px] border-[#0f0c0c] text-[#0f0c0c] font-black font-space-mono px-4 py-2 -skew-x-6 shadow-[4px_4px_0px_0px_#0f0c0c] uppercase">
-                <span className="skew-x-6 block">DATA SECURED</span>
-              </div>
-            </div>
-          )}
-
-          {cameraActive && (
-            <div className="relative border-[4px] border-[#0f0c0c] overflow-hidden bg-[#0f0c0c]">
-              <video ref={videoRef} className="w-full max-h-80 object-cover" playsInline muted autoPlay />
-              <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute inset-6 border-[4px] border-dashed border-[#da2d46]" />
-                <div className="absolute inset-x-0 bottom-6 text-center bg-[#0f0c0c] border-y-[4px] border-[#da2d46] py-1">
-                  <span className="text-[#e0e5ed] text-xs font-orbitron font-black uppercase tracking-widest">
-                    ALIGN TARGET
-                  </span>
-                </div>
-              </div>
-              <div className="absolute bottom-16 left-0 right-0 flex justify-center items-center gap-8 z-20">
-                <button
-                  id="cancel-camera-btn"
-                  onClick={stopCamera}
-                  className="w-12 h-12 bg-[#e0e5ed] border-[4px] border-[#0f0c0c] text-[#0f0c0c] font-black font-space-mono flex items-center justify-center -skew-x-6 shadow-[4px_4px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all"
-                >
-                  <X size={24} className="skew-x-6 stroke-[3px]" />
-                </button>
-                <button
-                  id="capture-btn"
-                  onClick={capturePhoto}
-                  className="w-20 h-20 bg-[#da2d46] border-[6px] border-[#0f0c0c] flex items-center justify-center -skew-x-6 shadow-[6px_6px_0px_0px_#0f0c0c] active:translate-y-2 active:translate-x-2 active:shadow-none transition-all"
-                >
-                  <div className="w-8 h-8 bg-[#0f0c0c] rounded-sm skew-x-6" />
-                </button>
-                <div className="w-12 h-12" />
-              </div>
-            </div>
-          )}
-
-          {!cameraActive && !previewUrl && (
-            <div
-              onDrop={handleDrop}
-              onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              className={`p-8 text-center transition-colors border-[4px] border-[#0f0c0c] ${dragOver ? 'bg-[#da2d46]/20' : 'bg-[#e0e5ed]'}`}
+      <PixelPanel frame="wood" padding="sm" className="w-full max-w-md">
+        {previewUrl && !cameraActive && (
+          <div className="relative px-frame px-frame-inset overflow-hidden">
+            <img src={previewUrl} alt="Captured instrument" className="w-full object-cover max-h-80" />
+            <PixelButton
+              id="retake-btn"
+              size="sm"
+              icon={<Reload />}
+              className="absolute top-3 right-3"
+              onClick={() => {
+                setPreviewUrl(null);
+                setCapturedData(null);
+                // Reset the input so the same file can be re-uploaded
+                if (fileInputRef.current) fileInputRef.current.value = '';
+              }}
             >
-              <div className="w-24 h-24 mx-auto mb-6 bg-[#0f0c0c] border-[4px] border-[#da2d46] flex items-center justify-center -skew-x-6 shadow-[6px_6px_0px_0px_#da2d46]">
-                <Camera size={40} className="text-[#f0dde0] skew-x-6" />
-              </div>
+              Retake
+            </PixelButton>
+            <PixelChip tone="heal" icon={<Check />} className="absolute bottom-3 left-3">Photo ready</PixelChip>
+          </div>
+        )}
 
-              <div className="bg-[#0f0c0c] px-4 py-2 border-[3px] border-[#0f0c0c] mb-6">
-                <p className="text-[#f0dde0] text-sm font-space-mono font-bold uppercase tracking-widest">
-                  Acquire Instrument Data
-                </p>
-              </div>
-
-              {cameraError && (
-                <div className="mb-6 bg-[#da2d46] border-[4px] border-[#0f0c0c] text-[#0f0c0c] font-black font-space-mono p-3 -skew-x-2 shadow-[4px_4px_0px_0px_#0f0c0c]">
-                  <span className="skew-x-2 block uppercase">{cameraError}</span>
-                </div>
-              )}
-
-              <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
-                <button
-                  id="open-camera-btn"
-                  onClick={startCamera}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-[#da2d46] border-[4px] border-[#0f0c0c] text-[#0f0c0c] text-sm font-orbitron font-black tracking-widest -skew-x-6 shadow-[6px_6px_0px_0px_#0f0c0c] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[8px_8px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all uppercase"
-                >
-                  <Camera size={20} className="skew-x-6" /> <span className="skew-x-6">SCAN</span>
-                </button>
-                <button
-                  id="upload-btn"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-[#2a2d43] border-[4px] border-[#0f0c0c] text-[#e0e5ed] text-sm font-orbitron font-black tracking-widest -skew-x-6 shadow-[6px_6px_0px_0px_#0f0c0c] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[8px_8px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all uppercase"
-                >
-                  <Upload size={20} className="skew-x-6" /> <span className="skew-x-6">UPLOAD</span>
-                </button>
-              </div>
+        {cameraActive && (
+          <div className="relative px-frame px-frame-inset overflow-hidden">
+            <video ref={videoRef} className="w-full max-h-80 object-cover" playsInline muted autoPlay />
+            <div className="absolute inset-6 border-[3px] border-dashed border-gold-300 pointer-events-none" />
+            <p className="absolute top-3 inset-x-0 text-center text-sm font-semibold text-parchment-100 [text-shadow:0_2px_0_var(--color-ink)] pointer-events-none">
+              Fit the instrument inside the frame
+            </p>
+            <div className="absolute bottom-4 inset-x-0 flex justify-center items-center gap-6">
+              <PixelIconButton id="cancel-camera-btn" icon={<X />} label="Cancel" sound="ui_back" onClick={stopCamera} />
+              <button
+                id="capture-btn"
+                type="button"
+                aria-label="Take photo"
+                onClick={capturePhoto}
+                className="px-btn px-btn-primary size-20 p-0 [&_svg]:size-8"
+              >
+                <Camera />
+              </button>
+              <span className="size-11" aria-hidden />
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        )}
+
+        {!cameraActive && !previewUrl && (
+          <div
+            onDrop={handleDrop}
+            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            className={cn('px-frame px-frame-inset flex flex-col items-center gap-5 p-6 text-center', dragOver && 'brightness-125')}
+          >
+            <div className="px-frame bg-xp size-24 flex items-center justify-center text-ink [&_svg]:size-12" style={{ ['--frame-bg' as string]: 'var(--color-xp)' }}>
+              <Camera />
+            </div>
+            <p className="text-base text-parchment-300">Take a clear photo of the whole instrument.</p>
+
+            {cameraError && (
+              <p className="w-full px-frame px-frame-sm bg-hp px-3 py-2 text-sm font-semibold text-parchment-100" style={{ ['--frame-bg' as string]: 'var(--color-hp)' }}>
+                {cameraError}
+              </p>
+            )}
+
+            <div className="w-full flex flex-col sm:flex-row gap-3">
+              <PixelButton id="open-camera-btn" variant="primary" size="lg" className="flex-1" icon={<Camera />} onClick={startCamera}>
+                Use Camera
+              </PixelButton>
+              <PixelButton id="upload-btn" size="lg" className="flex-1" icon={<Upload />} onClick={() => fileInputRef.current?.click()}>
+                Upload
+              </PixelButton>
+            </div>
+            <p className="text-xs text-parchment-500">You can also drag a photo here.</p>
+          </div>
+        )}
+      </PixelPanel>
 
       <canvas ref={canvasRef} className="hidden" />
       <input
@@ -255,21 +204,18 @@ export function Scanner({ onImageReady, onBack }: ScannerProps) {
         onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
       />
 
-      <div className="w-full max-w-md relative z-10 mt-auto">
-        <button
+      {capturedData && (
+        <PixelButton
           id="scan-instrument-btn"
+          variant="primary"
+          size="lg"
+          className="w-full max-w-md mt-6 px-rise-in"
+          icon={<ChevronRight />}
           onClick={handleScan}
-          disabled={!capturedData}
-          className={`w-full py-5 border-[6px] border-[#0f0c0c] font-orbitron text-lg font-black tracking-widest uppercase flex items-center justify-center gap-3 -skew-x-6 transition-all duration-200 ${
-            capturedData 
-              ? 'bg-[#da2d46] text-[#0f0c0c] shadow-[8px_8px_0px_0px_#0f0c0c] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[12px_12px_0px_0px_#0f0c0c] active:translate-y-2 active:translate-x-2 active:shadow-none cursor-pointer' 
-              : 'bg-[#888ea1] text-[#2a2d43] shadow-[4px_4px_0px_0px_#0f0c0c] cursor-not-allowed opacity-80'
-          }`}
         >
-          <span className="skew-x-6 block">IDENTIFY & PLAY</span>
-          <ChevronRight size={24} className="skew-x-6 stroke-[3px]" />
-        </button>
-      </div>
+          Identify & Play
+        </PixelButton>
+      )}
     </div>
   );
 }

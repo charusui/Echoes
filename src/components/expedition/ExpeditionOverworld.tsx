@@ -1,10 +1,14 @@
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { Play, MessageSquare, Compass, ShieldAlert, Camera, Map, Flame, X, ChevronUp } from 'lucide-react';
+import { useState, useMemo, useRef, useEffect, useCallback, type ComponentType, type SVGProps } from 'react';
+import {
+  Camera, ChevronUp, Close, Compass, Fire, Home, Map, MessageText, Shield, Skull, Sparkles, Store, Sword, Trophy, User,
+} from 'pixelarticons/react';
 import { type MapNode, type ExpeditionQuest } from '../../types/expedition';
 import visayasMap from '../../assets/png/visayas_map.png?v=2';
 import corruptedVisayasMap from '../../assets/png/corrupted_visayas_map.png?v=2';
-import { DevMenu } from '../DevMenu'; 
-import { audioEngine } from '../../services/audioSynth';
+import { DevMenu } from '../DevMenu';
+import { playUiSound } from '../../hooks/useUiSound';
+import { useProgress } from '../../context/ProgressProvider';
+import { PixelBar, PixelButton, PixelChip, PixelIconButton, PixelPanel, SectionLabel } from '../ui';
 
 import bakunawa_prev from '../../assets/png/bakunawa_prev.png?v=2';
 import wakwak_prev from '../../assets/png/wakwak_prev.png?v=2';
@@ -17,6 +21,25 @@ import cloud_one from '../../assets/png/cloud_one.png?v=2';
 import cloud_two from '../../assets/png/cloud_two.png?v=2';
 import cloud_three from '../../assets/png/cloud_three.png?v=2';
 import cloud_four from '../../assets/png/cloud_four.png?v=2';
+
+const NODE_TYPE_ICON: Record<MapNode['type'], ComponentType<SVGProps<SVGSVGElement>>> = {
+  town: Home,
+  battle: Sword,
+  boss: Skull,
+  shrine: Sparkles,
+};
+
+const XP_FOR_NEXT_LEVEL = (level: number) => level === 1 ? 100 : level === 2 ? 250 : level === 3 ? 500 : 900;
+const LEVEL_TITLE = (level: number) =>
+  level === 1 ? 'Apprentice'
+    : level === 2 ? 'Village Musician'
+      : level === 3 ? 'Cultural Keeper'
+        : level === 4 ? 'Regional Expert'
+          : 'Master Instrumentalist';
+
+/** Stepped octagon: a pixel-art "circle" for map pins. */
+const pixelDisc = (r: number, step: number) =>
+  `${-r + step},${-r} ${r - step},${-r} ${r},${-r + step} ${r},${r - step} ${r - step},${r} ${-r + step},${r} ${-r},${r - step} ${-r},${-r + step}`;
 
 interface ExpeditionOverworldProps {
   nodes: Record<string, MapNode>;
@@ -62,16 +85,8 @@ export function ExpeditionOverworld({
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // ─── SFX HELPER FUNCTION ───
-  const playSound = (soundType: string) => {
-    try {
-      if (audioEngine && typeof audioEngine.playHitSFX === 'function') {
-        audioEngine.playHitSFX(soundType);
-      }
-    } catch (e) {
-      console.warn("SFX Error:", e);
-    }
-  };
+  const playSound = playUiSound;
+  const { progress } = useProgress();
 
   // ─── DRAWER DRAG STATE ───
   const [dragOffset, setDragOffset] = useState(0);
@@ -401,33 +416,29 @@ export function ExpeditionOverworld({
   const path1Dash = `20,12`.split(',').map(n => parseInt(n) * dynamicPinScale).join(',');
 
   const memoizedNodes = useMemo(() => {
-    const regionMeta: Record<string, {
-      region: string;
-      collection: string;
-      collectionBg: string;
-      collectionText: string;
-    }> = {
-      echo_woods:      { region: 'WESTERN VISAYAS', collection: '0 / 6 INSTRUMENTS', collectionBg: '#f8fafc', collectionText: '#38bdf8' },
-      harmonic_shrine: { region: 'CENTRAL VISAYAS',  collection: '0 / 5 INSTRUMENTS', collectionBg: '#f8fafc', collectionText: '#d97706' },
-      silent_peak:     { region: 'EASTERN VISAYAS',  collection: '✦ LEGENDARY HUNT',  collectionBg: '#facc15', collectionText: '#0f0c0c' },
+    const regionMeta: Record<string, { region: string; collection: string }> = {
+      echo_woods:      { region: 'Western Visayas', collection: '0 / 6 instruments' },
+      harmonic_shrine: { region: 'Central Visayas', collection: '0 / 5 instruments' },
+      silent_peak:     { region: 'Eastern Visayas', collection: 'Legendary hunt' },
     };
+
+    const INK = 'var(--color-ink)';
 
     return Object.values(nodes).map(node => {
       const isSelected = node.id === currentNodeId;
       const isBoss = node.type === 'boss';
-      const isShrine = node.type === 'shrine';
+      const Icon = NODE_TYPE_ICON[node.type];
 
       const { x: renderX, y: renderY } = getDisplayCoords(node.id, node.x, node.y);
-      const ringColor = isBoss ? '#da2d46' : isShrine ? '#facc15' : '#38bdf8';
 
-      const isLongName = node.name.length > 14;
-      const mainFontSize = isLongName ? 10 : 12;
-      const boxWidth = Math.max(150, node.name.length * (isLongName ? 7 : 8.5) + 20);
-      const boxX = -boxWidth / 2;
-
+      const labelWidth = Math.max(112, Math.round(node.name.length * 9.5) + 28);
+      const labelX = -labelWidth / 2;
       const meta = regionMeta[node.id];
-
       const isDiscovered = discoveredNodeIds.has(node.id);
+
+      const discFill = isSelected ? 'var(--color-gold-500)' : isBoss ? 'var(--color-hp)' : 'var(--color-plum-800)';
+      const discHi = isSelected ? 'var(--color-gold-300)' : isBoss ? '#ef7a67' : 'var(--color-plum-600)';
+      const iconColor = isSelected ? 'var(--color-ink)' : 'var(--color-parchment-100)';
 
       return (
         <g
@@ -435,81 +446,39 @@ export function ExpeditionOverworld({
           transform={`translate(${renderX}, ${renderY}) scale(${dynamicPinScale})`}
           className={`cursor-pointer group pointer-events-auto transition-opacity duration-500 ${isDiscovered ? '' : 'opacity-40 grayscale pointer-events-none'}`}
           onClick={() => isDiscovered && handleNodeClick(node.id)}
+          shapeRendering="crispEdges"
         >
-          <g className="transition-transform duration-200 group-hover:-translate-y-2">
+          <g className="transition-transform duration-100 group-hover:-translate-y-1">
             {isSelected && (
-              <circle
-                r="48"
-                fill="none"
-                stroke={ringColor}
-                strokeWidth="4"
-                strokeDasharray="8 8"
-                className="animate-spin drop-shadow-[2px_2px_0px_#0f0c0c]"
-                style={{ animationDuration: '6s' }}
-              />
+              <polygon points={pixelDisc(46, 12)} fill="none" stroke="var(--color-gold-300)" strokeWidth="4" />
             )}
 
-            {/* Comic Node Base */}
-            <circle r="36" fill="#f8fafc" stroke="#0f0c0c" strokeWidth="6" />
-            <circle
-              r="30"
-              fill={isSelected ? ringColor : '#e2e8f0'}
-              stroke="#0f0c0c"
-              strokeWidth="4"
-              className="transition-colors group-hover:fill-white"
-            />
+            <polygon points={pixelDisc(34, 10)} fill={INK} />
+            <polygon points={pixelDisc(28, 8)} fill={discFill} />
+            <polygon points="-20,-28 20,-28 24,-24 -24,-24" fill={discHi} />
+            <Icon x={-16} y={-16} width={32} height={32} style={{ color: iconColor }} aria-hidden />
 
-            <text y="8" textAnchor="middle" fontSize="22" className="select-none pointer-events-none drop-shadow-[2px_2px_0px_rgba(0,0,0,0.3)]">
-              {node.icon}
-            </text>
-
-            {/* ── Main Name Box (Comic Style) ── */}
             {isDiscovered && (
-              <>
-                <rect x={boxX} y="44" width={boxWidth} height="24" fill="#f8fafc" stroke="#0f0c0c" strokeWidth="4" />
-                <text
-                  y="60"
-                  textAnchor="middle"
-                  fontSize={mainFontSize}
-                  fontFamily="Orbitron, sans-serif"
-                  fontWeight="900"
-                  fill="#0f0c0c"
-                  className="select-none pointer-events-none tracking-wider"
-                >
-                  {node.name.toUpperCase()}
+              <g className="select-none pointer-events-none" fontFamily="'Pixelify Sans', monospace">
+                <rect x={labelX - 3} y="41" width={labelWidth + 6} height="30" fill={INK} />
+                <rect x={labelX} y="44" width={labelWidth} height="24" fill="var(--color-parchment-100)" />
+                <text y="61" textAnchor="middle" fontSize="16" fontWeight="600" fill={INK}>
+                  {node.name}
                 </text>
 
-                {/* ── Region + Collection Stack ── */}
                 {meta && (
                   <>
-                    <rect x={boxX} y="68" width={boxWidth} height="16" fill={ringColor} stroke="#0f0c0c" strokeWidth="4" />
-                    <text
-                      y="79"
-                      textAnchor="middle"
-                      fontSize="8"
-                      fontFamily="Orbitron, sans-serif"
-                      fontWeight="900"
-                      fill="#0f0c0c"
-                      className="select-none pointer-events-none tracking-widest"
-                    >
+                    <rect x={labelX - 3} y="71" width={labelWidth + 6} height="36" fill={INK} />
+                    <rect x={labelX} y="71" width={labelWidth} height="33" fill="var(--color-plum-800)" />
+                    <text y="85" textAnchor="middle" fontSize="12" fontWeight="600" fill="var(--color-parchment-300)">
                       {meta.region}
                     </text>
-
-                    <rect x={boxX} y="84" width={boxWidth} height="18" fill={meta.collectionBg} stroke="#0f0c0c" strokeWidth="4" />
-                    <text
-                      y="96"
-                      textAnchor="middle"
-                      fontSize="8.5"
-                      fontFamily="Orbitron, sans-serif"
-                      fontWeight="900"
-                      fill={meta.collectionText}
-                      className="select-none pointer-events-none tracking-widest drop-shadow-[1px_1px_0px_#0f0c0c]"
-                    >
+                    <text y="99" textAnchor="middle" fontSize="12" fontWeight="500" fill="var(--color-gold-300)">
                       {meta.collection}
                     </text>
                   </>
                 )}
-              </>
+              </g>
             )}
           </g>
         </g>
@@ -557,57 +526,120 @@ export function ExpeditionOverworld({
 
   const currentPreviewImg = nodePreviewImages[currentNodeId];
 
+  const xpForNextLevel = XP_FOR_NEXT_LEVEL(progress.level);
+  const currentDialogue = dialogues[dialogueStep];
+
+  const closeSidebarOnMobile = () => { if (isMobile) setIsSidebarOpen(false); };
+
+  // Exactly one primary action per node; everything else steps down in weight.
+  const renderNodeActions = () => {
+    if (currentNode.type === 'town') {
+      return (
+        <>
+          <PixelButton
+            variant="primary"
+            fullWidth
+            icon={<MessageText />}
+            sound="npc_talk"
+            onClick={() => { setDialogueStep(0); setShowDialogue(true); closeSidebarOnMobile(); }}
+          >
+            Talk to {dialogues[0]?.speaker ?? 'Villager'}
+          </PixelButton>
+          {currentNodeId === 'cadence_town' && (
+            <PixelButton
+              fullWidth
+              icon={<Store />}
+              sound="shop_open"
+              onClick={() => { onOpenShop?.(); closeSidebarOnMobile(); }}
+            >
+              Maria's Shop
+            </PixelButton>
+          )}
+        </>
+      );
+    }
+
+    if (currentNode.completed) {
+      return currentNodeId === 'crossroads' ? (
+        <PixelButton
+          variant="primary"
+          fullWidth
+          icon={<MessageText />}
+          sound="npc_talk"
+          onClick={() => { setDialogueStep(0); setShowDialogue(true); closeSidebarOnMobile(); }}
+        >
+          Talk to Rescued Traveler
+        </PixelButton>
+      ) : (
+        <PixelButton variant="primary" fullWidth disabled icon={<Trophy />}>
+          Area Cleared
+        </PixelButton>
+      );
+    }
+
+    const enemyId = currentNode.enemyId || currentNode.enemyIds?.[0];
+    const enemyName = (enemyId || 'enemies').replace(/_/g, ' ');
+    return (
+      <PixelButton
+        variant="primary"
+        fullWidth
+        icon={<Sword />}
+        sound="battle_start"
+        onClick={() => {
+          if (currentNode.enemyIds) onStartBattle(currentNode.enemyIds[0], currentNode.enemyIds);
+          else if (currentNode.enemyId) onStartBattle(currentNode.enemyId);
+        }}
+      >
+        <span className="capitalize">Battle {enemyName}</span>
+      </PixelButton>
+    );
+  };
+
   return (
-    <div className="flex-1 flex flex-col md:flex-row overflow-hidden w-full h-full relative font-orbitron">
-      
-      <DevMenu 
-        onOpenStudentSession={onOpenStudentSession || (() => {})} 
-        onOpenKorlongHunt={onOpenKorlongHunt || (() => {})} 
-        onStartGameplay={onStartGameplay} 
+    <div className="flex-1 flex flex-col md:flex-row overflow-hidden w-full h-full relative">
+
+      <DevMenu
+        onOpenStudentSession={onOpenStudentSession || (() => {})}
+        onOpenKorlongHunt={onOpenKorlongHunt || (() => {})}
+        onStartGameplay={onStartGameplay}
       />
 
-      {isSidebarOpen && (
-        <div 
-          className="md:hidden fixed inset-0 bg-[#0f0c0c]/80 z-40 animate-in fade-in duration-300"
+      {isMobile && isSidebarOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-plum-950/80 z-40 px-fade-in"
           onClick={() => { playSound('ui_back'); setIsSidebarOpen(false); }}
         />
       )}
 
-      <div className="flex-1 flex flex-col bg-[#151828] border-b md:border-b-0 md:border-r-[4px] border-[#0f0c0c] overflow-hidden relative">
-        
-        {/* ─── COMIC STYLE HEADER (DARK) ─── */}
-        <div className={`bg-[#1e2238] px-3 py-2 sm:px-4 sm:py-3 border-b-[4px] border-[#0f0c0c] shadow-[0_4px_0_0_#0f0c0c] flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2 z-40 relative shrink-0 transition-all duration-500 ease-out transform ${mounted ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
-          <div className="absolute inset-0 opacity-[0.2]" style={{ backgroundImage: 'radial-gradient(#0f0c0c 2px, transparent 2px)', backgroundSize: '12px 12px' }} />
-          
-          <div className="relative z-10">
-            <h2 className="font-orbitron font-black text-sm sm:text-xl text-white uppercase tracking-wider leading-none">
-              MAP OF THE SILENT VALLEY
+      <div className="flex-1 flex flex-col bg-plum-950 border-b-[3px] md:border-b-0 md:border-r-[3px] border-ink overflow-hidden relative">
+
+        {/* ─── MAP HEADER ─── */}
+        <div className={`bg-plum-900 px-3 py-2 sm:px-4 sm:py-3 border-b-[3px] border-ink flex items-center justify-between gap-3 z-40 relative shrink-0 transition-opacity duration-300 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+          <div className="min-w-0">
+            <h2 className="font-bold text-lg sm:text-2xl leading-none text-parchment-100 truncate">
+              Map of the Silent Valley
             </h2>
-            <p className="text-[9px] sm:text-xs text-slate-300 font-bold mt-1">
-              Click nodes to travel, converse with NPCs, or trigger encounters
+            <p className="hidden sm:block text-sm text-parchment-300 mt-1">
+              Select a location to travel, talk to villagers, or start a battle.
             </p>
           </div>
-          <div className="relative z-10 flex items-center gap-2 self-start sm:self-auto mt-1 sm:mt-0">
-            <span className="px-3 py-1 sm:py-1.5 bg-[#38bdf8] text-[#0f0c0c] font-black text-[9px] sm:text-xs uppercase -skew-x-6 border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c]">
-              REGION 1 OF 4
-            </span>
-          </div>
+          <PixelChip tone="dark" icon={<Map />}>Region 1 of 4</PixelChip>
         </div>
 
         {/* ─── MAP CONTAINER ─── */}
-        <div ref={mapContainerRef} className={`flex-1 w-full h-full relative bg-[#2a2d43] overflow-hidden transition-opacity duration-700 ease-in-out delay-100 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
-          
+        <div ref={mapContainerRef} className={`flex-1 w-full h-full relative bg-plum-900 overflow-hidden transition-opacity duration-700 ease-in-out delay-100 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+
           <div
             ref={panWrapperRef}
             className={`absolute select-none touch-none cursor-grab active:cursor-grabbing will-change-transform transform-gpu ${isPanning ? '' : 'transition-transform duration-300 ease-out'}`}
-            style={{ 
+            style={{
               width: `${visualWidth}px`,
               height: `${visualHeight}px`,
               left: '50%',
               top: '50%',
               marginLeft: `${-visualWidth / 2}px`,
               marginTop: `${-visualHeight / 2}px`,
-              transform: `translate3d(${panOffsetRef.current.x}px, ${panOffsetRef.current.y}px, 0) scale(${mapScale})`, 
+              transform: `translate3d(${panOffsetRef.current.x}px, ${panOffsetRef.current.y}px, 0) scale(${mapScale})`,
               transformOrigin: 'center center',
               backfaceVisibility: 'hidden'
             }}
@@ -625,10 +657,7 @@ export function ExpeditionOverworld({
                 src={corruptedVisayasMap}
                 alt="Corrupted Visayas Map Background"
                 className="absolute inset-0 w-full h-full object-cover"
-                style={{
-                  opacity: 0.95,
-                  mixBlendMode: 'normal',
-                }}
+                style={{ opacity: 0.95, mixBlendMode: 'normal' }}
               />
               <img
                 src={visayasMap}
@@ -643,32 +672,29 @@ export function ExpeditionOverworld({
                   maskComposite: 'add'
                 }}
               />
-              <div 
-                className="absolute inset-0 opacity-10"
-                style={{ backgroundImage: 'radial-gradient(#0f0c0c 2.5px, transparent 2.5px)', backgroundSize: '24px 24px' }}
-              />
             </div>
 
-            <svg 
-              className="w-full h-full absolute inset-0 z-10 pointer-events-none drop-shadow-[4px_4px_0px_rgba(0,0,0,0.5)]" 
+            <svg
+              className="w-full h-full absolute inset-0 z-10 pointer-events-none"
               viewBox="0 0 1000 650"
               preserveAspectRatio="xMidYMid slice"
             >
-              <path 
+              <path
                 d="M 300,250 C 340,290 380,320 420,355 C 440,380 380,480 340,560 C 380,580 480,440 540,380 C 570,350 610,450 640,490 C 680,530 750,320 780,220"
-                fill="none" 
-                stroke="#0f0c0c" 
-                strokeWidth={path1Width + 4} 
-                strokeLinecap="round"
-                className="opacity-50"
+                fill="none"
+                stroke="var(--color-ink)"
+                strokeWidth={path1Width + 6}
+                strokeDasharray={path1Dash}
+                strokeLinecap="butt"
+                className="opacity-70"
               />
-              <path 
+              <path
                 d="M 300,250 C 340,290 380,320 420,355 C 440,380 380,480 340,560 C 380,580 480,440 540,380 C 570,350 610,450 640,490 C 680,530 750,320 780,220"
-                fill="none" 
-                stroke="#ffffff" 
-                strokeWidth={path1Width} 
-                strokeDasharray={path1Dash} 
-                strokeLinecap="round"
+                fill="none"
+                stroke="var(--color-parchment-100)"
+                strokeWidth={path1Width}
+                strokeDasharray={path1Dash}
+                strokeLinecap="butt"
               />
 
               {memoizedNodes}
@@ -701,29 +727,25 @@ export function ExpeditionOverworld({
               {(() => {
                 const currentRenderCoords = getDisplayCoords(currentNode.id, currentNode.x, currentNode.y);
                 const displayPos = avatarPos || { x: currentRenderCoords.x, y: currentRenderCoords.y };
-                
-                const labelText = isTraveling ? 'TRAVELING' : 'PARTY HERE';
-                const boxW = Math.max(50, (labelText.length * 5) + 8); 
+
+                const labelText = isTraveling ? 'Traveling' : 'Party here';
+                const halfW = Math.round(labelText.length * 4.8) + 12;
 
                 return (
-                  <g 
+                  <g
                     transform={`translate(${displayPos.x}, ${displayPos.y - (50 * dynamicPinScale)}) scale(${dynamicPinScale})`}
                     className="transition-all duration-450 ease-in-out pointer-events-none"
+                    shapeRendering="crispEdges"
                   >
-                    <path 
-                      d={`M-${boxW},-50 L${boxW},-50 L${boxW},-20 L10,-20 L0,-5 L-10,-20 L-${boxW},-20 Z`} 
-                      fill="#facc15" 
-                      stroke="#0f0c0c" 
-                      strokeWidth="4" 
+                    <path
+                      d={`M-${halfW + 3},-55 L${halfW + 3},-55 L${halfW + 3},-19 L9,-19 L0,-7 L-9,-19 L-${halfW + 3},-19 Z`}
+                      fill="var(--color-ink)"
                     />
-                    <text 
-                      y="-31" 
-                      textAnchor="middle" 
-                      fontSize="12" 
-                      fontFamily="Orbitron, sans-serif" 
-                      fontWeight="900" 
-                      fill="#0f0c0c"
-                    >
+                    <path
+                      d={`M-${halfW},-52 L${halfW},-52 L${halfW},-22 L6,-22 L0,-13 L-6,-22 L-${halfW},-22 Z`}
+                      fill="var(--color-gold-500)"
+                    />
+                    <text y="-31" textAnchor="middle" fontSize="16" fontFamily="'Pixelify Sans', monospace" fontWeight="600" fill="var(--color-ink)">
                       {labelText}
                     </text>
                   </g>
@@ -732,107 +754,64 @@ export function ExpeditionOverworld({
             </svg>
           </div>
 
-          {/* ─── COMIC TOP RIGHT HUD (DARK) ─── */}
-          <div className={`absolute top-2 right-2 sm:top-3 sm:right-3 z-30 p-1 sm:p-2 flex flex-col items-end gap-2 pointer-events-none w-full max-w-[150px] sm:max-w-[220px] md:max-w-[260px] transition-all duration-500 ease-out delay-200 transform ${mounted ? 'translate-x-0 opacity-100' : 'translate-x-12 opacity-0'}`}>
-            <div className="bg-[#1e2238] border-[3px] sm:border-[4px] border-[#0f0c0c] p-2 sm:p-3 shadow-[4px_4px_0px_0px_#0f0c0c] sm:shadow-[6px_6px_0px_0px_#0f0c0c] -skew-x-2 pointer-events-auto w-full relative overflow-hidden">
-              <div className="absolute inset-0 opacity-[0.1]" style={{ backgroundImage: 'radial-gradient(#0f0c0c 2px, transparent 2px)', backgroundSize: '8px 8px' }} />
-              
-              <div className="flex items-start justify-between gap-1.5 sm:gap-2 skew-x-2 relative z-10">
-                <div className="text-left flex-1">
-                  <h1 className="font-orbitron text-[10px] sm:text-sm md:text-lg font-black uppercase text-white leading-none drop-shadow-[2px_2px_0px_#0f0c0c]">
-                    VISAYAS ARC
-                  </h1>
-                  <div className="inline-block bg-[#facc15] border-[2px] border-[#0f0c0c] px-1.5 sm:px-2 py-0.5 mt-1.5 -skew-x-6">
-                    <p className="font-space-mono text-[6px] sm:text-[8px] md:text-[10px] uppercase font-black text-[#0f0c0c] skew-x-6 tracking-widest leading-none">
-                      APPRENTICE
-                    </p>
-                  </div>
+          {/* ─── PROGRESS HUD ─── */}
+          <div className={`absolute top-2 right-2 sm:top-3 sm:right-3 z-30 flex flex-col items-stretch gap-2 w-[180px] sm:w-[240px] transition-opacity duration-300 delay-200 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+            <PixelPanel padding="sm" className="sm:p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-bold text-base sm:text-xl leading-none text-parchment-100">Visayas Arc</p>
+                  <p className="mt-1 text-xs sm:text-sm leading-none text-gold-300">{LEVEL_TITLE(progress.level)}</p>
                 </div>
-                <div className="flex flex-col items-end">
-                  <div className="flex items-center gap-1 font-orbitron font-black text-[9px] sm:text-xs md:text-sm bg-[#da2d46] border-[2px] sm:border-[3px] border-[#0f0c0c] px-1.5 sm:px-2 shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 text-white">
-                    <Flame size={isMobile ? 10 : 14} fill="currentColor" className="skew-x-6" />
-                    <span className="skew-x-6">1</span>
-                  </div>
-                </div>
+                <PixelChip tone="dark" icon={<Fire />}>{progress.currentStreak}</PixelChip>
               </div>
-              <div className="mt-2 sm:mt-3 skew-x-2 relative z-10">
-                <div className="flex justify-between mb-1 font-space-mono text-[6px] sm:text-[8px] md:text-[10px] font-black text-white uppercase drop-shadow-[1px_1px_0px_#0f0c0c]">
-                  <span>LVL 1</span>
-                  <span>0 / 100 XP</span>
-                </div>
-                <div className="h-2 sm:h-2.5 md:h-3 w-full border-[2px] sm:border-[3px] border-[#0f0c0c] bg-[#0f0c0c] relative skew-x-6">
-                  <div className="h-full bg-[#38bdf8] border-r-[2px] sm:border-r-[3px] border-[#0f0c0c] w-[15%]" />
-                </div>
-              </div>
-            </div>
+              <PixelBar
+                className="mt-2 sm:mt-3"
+                kind="xp"
+                height={8}
+                value={progress.xp}
+                max={xpForNextLevel}
+                label={`Lvl ${progress.level}`}
+                valueText={`${progress.xp} / ${xpForNextLevel} XP`}
+              />
+            </PixelPanel>
 
-            <div className="flex gap-1.5 sm:gap-2 pointer-events-auto w-full justify-end mt-1">
-              <button
-                onClick={() => { playSound('ui_click'); onOpenLocationServices?.(); }}
-                className="flex-1 py-1.5 sm:py-2 bg-[#2a2d43] border-[3px] border-[#0f0c0c] flex flex-col items-center justify-center gap-1 shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6 hover:bg-[#38bdf8] hover:text-[#0f0c0c] transition-all group active:translate-y-1 active:translate-x-1 active:shadow-none text-white"
-              >
-                <Map size={isMobile ? 12 : 16} className="skew-x-6 text-white group-hover:text-[#0f0c0c]" />
-                <span className="font-space-mono uppercase font-black text-[6px] sm:text-[8px] md:text-[9px] skew-x-6 text-white group-hover:text-[#0f0c0c]">Radar</span>
-              </button>
-              <button
-                onClick={() => { playSound('ui_click'); onOpenBadges?.(); }}
-                className="flex-1 py-1.5 sm:py-2 bg-[#2a2d43] border-[3px] border-[#0f0c0c] flex flex-col items-center justify-center gap-1 shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6 hover:bg-[#da2d46] hover:text-white transition-all group active:translate-y-1 active:translate-x-1 active:shadow-none text-white"
-              >
-                <ShieldAlert size={isMobile ? 12 : 16} className="skew-x-6 text-white group-hover:text-white" />
-                <span className="font-space-mono uppercase font-black text-[6px] sm:text-[8px] md:text-[9px] skew-x-6 text-white group-hover:text-white">Badges</span>
-              </button>
-              <button
-                onClick={() => { playSound('ui_click'); onOpenRanks?.(); }}
-                className="flex-1 py-1.5 sm:py-2 bg-[#2a2d43] border-[3px] border-[#0f0c0c] flex flex-col items-center justify-center gap-1 shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6 hover:bg-[#facc15] hover:text-[#0f0c0c] transition-all group active:translate-y-1 active:translate-x-1 active:shadow-none text-white"
-              >
-                <Flame size={isMobile ? 12 : 16} className="skew-x-6 text-white group-hover:text-[#0f0c0c]" />
-                <span className="font-space-mono uppercase font-black text-[6px] sm:text-[8px] md:text-[9px] skew-x-6 text-white group-hover:text-[#0f0c0c]">Ranks</span>
-              </button>
+            <div className="flex gap-1.5 sm:gap-2 justify-end">
+              <PixelIconButton className="flex-1" icon={<Map />} label="Radar" showLabel onClick={() => onOpenLocationServices?.()} />
+              <PixelIconButton className="flex-1" icon={<Shield />} label="Badges" showLabel onClick={() => onOpenBadges?.()} />
+              <PixelIconButton className="flex-1" icon={<Trophy />} label="Ranks" showLabel onClick={() => onOpenRanks?.()} />
             </div>
           </div>
 
-          {/* ─── ANIMATED SCAN BUTTON ─── */}
-          <div className={`absolute bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 z-30 w-[85%] max-w-[240px] sm:max-w-[320px] px-2 sm:px-4 pointer-events-none transition-all duration-500 ease-out delay-300 transform ${mounted ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'}`}>
-            <button
-              onClick={() => { playSound('scan_init'); onOpenScanner?.(); }}
-              className="w-full flex items-center justify-center gap-2 sm:gap-3 py-2 sm:py-3.5 md:py-4 bg-[#da2d46] border-[4px] sm:border-[5px] border-[#0f0c0c] text-white shadow-[6px_6px_0px_0px_#0f0c0c] sm:shadow-[8px_8px_0px_0px_#0f0c0c] hover:bg-[#ff3b56] active:translate-y-[4px] active:translate-x-[4px] active:shadow-none transition-all -skew-x-6 pointer-events-auto group"
-            >
-              <Camera className="skew-x-6 font-black w-4 h-4 sm:w-6 sm:h-6 fill-current" />
-              <span className="font-orbitron font-black text-xs sm:text-sm md:text-lg tracking-widest uppercase skew-x-6 drop-shadow-[2px_2px_0px_#0f0c0c]">
-                SCAN INSTRUMENT
-              </span>
-            </button>
+          {/* ─── SCAN INSTRUMENT ─── */}
+          <div className={`absolute bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 z-30 transition-opacity duration-300 delay-300 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+            <PixelButton size="lg" icon={<Camera />} sound="scan_init" onClick={() => onOpenScanner?.()}>
+              Scan Instrument
+            </PixelButton>
           </div>
 
-          <button
-            onClick={() => { playSound('drawer_open'); setIsSidebarOpen(true); }}
-            className={`
-              md:hidden absolute right-0 bottom-20 z-30
-              bg-[#facc15] text-[#0f0c0c] py-2 px-2.5 pl-3.5 rounded-l-none border-y-[4px] border-l-[4px] border-[#0f0c0c] shadow-[-6px_6px_0px_0px_#0f0c0c]
-              transition-all duration-300 ease-in-out hover:bg-[#ffdf3d] active:translate-y-1 active:shadow-[0px_0px_0px_0px_#0f0c0c]
-              flex items-center gap-1.5 cursor-pointer
-              ${isSidebarOpen ? 'translate-x-full opacity-0 pointer-events-none' : 'translate-x-0 opacity-100'}
-            `}
+          <PixelButton
+            size="sm"
+            icon={<ChevronUp className="-rotate-90" />}
+            sound="drawer_open"
+            onClick={() => setIsSidebarOpen(true)}
+            className={`md:hidden absolute right-2 bottom-20 z-30 transition-opacity duration-200 ${isSidebarOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
           >
-            <ChevronUp size={18} className="font-black -rotate-90" />
-            <span className="font-orbitron font-black text-[11px] tracking-widest uppercase">
-              INFO
-            </span>
-          </button>
+            Info
+          </PixelButton>
         </div>
       </div>
 
-      {/* ─── COMIC RIGHT SIDEBAR (DARK - STRICTLY NO SCROLLBAR) ─── */}
-      <aside 
+      {/* ─── LOCATION SIDEBAR ─── */}
+      <aside
         className={`
           fixed md:relative inset-x-0 bottom-0 md:bottom-auto z-50 md:z-0
           w-full md:w-[340px] xl:w-[400px] h-[85vh] md:h-full
-          flex flex-col gap-3 bg-[#151828] p-4 md:p-5 border-t-[4px] md:border-t-0 md:border-l-[4px] border-[#0f0c0c]
+          flex flex-col gap-3 bg-plum-900 p-3 md:p-4 border-t-[3px] md:border-t-0 md:border-l-[3px] border-ink
           overflow-hidden select-none shrink-0 md:shrink
-          transition-all duration-500 ease-out shadow-[0px_-10px_20px_rgba(0,0,0,0.3)] md:shadow-none
-          ${isMobile 
-            ? (isSidebarOpen ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0') 
-            : (mounted ? 'translate-x-0 opacity-100' : 'translate-x-12 opacity-0')}
+          transition-all duration-300 ease-out
+          ${isMobile
+            ? (isSidebarOpen ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0')
+            : (mounted ? 'opacity-100' : 'opacity-0')}
         `}
         style={{
           ...(isMobile && isSidebarOpen && {
@@ -841,12 +820,9 @@ export function ExpeditionOverworld({
           })
         }}
       >
-        
-        <div className="absolute inset-0 opacity-[0.2]" style={{ backgroundImage: 'radial-gradient(#0f0c0c 2px, transparent 2px)', backgroundSize: '12px 12px' }} />
-
         {/* ─── DRAGGABLE HANDLE ─── */}
-        <div 
-          className="md:hidden w-full flex items-center justify-center pb-4 pt-1 cursor-grab active:cursor-grabbing group relative z-10 touch-none shrink-0" 
+        <div
+          className="md:hidden w-full flex items-center justify-center pb-2 pt-1 cursor-grab active:cursor-grabbing relative z-10 touch-none shrink-0"
           onTouchStart={handleDrawerTouchStart}
           onTouchMove={handleDrawerTouchMove}
           onTouchEnd={handleDrawerTouchEnd}
@@ -855,195 +831,106 @@ export function ExpeditionOverworld({
           onMouseUp={handleDrawerTouchEnd}
           onMouseLeave={handleDrawerTouchEnd}
         >
-          <div className="w-14 h-2 bg-[#0f0c0c] rounded-full group-hover:bg-slate-700 transition-colors" />
+          <div className="w-14 h-1.5 bg-plum-600" />
         </div>
 
-        <button 
-          onClick={() => { playSound('ui_back'); setIsSidebarOpen(false); }}
-          className="md:hidden absolute top-4 right-4 text-white hover:text-[#da2d46] transition-colors z-10"
-        >
-          <X size={28} className="font-black" />
-        </button>
+        <PixelIconButton
+          className="md:hidden absolute top-3 right-3 z-20 size-10"
+          icon={<Close />}
+          label="Close"
+          sound="ui_back"
+          onClick={() => setIsSidebarOpen(false)}
+        />
 
-        {/* --- MAIN INFO PANEL (FLEXIBLE HEIGHT, COMPACT FITS ALL) --- */}
-        <div className="flex-1 min-h-0 bg-[#1e2238] border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] p-2 sm:p-3 flex flex-col gap-1.5 sm:gap-2 relative z-10 overflow-hidden">
-          
-          <div className="shrink-0 flex items-center justify-between mb-1">
-            <span className="px-2 py-1 bg-[#38bdf8] text-[#0f0c0c] border-[3px] border-[#0f0c0c] font-orbitron font-black text-[10px] sm:text-xs uppercase -skew-x-6 shadow-[3px_3px_0px_0px_#0f0c0c]">
-              {currentNode.type.toUpperCase()} NODE
-            </span>
-            <span className="text-2xl leading-none hidden md:block drop-shadow-[2px_2px_0px_#0f0c0c]">{currentNode.icon}</span>
+        {/* ─── LOCATION PANEL ─── */}
+        <PixelPanel frame="wood" padding="sm" className="flex-1 min-h-0 flex flex-col gap-3 overflow-hidden">
+          <div className="shrink-0 flex flex-col gap-2 px-1 pt-1">
+            <SectionLabel tone="gold" className="flex items-center gap-2">
+              {(() => { const Icon = NODE_TYPE_ICON[currentNode.type]; return <Icon className="size-4" aria-hidden />; })()}
+              {currentNode.type}
+            </SectionLabel>
+            <h3 className="font-bold text-2xl xl:text-3xl leading-none text-parchment-100 line-clamp-2">
+              {currentNode.name}
+            </h3>
           </div>
 
-          <h3 className="shrink-0 font-orbitron font-black text-xl sm:text-xl xl:text-2xl text-white tracking-wider leading-tight line-clamp-2">
-            {currentNode.name}
-          </h3>
-
-          {/* --- FLUID HERO PREVIEW IMAGE --- */}
           {currentPreviewImg && (
-            <div className="flex-1 min-h-0 shrink max-h-[160px] xl:max-h-[200px] w-full border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] bg-[#0f0c0c] mt-1 mb-0.5 overflow-hidden -skew-x-2 relative">
-              <div className="absolute skew-x-2 w-full h-full">
-                <img
-                  src={currentPreviewImg}
-                  alt={`${currentNode.name} Preview`}
-                  className={`w-full h-full object-cover ${currentNodeId === 'silent_peak' ? 'object-bottom' : 'object-top'} opacity-90 transition-opacity hover:opacity-100 animate-ken-burns`}
-                />
-              </div>
+            <div className="px-frame px-frame-inset px-frame-sm flex-1 min-h-0 max-h-[160px] xl:max-h-[200px] w-full overflow-hidden">
+              <img
+                src={currentPreviewImg}
+                alt={`${currentNode.name} preview`}
+                className={`w-full h-full object-cover ${currentNodeId === 'silent_peak' ? 'object-bottom' : 'object-top'} animate-ken-burns`}
+              />
             </div>
           )}
 
-          <div className="shrink-0 bg-[#0f0c0c]/40 p-1.5 sm:p-2 border-l-[3px] sm:border-l-[4px] border-[#38bdf8] mt-0.5">
-            <p className="text-[9px] sm:text-[10px] xl:text-xs text-slate-300 font-bold leading-snug whitespace-pre-wrap">
-              {currentNode.desc}
-            </p>
-          </div>
-
-          {/* DASHED DIVIDER & LOCKED ACTION AREA */}
-          <div className="shrink-0 border-t-[2px] border-dashed border-[#0f0c0c]/30 mt-auto pt-1.5 flex flex-col gap-1.5">
-            <div className="bg-[#0f0c0c] px-2 py-1.5 border-[3px] border-[#0f0c0c] flex flex-col gap-0.5 shadow-[3px_3px_0px_0px_#0f0c0c] -skew-x-2">
-              <span className="text-[9px] sm:text-[10px] font-orbitron font-black uppercase text-[#facc15] tracking-wider skew-x-2 leading-none">
-                📍 REGIONAL REWARDS
-              </span>
-              <span className="text-[10px] sm:text-xs text-white font-black skew-x-2 leading-tight whitespace-normal">
-                {currentNode.rewards}
-              </span>
-            </div>
-
-            <div className="flex flex-col gap-2 w-full mt-1">
-              {currentNode.type === 'town' ? (
-                <div className="flex flex-col gap-2 w-full">
-                  <button
-                    onClick={() => {
-                      playSound('npc_talk');
-                      setDialogueStep(0);
-                      setShowDialogue(true);
-                      if (isMobile) setIsSidebarOpen(false);
-                    }}
-                    className="w-full py-1.5 sm:py-2 bg-[#facc15] text-[#0f0c0c] border-[3px] sm:border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-[10px] sm:text-xs uppercase -skew-x-6 hover:bg-[#ffdf3d] transition-all flex items-center justify-center gap-1.5 active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
-                  >
-                    <MessageSquare className="w-5 h-5 fill-current shrink-0 skew-x-6" />
-                    <span className="truncate skew-x-6">TALK TO NPC</span>
-                  </button>
-
-                  {currentNodeId === 'cadence_town' && (
-                    <button
-                      onClick={() => {
-                        playSound('shop_open');
-                        if (onOpenShop) onOpenShop();
-                        if (isMobile) setIsSidebarOpen(false);
-                      }}
-                      className="w-full py-1.5 bg-[#f97316] text-white border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-[10px] sm:text-xs uppercase -skew-x-6 hover:bg-[#fb923c] transition-all flex items-center justify-center gap-1.5 active:translate-y-0.5 active:shadow-none animate-pulse"
-                    >
-                      <span className="truncate font-black tracking-wider skew-x-6">SHOP</span>
-                    </button>
-                  )}
-                </div>
-              ) : currentNode.completed ? (
-                <div className="flex flex-col gap-2 w-full">
-                  {currentNodeId === 'crossroads' && (
-                    <button
-                      onClick={() => {
-                        playSound('npc_talk');
-                        setDialogueStep(0);
-                        setShowDialogue(true);
-                        if (isMobile) setIsSidebarOpen(false);
-                      }}
-                      className="w-full py-1.5 sm:py-2 bg-[#facc15] text-[#0f0c0c] border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-[10px] sm:text-xs uppercase -skew-x-6 hover:bg-[#ffdf3d] transition-all flex items-center justify-center gap-1.5 active:translate-y-0.5 active:shadow-none"
-                    >
-                      <MessageSquare className="w-4 h-4 fill-current shrink-0 skew-x-6" />
-                      <span className="truncate skew-x-6">TALK TO RESCUED NPC</span>
-                    </button>
-                  )}
-                  <button
-                    disabled
-                    className="w-full py-1.5 sm:py-2 bg-gray-500 text-white border-[3px] sm:border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-[10px] sm:text-xs uppercase -skew-x-6 flex items-center justify-center gap-1.5 opacity-50 cursor-not-allowed"
-                  >
-                    <span className="truncate skew-x-6 drop-shadow-[2px_2px_0px_#0f0c0c]">AREA CLEARED</span>
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => {
-                    playSound('battle_start');
-                    if (currentNode.enemyIds) onStartBattle(currentNode.enemyIds[0], currentNode.enemyIds);
-                    else if (currentNode.enemyId) onStartBattle(currentNode.enemyId);
-                  }}
-                  className="w-full py-1.5 sm:py-2 bg-[#da2d46] text-white border-[3px] sm:border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-[10px] sm:text-xs uppercase -skew-x-6 hover:bg-[#ff3b56] transition-all flex items-center justify-center gap-1.5 active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
-                >
-                  <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current shrink-0 skew-x-6" />
-                  <span className="truncate skew-x-6 drop-shadow-[2px_2px_0px_#0f0c0c]">BATTLE {(currentNode.enemyId || (currentNode.enemyIds && currentNode.enemyIds[0]) || 'ENEMIES').replace(/_/g, ' ').toUpperCase()}</span>
-                </button>
-              )}
-
-              <button
-                onClick={() => { playSound('journal_open'); onOpenQuests(); }}
-                className="w-full py-1.5 sm:py-2 bg-[#38bdf8] text-[#0f0c0c] border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] font-orbitron font-black text-[10px] sm:text-xs uppercase -skew-x-6 hover:bg-[#7dd3fc] transition-all flex items-center justify-center gap-1.5 active:translate-y-[2px] active:translate-x-[2px] active:shadow-none"
-              >
-                <Compass className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 skew-x-6" />
-                <span className="truncate skew-x-6">OPEN QUEST JOURNAL</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* --- WEAKNESS MATRIX (LOCKED TO BOTTOM) --- */}
-        <div className="shrink-0 bg-[#1e2238] border-[3px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] p-2.5 sm:p-3 flex flex-col gap-2 mb-4 md:mb-0 relative z-10">
-          <div className="absolute -top-3 left-3 bg-[#facc15] px-2 py-0.5 border-[2px] border-[#0f0c0c] -skew-x-6 shadow-[2px_2px_0px_0px_#0f0c0c]">
-             <h4 className="font-orbitron font-black text-[9px] sm:text-[10px] uppercase tracking-wider text-[#0f0c0c] skew-x-6 flex items-center gap-1">
-               <ShieldAlert size={12} className="fill-[#0f0c0c] text-[#facc15]"/> WEAKNESS MATRIX
-             </h4>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-1.5 text-[8px] sm:text-[10px] font-orbitron font-black pt-2 pb-0.5">
-            <span className="px-2 py-1 bg-[#da2d46] text-white border-[2px] border-[#0f0c0c] -skew-x-6 shadow-[2px_2px_0px_0px_#0f0c0c]">STRING</span>
-            <span className="text-white font-black drop-shadow-[1px_1px_0px_#0f0c0c]">➔</span>
-            <span className="px-2 py-1 bg-[#facc15] text-[#0f0c0c] border-[2px] border-[#0f0c0c] -skew-x-6 shadow-[2px_2px_0px_0px_#0f0c0c]">PERC</span>
-            <span className="text-white font-black drop-shadow-[1px_1px_0px_#0f0c0c]">➔</span>
-            <span className="px-2 py-1 bg-[#f97316] text-white border-[2px] border-[#0f0c0c] -skew-x-6 shadow-[2px_2px_0px_0px_#0f0c0c]">BRASS</span>
-            <span className="text-white font-black drop-shadow-[1px_1px_0px_#0f0c0c]">➔</span>
-            <span className="px-2 py-1 bg-[#a855f7] text-white border-[2px] border-[#0f0c0c] -skew-x-6 shadow-[2px_2px_0px_0px_#0f0c0c]">SYNTH</span>
-            <span className="text-white font-black drop-shadow-[1px_1px_0px_#0f0c0c]">➔</span>
-            <span className="px-2 py-1 bg-[#4ade80] text-[#0f0c0c] border-[2px] border-[#0f0c0c] -skew-x-6 shadow-[2px_2px_0px_0px_#0f0c0c]">WOOD</span>
-          </div>
-
-          <p className="text-[9px] sm:text-[10px] text-slate-300 font-bold leading-tight bg-[#0f0c0c] p-1.5 sm:p-2 border-[2px] border-[#0f0c0c]">
-            Super Effective attacks deal <strong className="text-[#da2d46] font-black">2.0x Damage</strong> and double Stagger buildup!
+          <p className="shrink-0 px-1 text-sm xl:text-base leading-snug text-parchment-300 whitespace-pre-wrap">
+            {currentNode.desc}
           </p>
-        </div>
+
+          <div className="shrink-0 mt-auto flex flex-col gap-3 px-1 pb-1">
+            <div className="flex flex-col gap-1">
+              <SectionLabel>Rewards</SectionLabel>
+              <p className="text-sm leading-snug text-parchment-100">{currentNode.rewards}</p>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              {renderNodeActions()}
+              <PixelButton
+                variant="ghost"
+                size="sm"
+                icon={<Compass />}
+                sound="journal_open"
+                onClick={onOpenQuests}
+                className="self-center"
+              >
+                Open Quest Journal
+              </PixelButton>
+            </div>
+          </div>
+        </PixelPanel>
+
+        {/* ─── WEAKNESS MATRIX ─── */}
+        <PixelPanel padding="sm" className="shrink-0 mb-4 md:mb-0" title={<span className="px-1">Weakness Chart</span>}>
+          <ol className="flex flex-wrap items-center justify-center gap-y-1.5 px-1 text-parchment-500" aria-label="Each type is strong against the next">
+            {(['string', 'perc', 'brass', 'synth', 'wood'] as const).map((tone, i) => (
+              <li key={tone} className="flex items-center">
+                {i > 0 && <span className="px-1" aria-hidden>›</span>}
+                <PixelChip tone={tone}>{tone}</PixelChip>
+              </li>
+            ))}
+          </ol>
+          <p className="mt-2 px-1 text-xs leading-snug text-parchment-300">
+            Super effective attacks deal <strong className="font-semibold text-parchment-100">2× damage</strong> and double stagger buildup.
+          </p>
+        </PixelPanel>
       </aside>
 
-      {/* ─── COMIC DIALOGUE MODAL (DARK) ─── */}
-      {showDialogue && (
-        <div className="fixed inset-0 z-[60] bg-[#0f0c0c]/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#1e2238] border-[5px] border-[#0f0c0c] shadow-[12px_12px_0px_0px_#0f0c0c] max-w-2xl w-full p-6 sm:p-8 flex flex-col sm:flex-row gap-5 items-center sm:items-start -skew-x-2 animate-in fade-in zoom-in-95 duration-200">
-            <div className="text-5xl sm:text-6xl bg-[#0f0c0c] p-4 sm:p-5 border-[4px] border-[#facc15] shadow-[6px_6px_0px_0px_#facc15] flex items-center justify-center shrink-0">
-              {dialogues[dialogueStep]?.avatar}
-            </div>
-
-            <div className="flex-1 flex flex-col gap-3 sm:gap-4 text-center sm:text-left w-full skew-x-2">
-              <div className="flex flex-col sm:flex-row items-center justify-between border-b-[4px] border-[#0f0c0c] pb-3 gap-2 sm:gap-0">
-                <span className="font-orbitron font-black text-lg sm:text-xl text-[#0f0c0c] bg-[#facc15] px-3 py-1 border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#0f0c0c] -skew-x-3">
-                  {dialogues[dialogueStep]?.speaker}
-                </span>
-                <span className="text-[10px] sm:text-xs font-orbitron text-slate-400 font-black">
-                  STEP {dialogueStep + 1}/{dialogues.length}
-                </span>
+      {/* ─── NPC DIALOGUE ─── */}
+      {showDialogue && currentDialogue && (
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-3 sm:p-6">
+          <div className="absolute inset-0 bg-plum-950/75 px-fade-in" />
+          <PixelPanel frame="wood" padding="none" className="relative w-full max-w-2xl px-rise-in" role="dialog" aria-modal="true" aria-label={currentDialogue.speaker}>
+            <div className="flex gap-4 p-4 sm:p-5">
+              <div className="px-frame px-frame-inset shrink-0 size-16 sm:size-20 flex items-center justify-center text-parchment-300">
+                <User className="size-10 sm:size-12" aria-hidden />
               </div>
-
-              <p className="text-base sm:text-xl text-white font-black leading-relaxed my-2">
-                "{dialogues[dialogueStep]?.text}"
-              </p>
-
-              <div className="pt-2 sm:pt-4">
-                <button
-                  onClick={handleNextDialogue}
-                  className="w-full py-3 sm:py-4 bg-[#4ade80] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] font-orbitron font-black text-sm sm:text-base uppercase -skew-x-3 hover:bg-[#6bee9c] transition-all active:translate-y-[4px] active:translate-x-[4px] active:shadow-none"
-                >
-                  <span className="skew-x-3 drop-shadow-[1px_1px_0px_rgba(0,0,0,0.2)]">▶ {dialogues[dialogueStep]?.choice}</span>
-                </button>
+              <div className="flex-1 min-w-0 flex flex-col gap-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-bold text-lg sm:text-xl leading-none text-gold-300">{currentDialogue.speaker}</span>
+                  <span className="text-xs leading-none text-parchment-500">{dialogueStep + 1}/{dialogues.length}</span>
+                </div>
+                <p className="text-base sm:text-lg leading-snug text-parchment-100">
+                  {currentDialogue.text}
+                </p>
               </div>
             </div>
-          </div>
+            <div className="flex justify-end border-t-[3px] border-ink bg-plum-800 px-4 py-3">
+              <PixelButton variant="primary" sound={null} onClick={handleNextDialogue}>
+                {currentDialogue.choice}
+              </PixelButton>
+            </div>
+          </PixelPanel>
         </div>
       )}
     </div>

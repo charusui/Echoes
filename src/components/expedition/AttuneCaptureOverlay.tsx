@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Radio, CheckCircle2, XCircle, Zap } from 'lucide-react';
+import { Radio, Check as CheckCircle2, Close as XCircle, Zap } from 'pixelarticons/react';
 import { type EnemyProfile } from '../../types/expedition';
 import { audioEngine } from '../../services/audioSynth';
 
@@ -142,37 +142,37 @@ export function AttuneCaptureOverlay({ enemy, onComplete }: AttuneCaptureOverlay
   }, [handleTriggerHit]);
 
   return (
-    <div className="bg-[#1e2238] border-[5px] border-[#0f0c0c] shadow-[8px_8px_0px_0px_#0f0c0c] p-6 flex flex-col items-center gap-5 -skew-x-2 animate-in fade-in zoom-in-95 duration-150 select-none max-w-xl mx-auto backdrop-blur-md">
+    <div className="bg-plum-800 border-[3px] border-ink p-6 flex flex-col items-center gap-5 animate-in fade-in zoom-in-95 duration-150 select-none max-w-xl mx-auto">
       {/* Top Banner */}
-      <div className="w-full flex items-center justify-between border-b-[3px] border-[#0f0c0c] pb-3">
-        <div className="flex items-center gap-2 bg-[#38bdf8] text-[#0f0c0c] px-3 py-1 border-[2px] border-[#0f0c0c] font-orbitron font-black text-xs uppercase">
+      <div className="w-full flex items-center justify-between border-b-[3px] border-ink pb-3">
+        <div className="flex items-center gap-2 bg-xp text-ink px-3 py-1 border-[2px] border-ink font-bold text-xs">
           <Radio className="w-4 h-4 animate-pulse" />
           <span>ATTUNE SIGNAL: {enemy.name.toUpperCase()}</span>
         </div>
-        <span className="font-orbitron font-bold text-xs text-[#facc15]">
+        <span className="font-bold text-xs text-gold-300">
           ATTEMPTS: {maxAttempts - attemptsUsed} LEFT
         </span>
       </div>
 
-      <p className="text-xs text-slate-200 font-bold text-center">
-        PRESS <span className="text-[#facc15] font-orbitron font-black">[SPACE]</span> OR CLICK TO LOCK FREQUENCY INSIDE THE GREEN ZONE!
+      <p className="text-xs text-parchment-100 font-bold text-center">
+        PRESS <span className="text-gold-300 font-bold">[SPACE]</span> OR CLICK TO LOCK FREQUENCY INSIDE THE GREEN ZONE!
       </p>
 
       {/* Target Progress Circles */}
       <div className="flex items-center gap-3">
-        <span className="font-orbitron font-black text-xs text-white uppercase">
+        <span className="font-bold text-xs text-parchment-100">
           REQUIRED HARMONY ({targetHits} HITS):
         </span>
         <div className="flex gap-2">
           {Array.from({ length: targetHits }).map((_, i) => (
             <div 
               key={i}
-              className={`w-6 h-6 rounded-full border-[3px] border-[#0f0c0c] flex items-center justify-center transition-all ${
+              className={`w-6 h-6 rounded-full border-[3px] border-ink flex items-center justify-center transition-all ${
                 i < Math.floor(currentHits) 
-                  ? 'bg-[#4ade80] text-[#0f0c0c] scale-110 shadow-[0_0_10px_#4ade80]' 
+                  ? 'bg-heal text-ink scale-110 ' 
                   : i < currentHits 
-                    ? 'bg-[#fb923c] text-[#0f0c0c]' 
-                    : 'bg-[#151828] text-slate-600'
+                    ? 'bg-orange-500 text-ink' 
+                    : 'bg-plum-900 text-parchment-500'
               }`}
             >
               {i < Math.floor(currentHits) ? (
@@ -190,43 +190,43 @@ export function AttuneCaptureOverlay({ enemy, onComplete }: AttuneCaptureOverlay
       {/* Timing Bar Challenge Box */}
       <div 
         onClick={handleTriggerHit}
-        className="w-full relative py-8 px-4 flex flex-col items-center justify-center bg-[#151828] border-[4px] border-[#0f0c0c] cursor-pointer shadow-inner"
+        className="w-full relative py-8 px-4 flex flex-col items-center justify-center bg-plum-900 border-[3px] border-ink cursor-pointer shadow-inner"
       >
         {/* Color Bands Bar */}
-        <div className="w-full h-12 relative border-[3px] border-[#0f0c0c] flex overflow-hidden shadow-md">
+        <div className="w-full h-12 relative border-[3px] border-ink flex overflow-hidden shadow-md">
           {/* Black Zone Left (0% - 15%) */}
-          <div style={{ width: '15%' }} className="h-full bg-[#1e2238] flex items-center justify-center">
-            <span className="font-orbitron font-black text-3xs text-slate-500 hidden sm:inline">MISS</span>
+          <div style={{ width: '15%' }} className="h-full bg-plum-800 flex items-center justify-center">
+            <span className="font-bold text-3xs text-parchment-500 hidden sm:inline">MISS</span>
           </div>
           {/* Yellow Zone Left (15% - 30%) */}
-          <div style={{ width: '15%' }} className="h-full bg-[#facc15] border-x-[2px] border-[#0f0c0c] flex items-center justify-center">
-            <span className="font-orbitron font-black text-2xs text-[#0f0c0c] hidden sm:inline">WEAK</span>
+          <div style={{ width: '15%' }} className="h-full bg-gold-500 border-x-[2px] border-ink flex items-center justify-center">
+            <span className="font-bold text-xs text-ink hidden sm:inline">WEAK</span>
           </div>
           {/* Orange Zone Left (30% - 42%) */}
-          <div style={{ width: '12%' }} className="h-full bg-[#fb923c] border-r-[2px] border-[#0f0c0c] flex items-center justify-center">
-            <span className="font-orbitron font-black text-2xs text-[#0f0c0c] hidden sm:inline">MED</span>
+          <div style={{ width: '12%' }} className="h-full bg-orange-500 border-r-[2px] border-ink flex items-center justify-center">
+            <span className="font-bold text-xs text-ink hidden sm:inline">MED</span>
           </div>
           {/* Green Zone Center (42% - 58%) */}
-          <div style={{ width: '16%' }} className="h-full bg-[#4ade80] flex items-center justify-center relative overflow-hidden shadow-[inset_0_0_12px_rgba(255,255,255,0.4)] animate-pulse">
-            <span className="font-orbitron font-black text-xs text-[#0f0c0c] tracking-widest">GREEN</span>
+          <div style={{ width: '16%' }} className="h-full bg-heal flex items-center justify-center relative overflow-hidden shadow-[inset_0_0_12px_rgba(255,255,255,0.4)] animate-pulse">
+            <span className="font-bold text-xs text-ink">GREEN</span>
           </div>
           {/* Orange Zone Right (58% - 70%) */}
-          <div style={{ width: '12%' }} className="h-full bg-[#fb923c] border-l-[2px] border-[#0f0c0c] flex items-center justify-center">
-            <span className="font-orbitron font-black text-2xs text-[#0f0c0c] hidden sm:inline">MED</span>
+          <div style={{ width: '12%' }} className="h-full bg-orange-500 border-l-[2px] border-ink flex items-center justify-center">
+            <span className="font-bold text-xs text-ink hidden sm:inline">MED</span>
           </div>
           {/* Yellow Zone Right (70% - 85%) */}
-          <div style={{ width: '15%' }} className="h-full bg-[#facc15] border-x-[2px] border-[#0f0c0c] flex items-center justify-center">
-            <span className="font-orbitron font-black text-2xs text-[#0f0c0c] hidden sm:inline">WEAK</span>
+          <div style={{ width: '15%' }} className="h-full bg-gold-500 border-x-[2px] border-ink flex items-center justify-center">
+            <span className="font-bold text-xs text-ink hidden sm:inline">WEAK</span>
           </div>
           {/* Black Zone Right (85% - 100%) */}
-          <div style={{ width: '15%' }} className="h-full bg-[#1e2238] flex items-center justify-center">
-            <span className="font-orbitron font-black text-3xs text-slate-500 hidden sm:inline">MISS</span>
+          <div style={{ width: '15%' }} className="h-full bg-plum-800 flex items-center justify-center">
+            <span className="font-bold text-3xs text-parchment-500 hidden sm:inline">MISS</span>
           </div>
         </div>
 
         {/* Oscillating Needle */}
         <div 
-          className="absolute top-4 bottom-4 w-1.5 sm:w-2 bg-white border border-[#0f0c0c] shadow-[0_0_15px_#ffffff] pointer-events-none transition-none"
+          className="absolute top-4 bottom-4 w-1.5 sm:w-2 bg-parchment-100 border border-ink pointer-events-none transition-none"
           style={{
             left: `${needlePos}%`,
             transform: 'translateX(-50%)',
@@ -239,14 +239,14 @@ export function AttuneCaptureOverlay({ enemy, onComplete }: AttuneCaptureOverlay
 
         {/* Result Banner if hit */}
         {lastResultText && (
-          <div className={`absolute -top-4 px-4 py-1.5 rounded border-[3px] border-[#0f0c0c] font-orbitron font-black text-sm tracking-wide uppercase animate-bounce shadow-lg ${
+          <div className={`absolute -top-4 px-4 py-1.5  border-[3px] border-ink  font-bold text-sm   animate-bounce shadow-lg ${
             lastHitColor === 'green' 
-              ? 'bg-[#4ade80] text-[#0f0c0c]' 
+              ? 'bg-heal text-ink' 
               : lastHitColor === 'orange'
-                ? 'bg-[#fb923c] text-[#0f0c0c]'
+                ? 'bg-orange-500 text-ink'
                 : lastHitColor === 'yellow'
-                  ? 'bg-[#facc15] text-[#0f0c0c]'
-                  : 'bg-[#da2d46] text-white'
+                  ? 'bg-gold-500 text-ink'
+                  : 'bg-hp text-parchment-100'
           }`}>
             {lastResultText}
           </div>
@@ -257,9 +257,9 @@ export function AttuneCaptureOverlay({ enemy, onComplete }: AttuneCaptureOverlay
       <button
         onClick={handleTriggerHit}
         disabled={isPaused || isFinishedRef.current}
-        className="w-full py-3 bg-[#38bdf8] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-base uppercase hover:bg-[#7dd3fc] active:translate-y-0.5 active:shadow-none transition-all disabled:opacity-50"
+        className="px-btn px-btn-blue w-full min-h-12 text-base"
       >
-        {isFinishedRef.current ? "ATTUNEMENT COMPLETE!" : "LOCK FREQUENCY [SPACE]"}
+        {isFinishedRef.current ? "Attuned!" : "Lock Frequency (Space)"}
       </button>
     </div>
   );

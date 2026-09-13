@@ -183,7 +183,7 @@ export function ParryQteOverlay({
               {/* Osu! Approach Ring */}
               {isPending && (
                 <div 
-                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 sm:w-20 sm:h-20 rounded-full border-[3px] sm:border-[4px] border-[#facc15] shadow-[0_0_8px_#facc15] pointer-events-none"
+                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 sm:w-20 sm:h-20 rounded-full border-[3px] sm:border-[3px] border-gold-300 pointer-events-none"
                   style={{
                     animation: `osuApproach ${APPROACH_DURATION}ms linear forwards`,
                     animationDelay: `${circle.spawnTime}ms`,
@@ -196,15 +196,15 @@ export function ParryQteOverlay({
               {isPending && (
                 <div 
                   onPointerDown={(e) => { e.preventDefault(); triggerHit(circle.id); }}
-                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-[#0f0c0c]/90 backdrop-blur-md border-[3px] sm:border-[4px] border-[#da2d46] shadow-[0_0_15px_rgba(218,45,70,0.8)] flex items-center justify-center cursor-pointer active:scale-95 transition-transform"
+                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-plum-950/90 border-[3px] sm:border-[3px] border-hp flex items-center justify-center cursor-pointer active:scale-95 transition-transform"
                   style={{
                     animation: `osuPopIn 200ms cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards`,
                     animationDelay: `${circle.spawnTime}ms`,
                     opacity: 0, 
                   }}
                 >
-                  <div className="absolute inset-0 rounded-full bg-[#da2d46]/20 animate-pulse pointer-events-none" />
-                  <span className="font-orbitron font-black text-xl sm:text-2xl text-white pointer-events-none drop-shadow-[2px_2px_0px_#0f0c0c]">
+                  <div className="absolute inset-0 rounded-full bg-hp/20 animate-pulse pointer-events-none" />
+                  <span className="font-bold text-xl sm:text-2xl text-parchment-100 pointer-events-none">
                     {circle.num}
                   </span>
                 </div>
@@ -213,10 +213,10 @@ export function ParryQteOverlay({
               {/* Hit Feedback Burst */}
               {!isPending && (
                 <div 
-                  className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center font-orbitron font-black text-xl sm:text-3xl tracking-widest uppercase pointer-events-none drop-shadow-[0_0_10px_currentColor] ${
-                    circle.status === 'perfect' ? 'text-[#4ade80]' :
-                    circle.status === 'good' ? 'text-[#facc15]' :
-                    'text-[#da2d46]'
+                  className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center  font-bold text-xl sm:text-3xl   pointer-events-none  ${
+                    circle.status === 'perfect' ? 'text-heal' :
+                    circle.status === 'good' ? 'text-gold-300' :
+                    'text-hp-light'
                   }`}
                   style={{
                     animation: 'osuBurst 500ms ease-out forwards',

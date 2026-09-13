@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import { Settings, Unlock, Zap, Star, BookOpen, Trash2, X, Users, Play } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
+import { SettingsCog as Settings, Unlock, Zap, Star, BookOpen, Trash as Trash2, Close as X, Users, Play, Check, Grid3x3 as Grid } from 'pixelarticons/react';
+import { PixelButton, PixelChip, PixelIconButton, PixelModal, PixelPanel, PixelToast } from './ui';
+import { cn } from '../lib/cn';
 import { useProgress } from '../context/ProgressProvider';
 import { getPendingReviews } from '../services/verificationService';
 import type { CommunityReviewPayload } from '../services/verificationService';
@@ -34,12 +36,12 @@ export function DevMenu({ onOpenStudentSession, onOpenKorlongHunt, onStartGamepl
 
   const handleUnlockAll = () => {
     unlockAllInstruments();
-    showToast('✓ All instruments unlocked + Level 5');
+    showToast('All instruments unlocked + level 5');
   };
 
   const handleMaxXP = () => {
     addXP(999, 'dev_menu');
-    showToast('✓ +999 XP added');
+    showToast('+999 XP added');
   };
 
   const handleOpenStudent = () => {
@@ -54,230 +56,172 @@ export function DevMenu({ onOpenStudentSession, onOpenKorlongHunt, onStartGamepl
     }
   };
 
-  const actions = [
+  const actions: { label: string; sublabel: string; icon: ReactNode; onClick: () => void; tone: string }[] = [
+    { label: 'Unlock all', sublabel: 'All instruments + level 5', icon: <Unlock />, onClick: handleUnlockAll, tone: 'text-gold-300' },
     {
-      label: 'UNLOCK ALL',
-      sublabel: 'All instruments + Level 5',
-      icon: <Unlock size={16} className="stroke-[2.5px]" />,
-      onClick: handleUnlockAll,
-      color: '#da2d46',
-    },
-    {
-      label: 'UNLOCK ALL LEVELS',
+      label: 'Unlock all levels',
       sublabel: 'Removes fog, keeps battles',
-      icon: <Unlock size={16} className="stroke-[2.5px]" />,
+      icon: <Unlock />,
       onClick: () => {
         localStorage.setItem('echoes_dev_force_unlock', '1');
-        showToast('✓ Fog of war removed (Reloading...)');
+        showToast('Fog of war removed. Reloading...');
         setTimeout(() => window.location.reload(), 1000);
       },
-      color: '#38bdf8',
+      tone: 'text-xp',
     },
+    { label: 'Max XP', sublabel: '+999 XP instantly', icon: <Zap />, onClick: handleMaxXP, tone: 'text-xp' },
     {
-      label: 'MAX XP',
-      sublabel: '+999 XP instant',
-      icon: <Zap size={16} className="stroke-[2.5px]" />,
-      onClick: handleMaxXP,
-      color: '#da2d46',
-    },
-    {
-      label: 'UNLOCK KORLONG',
-      sublabel: 'Add legendary instrument',
-      icon: <Star size={16} className="stroke-[2.5px]" />,
+      label: 'Unlock Korlong',
+      sublabel: 'Add the legendary instrument',
+      icon: <Star />,
       onClick: () => {
         unlockAllInstruments();
-        showToast('✓ Korlong unlocked (all instruments unlocked)');
+        showToast('Korlong unlocked (all instruments unlocked)');
       },
-      color: '#da2d46',
+      tone: 'text-gold-300',
     },
     {
-      label: 'SIMULATE KORLONG HUNT',
+      label: 'Simulate Korlong hunt',
       sublabel: 'Demo near-arrival state',
-      icon: <Star size={16} className="stroke-[2.5px]" />,
+      icon: <Star />,
       onClick: () => {
         localStorage.setItem('echoes_korlong_demo_mode', '1');
-        showToast('✓ Demo mode enabled. Launching Korlong Hunt...');
+        showToast('Demo mode on. Launching Korlong Hunt...');
         setTimeout(() => {
           setOpen(false);
           onOpenKorlongHunt();
         }, 800);
       },
-      color: '#888ea1',
+      tone: 'text-parchment-300',
     },
     {
-      label: 'KORLONG GAMEPLAY DEMO',
-      sublabel: 'Demo cutscene during gameplay',
-      icon: <Play size={16} className="stroke-[2.5px]" />,
+      label: 'Korlong gameplay demo',
+      sublabel: 'Cutscene during gameplay',
+      icon: <Play />,
       onClick: () => {
         setOpen(false);
         setShowGameplayDemoModal(true);
       },
-      color: '#e0e5ed',
+      tone: 'text-parchment-300',
     },
+    { label: 'Teach a student', sublabel: 'Open endgame student chat', icon: <BookOpen />, onClick: handleOpenStudent, tone: 'text-heal' },
     {
-      label: 'TEACH A STUDENT',
-      sublabel: 'Open endgame student chat',
-      icon: <BookOpen size={16} className="stroke-[2.5px]" />,
-      onClick: handleOpenStudent,
-      color: '#e0e5ed',
-    },
-    {
-      label: 'RESET PROGRESS',
-      sublabel: 'Clear all localStorage data',
-      icon: <Trash2 size={16} className="stroke-[2.5px]" />,
-      onClick: handleReset,
-      color: '#888ea1',
-    },
-    {
-      label: 'COMMUNITY REVIEWS',
-      sublabel: 'View pending review queue',
-      icon: <Users size={16} className="stroke-[2.5px]" />,
+      label: 'Community reviews',
+      sublabel: 'View the pending review queue',
+      icon: <Users />,
       onClick: () => {
         setReviews(getPendingReviews());
         setShowReviews(true);
         setOpen(false);
       },
-      color: '#e0e5ed',
+      tone: 'text-parchment-300',
     },
+    { label: 'UI kit', sublabel: 'Open the pixel design system page', icon: <Grid />, onClick: () => { window.location.assign('?ui-kit'); }, tone: 'text-purple-300' },
+    { label: 'Reset progress', sublabel: 'Clear all saved data', icon: <Trash2 />, onClick: handleReset, tone: 'text-hp-light' },
   ];
 
   return (
     <>
-      {/* Pushed down to top-20 so it clears the map header banner */}
-      <button
+      <PixelIconButton
+        className="absolute top-20 left-4 z-[200] size-10"
+        variant={open ? 'primary' : 'secondary'}
+        icon={open ? <X /> : <Settings />}
+        label={open ? 'Close dev menu' : 'Dev menu'}
         onClick={() => setOpen(p => !p)}
-        className="absolute top-20 left-4 z-[200] w-10 h-10 bg-[#0f0c0c] border-[3px] border-[#da2d46] flex items-center justify-center text-[#da2d46] shadow-[3px_3px_0px_0px_#da2d46] hover:bg-[#da2d46] hover:text-[#0f0c0c] transition-all active:translate-y-0.5 active:shadow-none"
-        title="Dev Menu"
-      >
-        {open ? <X size={18} className="stroke-[2.5px]" /> : <Settings size={18} className="stroke-[2.5px]" />}
-      </button>
+      />
 
-      {/* Pushed down to top-32 to align below the new button position */}
       {open && (
-        <div className="absolute top-32 left-4 z-[199] w-64 bg-[#0f0c0c] border-[4px] border-[#da2d46] shadow-[8px_8px_0px_0px_#da2d46]">
-          {/* Panel header */}
-          <div className="bg-[#da2d46] px-3 py-2 border-b-[3px] border-[#0f0c0c]">
-            <p className="font-orbitron text-[10px] font-black text-[#0f0c0c] tracking-widest uppercase">
-              ⚙ DEV MENU — TESTING ONLY
-            </p>
-          </div>
-
-          {/* Actions */}
-          <div className="flex flex-col divide-y-[2px] divide-[#2a2d43]">
+        <PixelPanel frame="wood" padding="none" className="absolute top-32 left-4 z-[199] w-72 px-rise-in">
+          <p className="px-3 py-2 bg-plum-800 border-b-[3px] border-ink text-sm font-semibold text-gold-300">Dev menu · testing only</p>
+          <ul className="flex flex-col max-h-[60vh] overflow-y-auto">
             {actions.map((action) => (
-              <button
-                key={action.label}
-                onClick={action.onClick}
-                className="flex items-center gap-3 px-4 py-3 text-left hover:bg-[#2a2d43] transition-colors group"
+              <li key={action.label} className="border-b-2 border-plum-800 last:border-b-0">
+                <button
+                  type="button"
+                  onClick={action.onClick}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-plum-800 focus-visible:outline-[3px] focus-visible:outline-gold-300 focus-visible:-outline-offset-[3px]"
+                >
+                  <span className={cn('shrink-0 flex [&_svg]:size-5', action.tone)} aria-hidden>{action.icon}</span>
+                  <span className="min-w-0">
+                    <span className={cn('block font-semibold text-sm leading-none', action.tone)}>{action.label}</span>
+                    <span className="block mt-1 text-xs text-parchment-500">{action.sublabel}</span>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </PixelPanel>
+      )}
+
+      {toast && (
+        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-[300] pointer-events-none">
+          <PixelToast tone="success" icon={<Check />}>{toast}</PixelToast>
+        </div>
+      )}
+
+      {showReviews && (
+        <PixelModal
+          onClose={() => setShowReviews(false)}
+          title="Community Reviews"
+          icon={<Users />}
+          maxWidth="max-w-md"
+          footer={
+            <PixelButton
+              variant="danger"
+              size="sm"
+              onClick={() => { localStorage.removeItem('echoes_community_reviews'); setReviews([]); showToast('Queue cleared'); }}
+            >
+              Clear Queue
+            </PixelButton>
+          }
+        >
+          {reviews.length === 0 ? (
+            <p className="py-8 text-center text-sm text-parchment-500">No pending reviews.</p>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {reviews.map((r, i) => (
+                <li key={i} className="px-frame px-frame-plum flex flex-col gap-2 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <PixelChip tone="gold">{r.ticketId}</PixelChip>
+                    <span className="text-xs text-parchment-500">{new Date(r.timestamp).toLocaleDateString()}</span>
+                  </div>
+                  {r.imageBase64Thumb && (
+                    <div className="px-frame px-frame-inset h-24 overflow-hidden">
+                      <img src={`data:image/jpeg;base64,${r.imageBase64Thumb}`} alt="Submitted instrument" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  {r.playerNote && <p className="text-sm text-parchment-300">"{r.playerNote}"</p>}
+                  <PixelButton size="sm" fullWidth>Approve (+XP)</PixelButton>
+                </li>
+              ))}
+            </ul>
+          )}
+        </PixelModal>
+      )}
+
+      {showGameplayDemoModal && (
+        <PixelModal onClose={() => setShowGameplayDemoModal(false)} title="Gameplay Demo" icon={<Play />} maxWidth="max-w-sm">
+          <p className="mb-4 text-sm text-parchment-300">Pick an instrument type to test the mid-song Korlong trigger.</p>
+          <div className="flex flex-col gap-2">
+            {[
+              { label: 'String (Buktot)', val: 'Buktot' },
+              { label: 'Drum (Tultugan)', val: 'Tultugan' },
+              { label: 'Wind (Tulali)', val: 'Tulali' },
+            ].map(opt => (
+              <PixelButton
+                key={opt.val}
+                fullWidth
+                onClick={() => {
+                  localStorage.setItem('echoes_demo_korlong_gameplay', '1');
+                  setShowGameplayDemoModal(false);
+                  onStartGameplay?.(opt.val);
+                }}
               >
-                <span style={{ color: action.color }} className="shrink-0 group-hover:scale-110 transition-transform">
-                  {action.icon}
-                </span>
-                <div>
-                  <p className="font-orbitron font-black text-[10px] tracking-widest uppercase" style={{ color: action.color }}>
-                    {action.label}
-                  </p>
-                  <p className="font-space-mono text-[9px] text-[#888ea1] mt-0.5">{action.sublabel}</p>
-                </div>
-              </button>
+                {opt.label}
+              </PixelButton>
             ))}
           </div>
-
-          {/* Footer note */}
-          <div className="border-t-[2px] border-[#2a2d43] px-3 py-2">
-            <p className="font-space-mono text-[8px] text-[#888ea1] leading-relaxed">
-              Visible in DEV mode or when<br />
-              <code className="text-[#da2d46]">echoes_dev_mode=1</code> is set in localStorage.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Toast - CHANGED TO ABSOLUTE */}
-      {toast && (
-        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-[300] bg-[#0f0c0c] border-[3px] border-[#da2d46] px-4 py-2 shadow-[4px_4px_0px_0px_#da2d46] -skew-x-6 pointer-events-none">
-          <p className="font-space-mono text-xs font-black text-[#da2d46] skew-x-6 whitespace-nowrap">{toast}</p>
-        </div>
-      )}
-
-      {/* Community Reviews Modal - CHANGED TO ABSOLUTE */}
-      {showReviews && (
-        <div className="absolute inset-0 z-[250] bg-[#0f0c0c]/80 flex items-center justify-center p-4">
-          <div className="bg-[#2a2d43] border-[4px] border-[#da2d46] w-full max-w-md max-h-[80vh] flex flex-col shadow-[8px_8px_0px_0px_#0f0c0c] -skew-x-2">
-            <div className="flex justify-between items-center bg-[#da2d46] p-3 border-b-[4px] border-[#0f0c0c] skew-x-2">
-              <h3 className="font-orbitron font-black text-[#0f0c0c] text-sm tracking-widest uppercase">Community Reviews</h3>
-              <button onClick={() => setShowReviews(false)} className="text-[#0f0c0c] hover:scale-110 transition-transform">
-                <X size={20} className="stroke-[3px]" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 skew-x-2 custom-scrollbar">
-              {reviews.length === 0 ? (
-                <p className="font-space-mono text-xs text-[#888ea1] text-center py-8">No pending reviews in queue.</p>
-              ) : (
-                reviews.map((r, i) => (
-                  <div key={i} className="bg-[#0f0c0c] border-[3px] border-[#888ea1] p-3 flex flex-col gap-2">
-                    <div className="flex justify-between items-start">
-                      <span className="font-space-mono text-[10px] text-[#da2d46] font-bold">{r.ticketId}</span>
-                      <span className="font-space-mono text-[9px] text-[#888ea1]">{new Date(r.timestamp).toLocaleDateString()}</span>
-                    </div>
-                    {r.imageBase64Thumb && (
-                      <div className="h-24 w-full bg-[#2a2d43] overflow-hidden border-[2px] border-[#888ea1]">
-                        <img src={`data:image/jpeg;base64,${r.imageBase64Thumb}`} alt="Thumb" className="w-full h-full object-cover opacity-70" />
-                      </div>
-                    )}
-                    {r.playerNote && (
-                      <p className="font-space-mono text-[10px] text-[#e0e5ed] italic border-l-[2px] border-[#da2d46] pl-2 mt-1">"{r.playerNote}"</p>
-                    )}
-                    <button className="mt-2 w-full py-1.5 bg-[#da2d46] text-[#0f0c0c] font-orbitron font-black text-[10px] uppercase transition-colors hover:bg-[#e0e5ed]">APPROVE (+XP)</button>
-                  </div>
-                ))
-              )}
-            </div>
-            <div className="p-3 bg-[#0f0c0c] border-t-[4px] border-[#da2d46] skew-x-2">
-              <button 
-                onClick={() => { localStorage.removeItem('echoes_community_reviews'); setReviews([]); showToast('Queue cleared'); }} 
-                className="w-full py-2 bg-[#888ea1] text-[#0f0c0c] font-orbitron font-black text-xs uppercase shadow-[3px_3px_0px_0px_#0f0c0c] active:translate-y-1 active:shadow-none"
-              >
-                CLEAR QUEUE
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Gameplay Demo Modal - CHANGED TO ABSOLUTE */}
-      {showGameplayDemoModal && (
-        <div className="absolute inset-0 z-[250] bg-[#0f0c0c]/80 flex items-center justify-center p-4">
-          <div className="bg-[#2a2d43] border-[4px] border-[#da2d46] w-full max-w-sm flex flex-col shadow-[8px_8px_0px_0px_#0f0c0c] -skew-x-2">
-            <div className="flex justify-between items-center bg-[#da2d46] p-3 border-b-[4px] border-[#0f0c0c] skew-x-2">
-              <h3 className="font-orbitron font-black text-[#0f0c0c] text-sm tracking-widest uppercase">Gameplay Demo Select</h3>
-              <button onClick={() => setShowGameplayDemoModal(false)} className="text-[#0f0c0c] hover:scale-110 transition-transform">
-                <X size={20} className="stroke-[3px]" />
-              </button>
-            </div>
-            <div className="p-4 flex flex-col gap-3 skew-x-2">
-              <p className="font-space-mono text-xs text-[#e0e5ed] mb-2 text-center">Select an instrument class to test the mid-game Korlong trigger.</p>
-              
-              {[
-                { label: 'String (Buktot)', val: 'Buktot' },
-                { label: 'Drum (Tultugan)', val: 'Tultugan' },
-                { label: 'Wind (Tulali)', val: 'Tulali' }
-              ].map(opt => (
-                <button
-                  key={opt.val}
-                  onClick={() => {
-                    localStorage.setItem('echoes_demo_korlong_gameplay', '1');
-                    setShowGameplayDemoModal(false);
-                    onStartGameplay?.(opt.val);
-                  }}
-                  className="w-full py-3 bg-[#0f0c0c] border-[3px] border-[#888ea1] text-[#e0e5ed] font-orbitron font-black text-xs uppercase hover:border-[#da2d46] hover:text-[#da2d46] transition-colors"
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+        </PixelModal>
       )}
     </>
   );

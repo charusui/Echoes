@@ -1,5 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { MapPin, Users, CheckCircle, XCircle, Loader, ChevronRight, X } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
+import { MapPin, Users, Check as CheckCircle, Close as XCircle, Loader, ChevronRight } from 'pixelarticons/react';
+import { PixelBar, PixelButton, PixelChip, PixelModal } from './ui';
+import { cn } from '../lib/cn';
 import type { VerificationResult } from '../types';
 import {
   checkGpsVerification,
@@ -220,213 +222,165 @@ export function ScanVerificationScreen({
     }
   }, [step, venue, ticketId, onVerified, onCancel]);
 
-  // ── Shared badge colors ────────────────────────────────────────────────────
+  // ── Step titles ────────────────────────────────────────────────────────────
 
   const stepLabel = {
-    'checking-gps':      'STEP 1 OF 3 — GPS VERIFICATION',
-    'gps-approved':      'STEP 1 OF 3 — GPS VERIFIED ✓',
-    'gps-failed':        'STEP 1 FAILED — TRYING NEXT METHOD',
-    'checking-webxr':    'STEP 2 OF 3 — AR SCAN CHECK',
-    'webxr-unsupported': 'STEP 2 UNAVAILABLE — TRYING NEXT METHOD',
-    'webxr-scanning':    'STEP 2 OF 3 — AR PRESENCE SCAN',
-    'webxr-approved':    'STEP 2 OF 3 — AR SCAN VERIFIED ✓',
-    'community-fallback':'STEP 3 OF 3 — COMMUNITY REVIEW',
-    'pending-review':    'STEP 3 — SUBMITTED FOR REVIEW ✓',
+    'checking-gps':      'Step 1 of 3 · Location check',
+    'gps-approved':      'Step 1 of 3 · Location verified',
+    'gps-failed':        'Step 1 · Trying another method',
+    'checking-webxr':    'Step 2 of 3 · AR check',
+    'webxr-unsupported': 'Step 2 · Trying another method',
+    'webxr-scanning':    'Step 2 of 3 · AR scan',
+    'webxr-approved':    'Step 2 of 3 · AR scan verified',
+    'community-fallback':'Step 3 of 3 · Community review',
+    'pending-review':    'Step 3 · Sent for review',
   }[step];
 
   return (
-    <div className="fixed inset-0 z-[100] bg-[#0f0c0c]/90 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm bg-[#2a2d43] border-[6px] border-[#0f0c0c] shadow-[12px_12px_0px_0px_#da2d46] flex flex-col">
+    <PixelModal onClose={onCancel} title="Verify your find" subtitle={stepLabel} icon={<MapPin />} maxWidth="max-w-sm">
+      <div className="flex flex-col items-center gap-5 min-h-[260px] justify-center text-center" aria-live="polite">
 
-        {/* Header */}
-        <div className="bg-[#da2d46] border-b-[4px] border-[#0f0c0c] px-4 py-3 flex items-center justify-between">
-          <span className="font-orbitron text-[10px] font-black tracking-widest text-[#0f0c0c] uppercase">
-            {stepLabel}
-          </span>
-          <button onClick={onCancel} className="text-[#0f0c0c] hover:opacity-70 transition-opacity">
-            <X size={20} className="stroke-[3px]" />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="p-6 flex flex-col items-center gap-6 min-h-[280px] justify-center">
-
-          {/* ── GPS Checking ── */}
-          {step === 'checking-gps' && (
-            <>
-              <div className="relative w-24 h-24">
-                <div className="absolute inset-0 border-4 border-[#da2d46] rounded-full animate-ping opacity-30" />
-                <div className="absolute inset-2 border-4 border-[#da2d46] rounded-full animate-ping opacity-20 [animation-delay:0.3s]" />
-                <div className="w-24 h-24 bg-[#0f0c0c] border-[4px] border-[#da2d46] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(218,45,70,0.4)]">
-                  <MapPin size={36} className="text-[#da2d46]" />
-                </div>
-              </div>
-              <div className="text-center">
-                <p className="font-orbitron font-black text-[#e0e5ed] text-lg tracking-widest uppercase">LOCATING</p>
-                <p className="font-space-mono text-xs text-[#888ea1] mt-1">Cross-referencing GPS with verified museum locations...</p>
-              </div>
-            </>
-          )}
-
-          {/* ── GPS Approved ── */}
-          {step === 'gps-approved' && (
-            <>
-              <div className="w-24 h-24 bg-[#0f0c0c] border-[4px] border-[#e0e5ed] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(224,229,237,0.3)]">
-                <CheckCircle size={40} className="text-[#e0e5ed] stroke-[2px]" />
-              </div>
-              <div className="text-center">
-                <p className="font-orbitron font-black text-[#e0e5ed] text-lg tracking-widest uppercase">LOCATION VERIFIED</p>
-                <div className="mt-2 bg-[#da2d46] border-[3px] border-[#0f0c0c] px-3 py-1 -skew-x-6 shadow-[3px_3px_0px_0px_#0f0c0c] inline-block">
-                  <p className="font-space-mono text-xs text-[#0f0c0c] font-black skew-x-6">{venue}</p>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* ── GPS Failed ── */}
-          {step === 'gps-failed' && (
-            <>
-              <XCircle size={48} className="text-[#da2d46] stroke-[1.5px]" />
-              <div className="text-center">
-                <p className="font-orbitron font-black text-[#da2d46] text-base tracking-widest uppercase">NOT AT A VERIFIED LOCATION</p>
-                <p className="font-space-mono text-xs text-[#888ea1] mt-2">Trying AR scan method...</p>
-              </div>
-            </>
-          )}
-
-          {/* ── WebXR Checking ── */}
-          {(step === 'checking-webxr') && (
-            <>
-              <Loader size={48} className="text-[#da2d46] animate-spin" />
-              <p className="font-space-mono text-xs text-[#888ea1] text-center">Checking AR capabilities...</p>
-            </>
-          )}
-
-          {/* ── WebXR Unsupported ── */}
-          {step === 'webxr-unsupported' && (
-            <>
-              <XCircle size={48} className="text-[#888ea1] stroke-[1.5px]" />
-              <div className="text-center">
-                <p className="font-orbitron font-black text-[#888ea1] text-base tracking-widest uppercase">AR NOT SUPPORTED</p>
-                <p className="font-space-mono text-xs text-[#888ea1] mt-2">Moving to community review...</p>
-              </div>
-            </>
-          )}
-
-          {/* ── WebXR Scanning ── */}
-          {step === 'webxr-scanning' && (
-            <div className="w-full flex flex-col items-center gap-4">
-              <div className="relative w-full bg-[#0f0c0c] border-[4px] border-[#0f0c0c] overflow-hidden" style={{ aspectRatio: '4/3' }}>
-                <video ref={videoRef} className="w-full h-full object-cover" playsInline muted />
-                {/* AR overlay */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="w-32 h-32 border-[3px] border-dashed border-[#da2d46] flex items-center justify-center">
-                    <div className="w-4 h-4 bg-[#da2d46]" />
-                  </div>
-                </div>
-                <div className="absolute bottom-2 left-0 right-0 text-center">
-                  <span className="font-orbitron text-[10px] font-black text-[#da2d46] tracking-widest bg-[#0f0c0c]/80 px-2 py-0.5">ALIGN INSTRUMENT</span>
-                </div>
-                {/* Dwell progress arc */}
-                {webxrDwell > 0 && (
-                  <div className="absolute top-2 right-2">
-                    <svg width="40" height="40" viewBox="0 0 40 40" className="-rotate-90">
-                      <circle cx="20" cy="20" r="16" stroke="#0f0c0c" strokeWidth="4" fill="none" />
-                      <circle
-                        cx="20" cy="20" r="16" stroke="#da2d46" strokeWidth="4" fill="none"
-                        strokeDasharray={`${(webxrDwell / 100) * 100.5} 100.5`}
-                        strokeLinecap="square"
-                      />
-                    </svg>
-                  </div>
-                )}
-              </div>
-              <p className="font-space-mono text-xs text-[#888ea1] text-center">
-                Hold camera steady on the instrument
-              </p>
-              <button
-                onPointerDown={startDwell}
-                onPointerUp={stopDwell}
-                onPointerLeave={stopDwell}
-                className="w-full py-3 bg-[#da2d46] border-[4px] border-[#0f0c0c] font-orbitron font-black text-sm tracking-widest text-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all uppercase -skew-x-6"
-              >
-                <span className="skew-x-6 block">HOLD TO SCAN (3s)</span>
-              </button>
-              <button onClick={() => setStep('community-fallback')} className="font-space-mono text-xs text-[#888ea1] underline">
-                Skip to community review
-              </button>
+        {step === 'checking-gps' && (
+          <>
+            <StatusIcon tone="gold"><MapPin className="animate-pulse" /></StatusIcon>
+            <div>
+              <p className="font-bold text-xl leading-none">Checking your location...</p>
+              <p className="mt-2 text-sm text-parchment-300">Comparing your GPS with verified museum locations.</p>
             </div>
-          )}
+          </>
+        )}
 
-          {/* ── WebXR Approved ── */}
-          {step === 'webxr-approved' && (
-            <>
-              <CheckCircle size={48} className="text-[#e0e5ed] stroke-[1.5px]" />
-              <div className="text-center">
-                <p className="font-orbitron font-black text-[#e0e5ed] text-lg tracking-widest uppercase">AR SCAN COMPLETE</p>
-                <p className="font-space-mono text-xs text-[#888ea1] mt-2">Physical presence confirmed.</p>
+        {step === 'gps-approved' && (
+          <>
+            <StatusIcon tone="heal"><CheckCircle /></StatusIcon>
+            <div className="flex flex-col items-center gap-2">
+              <p className="font-bold text-xl leading-none">Location verified!</p>
+              <PixelChip tone="gold">{venue}</PixelChip>
+            </div>
+          </>
+        )}
+
+        {step === 'gps-failed' && (
+          <>
+            <StatusIcon tone="dim"><XCircle /></StatusIcon>
+            <div>
+              <p className="font-bold text-xl leading-none">Not at a verified location</p>
+              <p className="mt-2 text-sm text-parchment-300">Let's try an AR scan instead...</p>
+            </div>
+          </>
+        )}
+
+        {step === 'checking-webxr' && (
+          <>
+            <StatusIcon tone="gold"><Loader className="animate-spin" /></StatusIcon>
+            <p className="text-sm text-parchment-300">Checking if your device supports AR...</p>
+          </>
+        )}
+
+        {step === 'webxr-unsupported' && (
+          <>
+            <StatusIcon tone="dim"><XCircle /></StatusIcon>
+            <div>
+              <p className="font-bold text-xl leading-none">AR isn't available</p>
+              <p className="mt-2 text-sm text-parchment-300">Moving to community review...</p>
+            </div>
+          </>
+        )}
+
+        {step === 'webxr-scanning' && (
+          <div className="w-full flex flex-col items-center gap-4">
+            <div className="relative w-full px-frame px-frame-inset overflow-hidden" style={{ aspectRatio: '4/3' }}>
+              <video ref={videoRef} className="w-full h-full object-cover" playsInline muted />
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="size-32 border-[3px] border-dashed border-gold-300" />
               </div>
-            </>
-          )}
+              {webxrDwell > 0 && (
+                <div className="absolute inset-x-3 bottom-3">
+                  <PixelBar kind="gold" height={8} segments={10} value={webxrDwell} transition="none" />
+                </div>
+              )}
+            </div>
+            <p className="text-sm text-parchment-300">Keep the camera steady on the instrument</p>
+            <button
+              type="button"
+              onPointerDown={startDwell}
+              onPointerUp={stopDwell}
+              onPointerLeave={stopDwell}
+              className="px-btn px-btn-primary w-full min-h-12 text-base"
+            >
+              Hold to Scan (3s)
+            </button>
+            <PixelButton size="sm" variant="ghost" onClick={() => setStep('community-fallback')}>
+              Skip to community review
+            </PixelButton>
+          </div>
+        )}
 
-          {/* ── Community Fallback ── */}
-          {step === 'community-fallback' && (
-            <div className="w-full flex flex-col items-center gap-4">
-              <Users size={40} className="text-[#888ea1]" />
-              <div className="text-center">
-                <p className="font-orbitron font-black text-[#e0e5ed] text-base tracking-widest uppercase">COMMUNITY REVIEW</p>
-                <p className="font-space-mono text-xs text-[#888ea1] mt-1 leading-relaxed">
-                  Submit this sighting for manual verification by our community administrators.
-                  You'll receive tentative XP while it's reviewed.
-                </p>
-              </div>
+        {step === 'webxr-approved' && (
+          <>
+            <StatusIcon tone="heal"><CheckCircle /></StatusIcon>
+            <div>
+              <p className="font-bold text-xl leading-none">AR scan complete!</p>
+              <p className="mt-2 text-sm text-parchment-300">We confirmed you're with the instrument.</p>
+            </div>
+          </>
+        )}
 
-              {/* Thumbnail */}
-              <div className="w-full bg-[#0f0c0c] border-[3px] border-[#888ea1] overflow-hidden">
-                <img
-                  src={`data:${imageMimeType};base64,${imageBase64}`}
-                  alt="Captured instrument"
-                  className="w-full max-h-32 object-cover opacity-70"
-                />
-              </div>
-
+        {step === 'community-fallback' && (
+          <div className="w-full flex flex-col items-center gap-4">
+            <StatusIcon tone="dim"><Users /></StatusIcon>
+            <div>
+              <p className="font-bold text-xl leading-none">Community review</p>
+              <p className="mt-2 text-sm text-parchment-300">
+                Send this find to our reviewers. You'll get starter XP while they check it.
+              </p>
+            </div>
+            <div className="w-full px-frame px-frame-inset overflow-hidden">
+              <img src={`data:${imageMimeType};base64,${imageBase64}`} alt="Captured instrument" className="w-full max-h-32 object-cover" />
+            </div>
+            <label className="w-full text-left">
+              <span className="text-sm text-parchment-300">Where did you find it? (optional)</span>
               <textarea
                 value={playerNote}
                 onChange={e => setPlayerNote(e.target.value)}
-                placeholder="Optional: Tell us where you found this instrument..."
-                className="w-full bg-[#0f0c0c] border-[3px] border-[#888ea1] text-[#e0e5ed] font-space-mono text-xs p-3 resize-none h-16 focus:border-[#da2d46] focus:outline-none placeholder:text-[#888ea1]"
+                placeholder="e.g. a museum in Iloilo City"
+                className="mt-1 w-full h-20 p-3 resize-none bg-plum-950 border-[3px] border-ink text-base text-parchment-100 placeholder:text-parchment-500 focus:border-gold-300 focus:outline-none"
               />
+            </label>
+            <PixelButton variant="primary" fullWidth icon={<ChevronRight />} onClick={handleCommunitySubmit}>
+              Send for Review
+            </PixelButton>
+          </div>
+        )}
 
-              <button
-                onClick={handleCommunitySubmit}
-                className="w-full py-3 bg-[#da2d46] border-[4px] border-[#0f0c0c] font-orbitron font-black text-sm tracking-widest text-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all uppercase -skew-x-6 flex items-center justify-center gap-2"
-              >
-                <span className="skew-x-6 block flex items-center gap-2">
-                  SUBMIT FOR REVIEW <ChevronRight size={16} className="inline" />
-                </span>
-              </button>
+        {step === 'pending-review' && (
+          <>
+            <StatusIcon tone="heal"><CheckCircle /></StatusIcon>
+            <div className="flex flex-col items-center gap-2">
+              <p className="font-bold text-xl leading-none">Sent!</p>
+              {ticketId && <PixelChip tone="dark">Ticket {ticketId}</PixelChip>}
+              <p className="text-sm text-parchment-300">Taking you back to the map. Reviewers will check your find.</p>
+              <PixelButton size="sm" variant="ghost" sound="ui_back" onClick={onCancel}>Close</PixelButton>
             </div>
-          )}
-
-          {/* ── Pending Review ── */}
-          {step === 'pending-review' && (
-            <>
-              <CheckCircle size={48} className="text-[#da2d46] stroke-[1.5px]" />
-              <div className="text-center">
-                <p className="font-orbitron font-black text-[#da2d46] text-base tracking-widest uppercase">SUBMITTED!</p>
-                {ticketId && (
-                  <div className="mt-2 bg-[#0f0c0c] border-[3px] border-[#da2d46] px-3 py-1 inline-block -skew-x-6">
-                    <p className="font-space-mono text-xs text-[#da2d46] font-black skew-x-6">TICKET: {ticketId}</p>
-                  </div>
-                )}
-                <p className="font-space-mono text-xs text-[#888ea1] mt-3">Returning to map. Admins will review your submission.</p>
-                <button onClick={onCancel} className="mt-4 text-[#da2d46] underline text-xs font-space-mono">Close</button>
-              </div>
-            </>
-          )}
-
-        </div>
+          </>
+        )}
       </div>
-    </div>
+    </PixelModal>
+  );
+}
+
+function StatusIcon({ children, tone }: { children: ReactNode; tone: 'gold' | 'heal' | 'hp' | 'dim' }) {
+  return (
+    <span
+      className={cn(
+        'px-frame size-24 flex items-center justify-center [&_svg]:size-10',
+        tone === 'gold' && 'bg-gold-500 text-ink',
+        tone === 'heal' && 'bg-heal text-ink',
+        tone === 'hp' && 'bg-hp text-parchment-100',
+        tone === 'dim' && 'px-frame-inset text-parchment-500',
+      )}
+    >
+      {children}
+    </span>
   );
 }

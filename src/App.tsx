@@ -27,6 +27,9 @@ import { RanksScreen } from './components/RanksScreen';
 import { ScannerCombatScreen } from './components/ScannerCombatScreen';
 
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { devParam } from './lib/devParams';
+import { PixelToast } from './components/ui';
+import { InfoBox } from 'pixelarticons/react';
 import { initializeInstrumentPipeline } from './services/geminiPipeline';
 import { MASTER_INSTRUMENTS, FALLBACK_PROFILES, KORLONG_INSTRUMENT } from './constants';
 import { 
@@ -42,16 +45,19 @@ import {
 
 function InnerApp() {
   const { client, isElectron, showApiKeyPrompt } = useGemini();
-  const [view, setView] = useState<AppView>('title');
+  const [view, setView] = useState<AppView>(() => (devParam('dev-view') as AppView | null) ?? 'title');
   const [isTransitioning, setIsTransitioning] = useState(false);
   
   // Pipeline tracking
   const [pipelineStatus, setPipelineStatus] = useState<PipelineStatus>({
     phase: 'idle', label: '', detail: '', progress: 0,
   });
-  const [activeProfile, setActiveProfile] = useState<ActiveInstrumentProfile | null>(null);
+  const [activeProfile, setActiveProfile] = useState<ActiveInstrumentProfile | null>(() => {
+    const devCategory = devParam('dev-profile') as 'string' | 'wind' | 'percussion' | null;
+    return devCategory && FALLBACK_PROFILES[devCategory] ? { ...FALLBACK_PROFILES[devCategory], isFallback: true, imageBase64: '', imageMimeType: '' } : null;
+  });
   const [instrumentName, setInstrumentName] = useState<string | undefined>();
-  const [pipelineImage, setPipelineImage] = useState<{base64: string, mimeType: string} | null>(null);
+  const [pipelineImage, setPipelineImage] = useState<{base64: string, mimeType: string} | null>(() => devParam('dev-view') === 'pipeline' ? { base64: '', mimeType: '' } : null);
   const [finalGameState, setFinalGameState] = useState<GameplayState | null>(null);
   const [pendingImageData, setPendingImageData] = useState<{base64: string; mimeType: string} | null>(null);
 
@@ -406,15 +412,15 @@ function InnerApp() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-obsidian text-light-gray overflow-x-hidden relative">
+    <div className="min-h-screen bg-plum-950 text-parchment-100 overflow-x-hidden relative">
       {toastMessage && (
-        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[9999] bg-[#0f0c0c] border-[3px] border-[#facc15] text-[#facc15] px-6 py-3 font-orbitron font-black text-sm uppercase -skew-x-6 shadow-[6px_6px_0px_0px_#facc15] animate-[bounce_0.5s_infinite]">
-          {toastMessage}
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[9999]">
+          <PixelToast icon={<InfoBox />}>{toastMessage}</PixelToast>
         </div>
       )}
-      
-      <div 
-        className="fixed inset-0 bg-[#2a2d43] pointer-events-none"
+
+      <div
+        className="fixed inset-0 bg-plum-950 pointer-events-none"
         style={{ 
           opacity: isTransitioning ? 1 : 0,
           transition: isTransitioning ? 'none' : 'opacity 0.4s ease-out',

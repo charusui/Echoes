@@ -1,6 +1,7 @@
 // @ts-nocheck
+import { devParam } from '../../lib/devParams';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Sword, Sparkles, Shield, Disc, Zap, ArrowLeft, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Sword, Sparkles, Shield, Music as Disc, Zap, ArrowLeft, Users, ChevronLeft, ChevronRight } from 'pixelarticons/react';
 import { audioEngine } from '../../services/audioSynth';
 import { useProgress } from '../../context/ProgressProvider';
 import { 
@@ -116,7 +117,7 @@ export function useCombatEngine({
   }, [targetEnemyIndex]);
 
   const [turnIndex, setTurnIndex] = useState(0);
-  const [activeAction, setActiveAction] = useState<'none' | 'rhythm' | 'spell' | 'parry' | 'attune' | 'post_attack_anim'>('none');
+  const [activeAction, setActiveAction] = useState<'none' | 'rhythm' | 'spell' | 'parry' | 'attune' | 'post_attack_anim'>(() => (devParam('dev-action') as 'rhythm' | 'spell' | 'parry' | 'attune' | null) ?? 'none');
   const [parryStanceActive, setParryStanceActive] = useState(false);
   const [enemyFrame, setEnemyFrame] = useState(0);
   const [isPartyDrawerOpen, setIsPartyDrawerOpen] = useState(false);

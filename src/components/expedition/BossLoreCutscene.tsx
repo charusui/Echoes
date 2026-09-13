@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, Swords } from 'lucide-react';
+import { ChevronRight, Sword as Swords } from 'pixelarticons/react';
 
 interface BossLoreCutsceneProps {
   bossId: string;
@@ -166,7 +166,7 @@ export const BossLoreCutscene: React.FC<BossLoreCutsceneProps> = ({ bossId, onCo
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0a0b0f] overflow-hidden"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-plum-950 overflow-hidden"
       onClick={handleNext}
     >
       <div
@@ -188,18 +188,18 @@ export const BossLoreCutscene: React.FC<BossLoreCutsceneProps> = ({ bossId, onCo
       />
 
       {/* Styled header bar with thick border and shadow */}
-      <div className="w-full border-b-[4px] border-[#0f0c0c] shadow-[0_4px_0_0_#0f0c0c] relative z-10">
+      <div className="w-full border-b-[4px] border-ink shadow-[0_4px_0_0_#0f0c0c] relative z-10">
         <div className="flex items-center justify-between px-6 py-3" style={{ backgroundColor: lore.tagColor }}>
           <div className="flex items-center gap-3">
-            <span className="font-space-mono font-black text-[10px] text-white/90 uppercase tracking-[0.3em] drop-shadow-[1px_1px_0_rgba(0,0,0,0.5)]">CODEX ENTRY</span>
-            <span className="font-space-mono font-black text-[10px] text-white/90 uppercase tracking-[0.3em] drop-shadow-[1px_1px_0_rgba(0,0,0,0.5)]">//</span>
-            <span className="font-space-mono font-black text-[10px] text-white uppercase tracking-[0.3em] drop-shadow-[1px_1px_0_rgba(0,0,0,0.5)]">{lore.origin}</span>
+            <span className="font-bold text-xs text-parchment-100/90 tracking-[0.3em]">CODEX ENTRY</span>
+            <span className="font-bold text-xs text-parchment-100/90 tracking-[0.3em]">//</span>
+            <span className="font-bold text-xs text-parchment-100 tracking-[0.3em]">{lore.origin}</span>
           </div>
           <button
             onClick={(e) => { e.stopPropagation(); onComplete(); }}
-            className="px-3 py-1 bg-black/40 hover:bg-black/60 text-white font-orbitron font-black text-[10px] uppercase tracking-wider border-[2px] border-white/80 hover:border-white transition-all shadow-[2px_2px_0px_0px_#000] -skew-x-6"
+            className="px-btn px-btn-secondary min-h-9 px-3 text-sm"
           >
-            <span className="skew-x-6 block">SKIP LORE</span>
+            <span className="block">Skip</span>
           </button>
         </div>
       </div>
@@ -210,12 +210,12 @@ export const BossLoreCutscene: React.FC<BossLoreCutsceneProps> = ({ bossId, onCo
         <div className="flex items-center gap-4 mb-6">
           <div>
             <h1
-              className="font-orbitron font-black text-4xl sm:text-5xl leading-none uppercase"
+              className="font-bold text-4xl sm:text-5xl leading-none"
               style={{ color: lore.tagColor, textShadow: `4px 4px 0px #0f0c0c, 0 0 30px ${lore.tagColor}` }}
             >
               {lore.name}
             </h1>
-            <p className="font-space-mono text-sm text-slate-300 font-bold mt-1 uppercase tracking-widest drop-shadow-[1px_1px_0_#0f0c0c]">{lore.title}</p>
+            <p className="text-sm text-parchment-300 font-bold mt-1">{lore.title}</p>
           </div>
         </div>
 
@@ -224,7 +224,7 @@ export const BossLoreCutscene: React.FC<BossLoreCutsceneProps> = ({ bossId, onCo
           {lore.slides.map((_, i) => (
             <div
               key={i}
-              className="h-2 border-[2px] border-[#0f0c0c] transition-all duration-300 shadow-[2px_2px_0_0_#0f0c0c] -skew-x-6"
+              className="h-2 border-[2px] border-ink transition-all duration-300"
               style={{ width: i === slideIndex ? '40px' : '12px', backgroundColor: i <= slideIndex ? lore.tagColor : '#1e2238' }}
             />
           ))}
@@ -232,15 +232,15 @@ export const BossLoreCutscene: React.FC<BossLoreCutsceneProps> = ({ bossId, onCo
 
         {/* Skewed Headline Tag */}
         <div
-          className="inline-block px-4 py-1.5 mb-4 font-orbitron font-black text-xs uppercase tracking-widest border-[3px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-3 self-start"
+          className="inline-block px-4 py-1.5 mb-4 font-bold text-xs border-[3px] border-ink self-start"
           style={{ backgroundColor: lore.tagColor, color: '#0f0c0c' }}
         >
-          <span className="skew-x-3 block drop-shadow-[1px_1px_0_rgba(255,255,255,0.3)]">{currentSlide.headline}</span>
+          <span className="block">{currentSlide.headline}</span>
         </div>
 
         {/* Typewriter Text Box with Skew and Thick Borders */}
-        <div className="bg-[#151828]/95 border-[3px] border-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] p-6 sm:p-8 mb-8 min-h-[120px] -skew-x-2">
-          <p className="font-space-mono text-sm sm:text-base text-slate-200 font-bold leading-relaxed skew-x-2 drop-shadow-[1px_1px_0_#0f0c0c]">
+        <div className="bg-plum-900/95 border-[3px] border-ink p-6 sm:p-8 mb-8 min-h-[120px]">
+          <p className="text-sm sm:text-base text-parchment-100 font-bold leading-relaxed">
             {typewriterText}
             {isTyping && (
               <span className="inline-block w-2 h-4 ml-1 align-middle animate-pulse" style={{ backgroundColor: lore.tagColor }} />
@@ -249,31 +249,30 @@ export const BossLoreCutscene: React.FC<BossLoreCutsceneProps> = ({ bossId, onCo
         </div>
 
         {isLast && !isTyping && (
-          <p className="font-orbitron font-black text-sm sm:text-base italic text-center mb-6 animate-pulse drop-shadow-[2px_2px_0_#0f0c0c]" style={{ color: lore.tagColor }}>
+          <p className="font-bold text-sm sm:text-base text-center mb-6 animate-pulse" style={{ color: lore.tagColor }}>
             "{lore.battleCry}"
           </p>
         )}
 
         {/* Bottom controls */}
         <div className="flex items-center justify-between mt-auto mb-4">
-          <span className="font-space-mono text-[10px] text-slate-400 uppercase tracking-widest font-black drop-shadow-[1px_1px_0_#0f0c0c]">TAP ANYWHERE TO CONTINUE</span>
+          <span className="text-xs text-parchment-500 font-bold">TAP ANYWHERE TO CONTINUE</span>
           <button
             onClick={(e) => { e.stopPropagation(); handleNext(); }}
-            className="flex items-center gap-2 px-6 py-3 font-orbitron font-black text-sm uppercase border-[3px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] transition-all active:translate-y-1 active:shadow-none hover:scale-105 -skew-x-3"
-            style={{ backgroundColor: isLast && !isTyping ? lore.tagColor : '#1e2238', color: isLast && !isTyping ? '#0f0c0c' : 'white' }}
+            className={`px-btn ${isLast && !isTyping ? 'px-btn-primary' : 'px-btn-secondary'} min-h-12 px-5 text-base`}
           >
-            <div className="flex items-center gap-2 skew-x-3">
+            <div className="flex items-center gap-2">
               {isLast && !isTyping ? (
-                <><Swords className="w-5 h-5" /><span>ENTER BATTLE</span></>
+                <><Swords className="w-5 h-5" /><span>Enter Battle</span></>
               ) : (
-                <><span>NEXT</span><ChevronRight className="w-5 h-5" /></>
+                <><span>Next</span><ChevronRight className="w-5 h-5" /></>
               )}
             </div>
           </button>
         </div>
       </div>
 
-      <div className="w-full h-2 border-t-[3px] border-[#0f0c0c]" style={{ backgroundColor: lore.tagColor }} />
+      <div className="w-full h-2 border-t-[3px] border-ink" style={{ backgroundColor: lore.tagColor }} />
 
       <style>{`
         @keyframes lorePulse {

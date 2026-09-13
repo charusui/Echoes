@@ -45,7 +45,7 @@ export function CrossroadsCutscene({ onComplete }: CrossroadsCutsceneProps) {
 
   return (
     <div 
-      className="absolute inset-0 z-50 flex flex-col items-center justify-end overflow-hidden bg-black select-none pointer-events-auto"
+      className="absolute inset-0 z-50 flex flex-col items-center justify-end overflow-hidden bg-plum-950 select-none pointer-events-auto"
       onClick={handleNext}
     >
       {/* Background */}
@@ -64,16 +64,16 @@ export function CrossroadsCutscene({ onComplete }: CrossroadsCutsceneProps) {
       {/* Dialogue Overlay */}
       <div className="relative z-50 flex items-center justify-center w-full pb-8 sm:pb-12 px-4 pointer-events-none">
         <div 
-          className="pointer-events-none flex flex-col justify-center bg-[#0f0c0c]/95 border-[4px] border-[#facc15] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)] p-4 sm:p-6 max-w-3xl w-full -skew-x-3"
+          className="pointer-events-none flex flex-col justify-center bg-plum-950/95 border-[3px] border-gold-300 p-4 sm:p-6 max-w-3xl w-full"
         >
-          <span className="font-orbitron font-black text-[#facc15] text-lg sm:text-2xl uppercase tracking-widest mb-2">
+          <span className="font-bold text-gold-300 text-lg sm:text-2xl mb-2">
             {dialogue[dialogueIndex].name}
           </span>
-          <span className={`font-medium text-base sm:text-xl leading-snug font-sans ${dialogue[dialogueIndex].name === 'System' ? 'text-green-400 font-bold' : 'text-white'}`}>
+          <span className={`font-medium text-base sm:text-xl leading-snug  ${dialogue[dialogueIndex].name === 'System' ? 'text-heal font-bold' : 'text-parchment-100'}`}>
             {dialogue[dialogueIndex].text}
           </span>
           <div className="w-full text-right mt-3 sm:mt-4">
-            <span className="text-slate-400 text-[10px] sm:text-xs font-bold animate-pulse uppercase tracking-wider inline-block">
+            <span className="text-parchment-500 text-xs sm:text-xs font-bold animate-pulse inline-block">
               Click anywhere to continue...
             </span>
           </div>

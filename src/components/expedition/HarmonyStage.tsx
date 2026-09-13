@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Sword, Sparkles, Shield, Disc, Zap, ArrowLeft, Users, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Package } from 'lucide-react';
-import { audioEngine } from '../../services/audioSynth';
+import { Sword, Sparkles, Shield, Music as Disc, Zap, ArrowLeft, Users, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Package } from 'pixelarticons/react';
+import {
+  ArrowLeft as PxArrowLeft, ChevronLeft as PxChevronLeft, ChevronRight as PxChevronRight, Music as PxMusic,
+  Package as PxPackage, Shield as PxShield, Sparkles as PxSparkles, Sword as PxSword, Users as PxUsers,
+} from 'pixelarticons/react';
+import { cn } from '../../lib/cn';
+import { Kbd, PixelButton, PixelPanel } from '../ui';
+import { CommandMenu, EnemyHealthBar, PartyMemberCard, TurnIndicator, UnitNameplate, type CombatCommand } from './hud';import { audioEngine } from '../../services/audioSynth';
 import { useProgress } from '../../context/ProgressProvider';
 import {
   EXPEDITION_INSTRUMENTS,
@@ -1000,6 +1006,18 @@ export function HarmonyStage({
   const ghostPct = Math.max(0, Math.min(100, (ghostHp / enemy.maxHp) * 100));
   const staggerPct = Math.max(0, Math.min(100, (enemy.stagger / enemy.maxStagger) * 100));
 
+  const renderTurnBar = () => (
+    <TurnIndicator isHeroTurn={isHeroTurn} activeHeroName={activeHero.name} turnQueue={turnQueue} turnIndex={turnIndex} />
+  );
+
+  const combatCommands: CombatCommand[] = [
+    { id: 'attack', label: 'Rhythm Attack', hint: '1 AP', icon: <PxSword />, variant: 'primary', featured: true, onClick: handleCommandAttack, disabled: !isHeroTurn || activeHero.ap < 1 || activeAction !== 'none' || isEndingBattle },
+    { id: 'skill', label: 'Overdrive', hint: '2 AP', icon: <PxSparkles />, variant: 'purple', onClick: handleCommandSkill, disabled: !isHeroTurn || activeHero.ap < 2 || activeAction !== 'none' || isEndingBattle },
+    { id: 'attune', label: 'Attune', hint: 'Enemy HP < 35%', icon: <PxMusic />, variant: 'blue', onClick: handleCommandAttune, disabled: !isHeroTurn || activeAction !== 'none' || isEndingBattle },
+    { id: 'defend', label: 'Parry Stance', hint: '+2 AP', icon: <PxShield />, variant: 'green', onClick: handleCommandDefend, disabled: !isHeroTurn || activeAction !== 'none' || isEndingBattle },
+    { id: 'items', label: 'Items', icon: <PxPackage />, variant: 'pink', onClick: () => setShowItemsMenu(true), disabled: isEndingBattle || !isHeroTurn || activeAction !== 'none' },
+    { id: 'flee', label: 'Retreat', icon: <PxArrowLeft />, variant: 'ghost', onClick: onFlee, disabled: isEndingBattle },
+  ];
   const handleWingSlamCounterComplete = useCallback((totalDmg: number, totalStag: number) => {
     let updatedEnemyHp = enemy.hp;
     setEnemy(prev => {
@@ -1027,7 +1045,7 @@ export function HarmonyStage({
   return (
     <div
       ref={combatContainerRef}
-      className="relative flex-1 w-full h-full overflow-hidden bg-[#151828] bg-cover bg-center bg-no-repeat select-none"
+      className="relative flex-1 w-full h-full overflow-hidden bg-plum-900 bg-cover bg-center bg-no-repeat select-none"
       style={{ backgroundImage: `linear-gradient(rgba(15, 12, 12, 0.35), rgba(15, 12, 12, 0.5)), url('${isShrineBandit ? '/assets/expedition/shrine_bg.png' : '/assets/expedition/battle_bg.png'}')` }}
     >
       <style>{`
@@ -1094,16 +1112,16 @@ export function HarmonyStage({
       `}</style>
 
       {/* PORTRAIT LOCK OVERLAY FOR MOBILE DEVICES */}
-      <div className="portrait:flex hidden absolute inset-0 z-[9999] bg-[#0f0c0c] flex-col items-center justify-center p-6 text-center shadow-inner overflow-hidden pointer-events-auto">
+      <div className="portrait:flex hidden absolute inset-0 z-[9999] bg-plum-950 flex-col items-center justify-center p-6 text-center shadow-inner overflow-hidden pointer-events-auto">
         <div className="animate-bounce mb-6">
-          <svg className="w-20 h-20 text-[#facc15]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+          <svg className="w-20 h-20 text-gold-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
         </div>
-        <h2 className="text-white font-orbitron font-black text-3xl mb-4 tracking-wider text-shadow-md">ROTATE DEVICE</h2>
-        <p className="text-slate-300 font-sans text-lg">This boss encounter requires landscape mode for the intended layout.</p>
+        <h2 className="font-bold text-3xl mb-4 text-parchment-100">Rotate your device</h2>
+        <p className="text-parchment-300 text-lg">This boss encounter requires landscape mode for the intended layout.</p>
       </div>
 
       {enemy.hp <= 0 && (
-        <div className="absolute inset-0 bg-white z-50 pointer-events-none animate-[flashWhite_2s_ease-out_forwards]" />
+        <div className="absolute inset-0 bg-parchment-100 z-50 pointer-events-none animate-[flashWhite_2s_ease-out_forwards]" />
       )}
 
       {/* BOSS RENDER (Desktop & Mobile) */}
@@ -1117,14 +1135,14 @@ export function HarmonyStage({
               >
                 {enemy.staggered && enemy.hp > 0 && (
                   <div className={`absolute z-20 flex flex-col items-center justify-center pointer-events-none animate-fadeIn ${enemy.id.startsWith('bakunawa') ? 'top-[5%] left-[25%]' : '-translate-y-40 sm:-translate-y-52'}`}>
-                    <div className="w-48 h-24 overflow-hidden relative drop-shadow-[0_0_8px_#facc15]"><img src="/assets/expedition/stun_spritesheet_tight.png" className="absolute top-0 left-0 h-full w-[500%] max-w-none animate-sprite-5" alt="Stun" /></div>
+                    <div className="w-48 h-24 overflow-hidden relative"><img src="/assets/expedition/stun_spritesheet_tight.png" className="absolute top-0 left-0 h-full w-[500%] max-w-none animate-sprite-5" alt="Stun" /></div>
                   </div>
                 )}
                 <img
                   ref={bakunawaDesktopImgRef}
                   src={enemy.id.startsWith('bakunawa') ? (bossAttackPhase !== 'idle' || isShooting ? "/assets/expedition/bakunawa_mouth_open_transparent.png" : "/assets/expedition/bakunawa_normal_transparent.png") : "/assets/expedition/echo_boss_body.png"}
                   alt={enemy.name}
-                  className={`w-auto ${enemy.id.startsWith('bakunawa') ? 'h-[75%] sm:h-[85%]' : 'h-[50%] sm:h-[55%]'} max-w-none object-contain transition-transform ${introStep === 'dialogue' ? '-translate-y-12 sm:-translate-y-16 duration-[1500ms] ease-in-out' : 'translate-y-[150px] sm:translate-y-[170px] duration-300'} ${bossAttackPhase !== 'idle' ? 'scale-110 drop-shadow-[0_0_20px_rgba(218,45,70,0.8)]' : 'scale-100'}`}
+                  className={`w-auto ${enemy.id.startsWith('bakunawa') ? 'h-[75%] sm:h-[85%]' : 'h-[50%] sm:h-[55%]'} max-w-none object-contain transition-transform ${introStep === 'dialogue' ? '-translate-y-12 sm:-translate-y-16 duration-[1500ms] ease-in-out' : 'translate-y-[150px] sm:translate-y-[170px] duration-300'} ${bossAttackPhase !== 'idle' ? 'scale-110 ' : 'scale-100'}`}
                 />
               </div>
             </div>
@@ -1136,8 +1154,8 @@ export function HarmonyStage({
                 {enemy.staggered && enemy.hp > 0 && (
                   <div className={`absolute z-20 flex flex-col items-center justify-center pointer-events-none animate-fadeIn ${enemy.id.startsWith('bakunawa') ? 'top-[5%] left-[25%]' : '-translate-y-28 sm:-translate-y-36'}`}>
                     <div className="relative w-36 h-12 flex items-center justify-center">
-                      <div className="absolute inset-0 flex items-center justify-around animate-[spin_3s_linear_infinite] drop-shadow-[0_0_10px_#facc15]">
-                        <span className="text-2xl animate-bounce">⭐</span><span className="text-base text-[#facc15] animate-pulse">✨</span>
+                      <div className="absolute inset-0 flex items-center justify-around animate-[spin_3s_linear_infinite]">
+                        <span className="text-2xl animate-bounce">⭐</span><span className="text-base text-gold-300 animate-pulse">✨</span>
                       </div>
                     </div>
                   </div>
@@ -1146,7 +1164,7 @@ export function HarmonyStage({
                   ref={bakunawaMobileImgRef}
                   src={enemy.id.startsWith('bakunawa') ? (bossAttackPhase !== 'idle' || isShooting ? "/assets/expedition/bakunawa_mouth_open_transparent.png" : "/assets/expedition/bakunawa_normal_transparent.png") : "/assets/expedition/echo_boss_body.png"}
                   alt={enemy.name}
-                  className={`max-w-none object-contain transition-transform ${introStep === 'dialogue' ? '-translate-y-12 sm:-translate-y-16 duration-[1500ms] ease-in-out' : 'translate-y-0 duration-300'} ${bossAttackPhase !== 'idle' ? 'scale-110 drop-shadow-[0_0_20px_rgba(218,45,70,0.8)]' : 'scale-100'} ${enemy.id.startsWith('bakunawa') ? 'h-[75%] sm:h-[85%] w-auto translate-x-[20%]' : 'h-[60%] sm:h-[70%] w-auto'}`}
+                  className={`max-w-none object-contain transition-transform ${introStep === 'dialogue' ? '-translate-y-12 sm:-translate-y-16 duration-[1500ms] ease-in-out' : 'translate-y-0 duration-300'} ${bossAttackPhase !== 'idle' ? 'scale-110 ' : 'scale-100'} ${enemy.id.startsWith('bakunawa') ? 'h-[75%] sm:h-[85%] w-auto translate-x-[20%]' : 'h-[60%] sm:h-[70%] w-auto'}`}
                 />
               </div>
             </div>
@@ -1167,7 +1185,7 @@ export function HarmonyStage({
                   <div className="w-1/2" />
                 </div>
               ) : !(bossAttackPhase === 'slam' || (activeAction === 'parry' && enemyFrame >= 4 && !isBoss)) && (
-                <div className={`flex items-center justify-center transition-all ${bossAttackPhase === 'rise' ? 'duration-500 ease-out scale-120 -translate-y-36 sm:-translate-y-48 animate-pulse drop-shadow-[0_0_35px_rgba(250,204,21,0.9)]' : bossAttackPhase === 'down' ? 'duration-150 ease-in scale-95 translate-y-10 sm:translate-y-14' : 'duration-300 scale-100 -translate-y-4 sm:-translate-y-6'}`}>
+                <div className={`flex items-center justify-center transition-all ${bossAttackPhase === 'rise' ? 'duration-500 ease-out scale-120 -translate-y-36 sm:-translate-y-48 animate-pulse ' : bossAttackPhase === 'down' ? 'duration-150 ease-in scale-95 translate-y-10 sm:translate-y-14' : 'duration-300 scale-100 -translate-y-4 sm:-translate-y-6'}`}>
                   <img src="/assets/expedition/echo_boss_wings_strike_left.png" alt="Left Wing Base Form" className="w-auto h-[52%] sm:h-[57%] max-w-none object-contain" />
                   <img src="/assets/expedition/echo_boss_wings_strike_right.png" alt="Right Wing Base Form" className="w-auto h-[52%] sm:h-[57%] max-w-none object-contain" />
                 </div>
@@ -1180,11 +1198,11 @@ export function HarmonyStage({
                 <div className="flex items-center justify-center w-full h-full">
                   <div className="w-1/2" />
                   <div className="w-1/2 flex justify-start items-center h-full overflow-visible">
-                    <img src="/assets/expedition/echo_boss_wings_slam_right.png" alt="Right Wing Sweep Slam" className={`w-auto h-[54%] sm:h-[59%] max-w-none object-contain transition-all ${bossAttackPhase === 'sweep_prep' ? 'duration-300 scale-125 translate-x-[80px] sm:translate-x-[180px] translate-y-12 sm:translate-y-20 drop-shadow-[0_0_30px_rgba(218,45,70,0.8)]' : 'duration-700 ease-out scale-135 -translate-x-[140px] sm:-translate-x-[300px] translate-y-12 sm:translate-y-20 drop-shadow-[0_0_50px_rgba(218,45,70,1)]'}`} />
+                    <img src="/assets/expedition/echo_boss_wings_slam_right.png" alt="Right Wing Sweep Slam" className={`w-auto h-[54%] sm:h-[59%] max-w-none object-contain transition-all ${bossAttackPhase === 'sweep_prep' ? 'duration-300 scale-125 translate-x-[80px] sm:translate-x-[180px] translate-y-12 sm:translate-y-20 ' : 'duration-700 ease-out scale-135 -translate-x-[140px] sm:-translate-x-[300px] translate-y-12 sm:translate-y-20 '}`} />
                   </div>
                 </div>
               ) : (bossAttackPhase === 'slam' || (activeAction === 'parry' && enemyFrame >= 4 && !isBoss)) && (
-                <div className="flex items-center justify-center transition-all duration-200 scale-130 translate-y-20 sm:translate-y-28 drop-shadow-[0_0_40px_rgba(218,45,70,1)]">
+                <div className="flex items-center justify-center transition-all duration-200 scale-130 translate-y-20 sm:translate-y-28">
                   <img src="/assets/expedition/echo_boss_wings_slam_left.png" alt="Left Wing Slam on Floor" className="w-auto h-[54%] sm:h-[59%] max-w-none object-contain" />
                   <img src="/assets/expedition/echo_boss_wings_slam_right.png" alt="Right Wing Slam on Floor" className="w-auto h-[54%] sm:h-[59%] max-w-none object-contain" />
                 </div>
@@ -1210,10 +1228,10 @@ export function HarmonyStage({
             onPointerUp={handleLeftPointerUp}
             onPointerCancel={handleLeftPointerUp}
           >
-            <div className="h-[50%] w-12 border-2 border-white/20 rounded-full flex flex-col items-center justify-between p-2 opacity-50 bg-black/20 pointer-events-none">
-              <ChevronUp className="text-white w-6 h-6" />
-              <span className="font-orbitron font-bold text-white text-[10px] -rotate-90 tracking-widest">DRAG</span>
-              <ChevronDown className="text-white w-6 h-6" />
+            <div className="h-[50%] w-12 border-2 border-parchment-300/20 rounded-full flex flex-col items-center justify-between p-2 opacity-50 bg-plum-950 pointer-events-none">
+              <ChevronUp className="text-parchment-100 w-6 h-6" />
+              <span className="font-pixel font-semibold text-parchment-100 text-xs -rotate-90">DRAG</span>
+              <ChevronDown className="text-parchment-100 w-6 h-6" />
             </div>
           </div>
 
@@ -1224,8 +1242,8 @@ export function HarmonyStage({
               if (activeAction === 'none') tryParryRef.current();
             }}
           >
-            <div className="w-24 h-24 border-[4px] border-[#facc15]/50 rounded-full flex items-center justify-center opacity-60 bg-[#facc15]/20 animate-pulse pointer-events-none">
-              <span className="font-orbitron font-black text-[#facc15] text-sm tracking-wider">PARRY</span>
+            <div className="w-24 h-24 border-[3px] border-gold-300/50 rounded-full flex items-center justify-center opacity-60 bg-gold-500/20 animate-pulse pointer-events-none">
+              <span className="font-pixel font-bold text-gold-300 text-sm">PARRY</span>
             </div>
           </div>
         </div>
@@ -1248,8 +1266,8 @@ export function HarmonyStage({
               }}
             >
               {isWarning ? (
-                <div className="relative w-full h-full bg-gradient-to-r from-transparent via-[#da2d46]/40 to-[#da2d46]/80 border-y-[2px] border-[#da2d46]/60 flex items-center overflow-hidden shadow-[0_0_30px_rgba(218,45,70,0.6)]">
-                  <div className="absolute w-full h-[2px] bg-[#da2d46] shadow-[0_0_10px_#da2d46,0_0_20px_#da2d46] animate-pulse" />
+                <div className="relative w-full h-full bg-gradient-to-r from-transparent via-hp/40 to-hp/80 border-y-[2px] border-hp/60 flex items-center overflow-hidden">
+                  <div className="absolute w-full h-[2px] bg-hp animate-pulse" />
                   <div
                     className="absolute w-full h-full opacity-30 animate-[beamSlideLeft_0.5s_linear_infinite]"
                     style={{
@@ -1259,7 +1277,7 @@ export function HarmonyStage({
                   />
                   <div className="w-full flex justify-around opacity-90 relative z-10">
                     {[...Array(6)].map((_, i) => (
-                      <span key={i} className="font-orbitron font-black text-[#ff3b56] text-sm sm:text-2xl tracking-widest animate-[ping_0.5s_ease-in-out_infinite]">
+                      <span key={i} className="font-pixel font-bold text-hp-light text-sm sm:text-2xl animate-[ping_0.5s_ease-in-out_infinite]">
                         LOCKED
                       </span>
                     ))}
@@ -1267,9 +1285,9 @@ export function HarmonyStage({
                 </div>
               ) : (
                 <div className="relative w-full h-full flex items-center justify-end animate-[beamShake_0.05s_linear_infinite]">
-                  <div className="absolute w-[120%] h-[250%] bg-[#38bdf8] blur-[30px] sm:blur-[50px] opacity-60 z-0 rounded-l-full" />
+                  <div className="absolute w-[120%] h-[250%] bg-xp blur-[30px] sm:blur-[50px] opacity-60 z-0 rounded-l-full" />
 
-                  <div className="absolute w-[110%] h-[160%] bg-[#a855f7] blur-[20px] mix-blend-screen opacity-80 z-10 rounded-l-full animate-pulse" />
+                  <div className="absolute w-[110%] h-[160%] bg-purple-500 blur-[20px] mix-blend-screen opacity-80 z-10 rounded-l-full animate-pulse" />
 
                   <div
                     className="absolute w-full h-[120%] z-10 opacity-90 mix-blend-color-dodge animate-[beamSlideLeft_0.15s_linear_infinite]"
@@ -1289,10 +1307,10 @@ export function HarmonyStage({
                     }}
                   />
 
-                  <div className="absolute w-[105%] h-[50%] bg-white rounded-l-full shadow-[inset_0_0_20px_#38bdf8,0_0_30px_#ffffff,0_0_60px_#facc15] z-20 animate-[beamShake_0.1s_linear_infinite]" />
+                  <div className="absolute w-[105%] h-[50%] bg-parchment-100 rounded-l-full shadow-[inset_0_0_20px_#38bdf8,0_0_30px_#ffffff,0_0_60px_#facc15] z-20 animate-[beamShake_0.1s_linear_infinite]" />
 
-                  <div className="absolute right-0 w-24 sm:w-40 h-[400%] bg-white rounded-full blur-2xl z-30 opacity-100 animate-pulse" />
-                  <div className="absolute right-0 w-12 sm:w-20 h-[300%] bg-[#facc15] rounded-full blur-xl mix-blend-screen z-30 opacity-100 animate-pulse" />
+                  <div className="absolute right-0 w-24 sm:w-40 h-[400%] bg-parchment-100 rounded-full blur-2xl z-30 opacity-100 animate-pulse" />
+                  <div className="absolute right-0 w-12 sm:w-20 h-[300%] bg-gold-500 rounded-full blur-xl mix-blend-screen z-30 opacity-100 animate-pulse" />
                 </div>
               )}
             </div>
@@ -1323,30 +1341,28 @@ export function HarmonyStage({
         })}
 
         {introStep === 'hint' && enemy.id.startsWith('bakunawa') && (
-          <div className="absolute inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm pointer-events-auto transition-opacity animate-in fade-in duration-500">
-            <div className="flex flex-col landscape:flex-row items-center gap-4 landscape:gap-8 bg-[#0f0c0c]/95 border-[4px] border-[#4ade80] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.8)] p-4 sm:p-8 max-w-3xl w-[95%] -skew-x-3 text-center landscape:text-left">
+          <div className="absolute inset-0 z-[100] flex items-center justify-center p-4 bg-plum-950/80 pointer-events-auto px-fade-in">
+            <PixelPanel frame="wood" padding="lg" className="w-full max-w-3xl flex flex-col landscape:flex-row gap-5 landscape:gap-8" role="dialog" aria-modal="true" aria-labelledby="bakunawa-rules-title">
               <div className="flex flex-col gap-3 flex-1">
-                <h2 className="font-orbitron font-black text-xl sm:text-4xl text-[#4ade80] uppercase tracking-widest drop-shadow-md">Boss Battle Rules</h2>
-                <div className="text-white font-sans text-sm sm:text-lg leading-relaxed space-y-2">
-                  <p><span className="text-[#facc15] font-bold">MOVE:</span> <span className="hidden lg:inline">Use <strong className="text-[#38bdf8]">W / S keys</strong></span><span className="inline lg:hidden">Drag <strong className="text-[#38bdf8]">Left Screen</strong> up/down</span> to steer.</p>
-                  <p><span className="text-[#38bdf8] font-bold">DASH:</span> <span className="hidden lg:inline">Hold <strong className="text-[#facc15]">SHIFT</strong></span><span className="inline lg:hidden">Swipe <strong className="text-[#facc15]">Quickly</strong></span> for a speed boost.</p>
-                </div>
+                <h2 id="bakunawa-rules-title" className="font-bold text-2xl sm:text-3xl leading-none text-parchment-100">How to fight Bakunawa</h2>
+                <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-3 text-base leading-snug">
+                  <dt className="font-label text-base text-gold-300">Steer</dt>
+                  <dd className="text-parchment-300"><span className="hidden lg:inline"><Kbd>W</Kbd> <Kbd>S</Kbd> to move up and down.</span><span className="lg:hidden">Drag the left side of the screen up and down.</span></dd>
+                  <dt className="font-label text-base text-gold-300">Dash</dt>
+                  <dd className="text-parchment-300"><span className="hidden lg:inline">Hold <Kbd>Shift</Kbd> for a speed boost.</span><span className="lg:hidden">Swipe quickly for a speed boost.</span></dd>
+                </dl>
               </div>
-              <div className="flex flex-col gap-4 flex-1 items-center landscape:items-stretch">
-                <div className="bg-[#1e2238] p-3 border-l-[4px] border-[#facc15] text-left flex flex-col gap-2 text-sm sm:text-base">
-                  <p>⚠️ <strong className="text-white">DODGE</strong> the <span className="text-blue-400 font-bold">Blue Orbs</span> and <span className="text-red-400 font-bold">Red Beams</span>.</p>
-                  <p>⚔️ <strong className="text-white">PARRY</strong> the <span className="text-[#facc15] font-bold">Gold Orbs</span> by <span className="hidden lg:inline">pressing <strong className="text-[#da2d46]">SPACE</strong></span><span className="inline lg:hidden">tapping <strong className="text-[#da2d46]">Right Screen</strong></span>!</p>
+              <div className="flex flex-col gap-4 flex-1">
+                <div className="px-frame px-frame-inset px-frame-sm flex flex-col gap-2 px-3 py-2 text-sm text-parchment-100">
+                  <p><span className="font-semibold text-hp-light">Dodge</span> blue orbs and red beams.</p>
+                  <p><span className="font-semibold text-gold-300">Parry</span> gold orbs by <span className="hidden lg:inline">pressing <Kbd>Space</Kbd></span><span className="lg:hidden">tapping the right side of the screen</span>.</p>
                 </div>
-                <button
-                  onClick={() => setIntroStep('combat')}
-                  className="w-full py-3 sm:py-4 bg-[#4ade80] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-lg sm:text-xl uppercase hover:bg-[#6bee9c] hover:-translate-y-1 transition-transform active:translate-y-0 active:shadow-none"
-                >
-                  OK, LET'S GO!
-                </button>
+                <PixelButton variant="primary" size="lg" fullWidth onClick={() => setIntroStep('combat')}>
+                  Start Battle
+                </PixelButton>
               </div>
-            </div>
-          </div>
-        )}
+            </PixelPanel>
+          </div>        )}
       </div>
 
       <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
@@ -1356,11 +1372,11 @@ export function HarmonyStage({
           return (
             <div key={p.id} className="absolute flex items-center justify-center pointer-events-none" style={{ left: baseX, top: baseY, transform: `translate(calc(-50% + ${p.offsetX}px), calc(-50% + ${p.offsetY}px))` }}>
               <div className="absolute inset-0 flex items-center justify-center">
-                {p.effectType === 'slash' && <div className="w-32 h-4 bg-white rounded-full shadow-[0_0_20px_#facc15,0_0_40px_#facc15]" style={{ animation: 'slashFx 0.4s ease-out forwards' }} />}
-                {p.effectType === 'magic' && <Sparkles className="w-32 h-32 text-[#facc15] fill-[#facc15] opacity-0" style={{ animation: 'magicFx 0.6s ease-out forwards' }} />}
-                {p.effectType === 'block' && <div className="w-20 h-20 border-[#38bdf8] rounded-full opacity-0 shadow-[0_0_15px_#38bdf8]" style={{ animation: 'blockFx 0.5s ease-out forwards' }} />}
+                {p.effectType === 'slash' && <div className="w-32 h-4 bg-parchment-100 rounded-full" style={{ animation: 'slashFx 0.4s ease-out forwards' }} />}
+                {p.effectType === 'magic' && <Sparkles className="w-32 h-32 text-gold-300 fill-gold-300 opacity-0" style={{ animation: 'magicFx 0.6s ease-out forwards' }} />}
+                {p.effectType === 'block' && <div className="w-20 h-20 border-xp rounded-full opacity-0" style={{ animation: 'blockFx 0.5s ease-out forwards' }} />}
               </div>
-              <div className="font-orbitron font-black tracking-widest text-4xl sm:text-6xl text-white relative z-10" style={{ color: p.color, WebkitTextStroke: '3px #0f0c0c', textShadow: '4px 4px 0 #0f0c0c, 0 0 25px currentColor', animation: 'damageNumberBounce 1s cubic-bezier(0.36, 0, 0.66, -0.56) forwards' }}>
+              <div className="font-pixel font-bold text-4xl sm:text-6xl text-parchment-100 relative z-10" style={{ color: p.color, WebkitTextStroke: '3px #0f0c0c', textShadow: '4px 4px 0 #0f0c0c, 0 0 25px currentColor', animation: 'damageNumberBounce 1s cubic-bezier(0.36, 0, 0.66, -0.56) forwards' }}>
                 {p.text}
               </div>
             </div>
@@ -1369,120 +1385,66 @@ export function HarmonyStage({
       </div>
 
       <div className="absolute top-2 inset-x-0 flex flex-col items-center justify-center z-20 gap-2 pointer-events-none px-2 sm:px-4">
-        <div className={`w-full max-w-xl mx-auto flex flex-col gap-1 pointer-events-auto transition-opacity duration-1000 ${introStep === 'dialogue' ? 'opacity-0' : 'opacity-100'}`}>
-          <div className="flex items-baseline justify-between font-orbitron tracking-wide px-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
-            <span className="font-black text-sm sm:text-base text-white uppercase tracking-wider leading-tight">{enemy.name}</span>
-            <span className="text-[10px] sm:text-xs text-[#facc15] font-bold text-right">LV. {enemy.level} {enemy.isBoss && 'BOSS'} — {enemy.hp}/{enemy.maxHp} HP</span>
-          </div>
-          <div className="relative w-full h-3 sm:h-4 bg-[#0f0c0c]/90 border-[2px] border-slate-700 shadow-[0_4px_16px_rgba(0,0,0,0.9)] overflow-hidden" style={{ animation: hpShaking ? 'hpShake 0.4s ease-out both' : 'none' }}>
-            <div className="absolute top-0 left-0 h-full bg-white transition-all duration-700 ease-out" style={{ width: `${ghostPct}%` }} />
-            <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#da2d46] to-[#ff4b68] transition-all duration-300 ease-out" style={{ width: `${hpPct}%` }} />
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute top-0 bottom-0 left-[25%] w-[1px] bg-[#0f0c0c]/60" />
-              <div className="absolute top-0 bottom-0 left-[50%] w-[2px] bg-[#0f0c0c]/80" />
-              <div className="absolute top-0 bottom-0 left-[75%] w-[1px] bg-[#0f0c0c]/60" />
-            </div>
-          </div>
-          <div className="relative w-full h-1 sm:h-1.5 bg-[#0f0c0c]/80 border border-slate-800 overflow-hidden mt-0.5">
-            <div className="absolute top-0 left-0 h-full bg-[#facc15] transition-all duration-300" style={{ width: `${staggerPct}%` }} />
-          </div>
-        </div>
+        <EnemyHealthBar
+          className={`max-w-xl mx-auto pointer-events-auto transition-opacity duration-1000 ${introStep === 'dialogue' ? 'opacity-0' : 'opacity-100'}`}
+          name={enemy.name}
+          level={enemy.level}
+          isBoss={enemy.isBoss}
+          hp={enemy.hp}
+          maxHp={enemy.maxHp}
+          ghostHp={ghostHp}
+          stagger={enemy.stagger}
+          maxStagger={enemy.maxStagger}
+          shaking={hpShaking}
+        />
 
         {!isShrineBandit && (
-          <div className="absolute right-2 sm:right-4 top-2 sm:top-4 flex items-center gap-1 sm:gap-2 bg-[#1e2238]/90 border-[2px] sm:border-[3px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] px-2 py-1 sm:px-3 sm:py-1.5 -skew-x-2 backdrop-blur-sm pointer-events-auto z-50">
-            <span className="font-orbitron font-black text-[8px] sm:text-2xs text-[#facc15] uppercase border-r border-slate-600 pr-1.5 sm:pr-2">TURN</span>
-            <div className="flex items-center gap-1 sm:gap-1.5">
-              {turnQueue.map((unit, idx) => {
-                const isCurrent = idx === turnIndex % turnQueue.length;
-                return (
-                  <div key={idx} className={`w-5 h-5 sm:w-auto sm:h-auto sm:px-1 sm:py-0.5 border border-[#0f0c0c] flex items-center justify-center transition-all ${isCurrent ? 'bg-[#facc15] text-[#0f0c0c] scale-110 sm:scale-105 shadow-[1px_1px_0px_0px_#0f0c0c] z-10' : unit.isHero ? 'bg-[#2a2d43] text-white opacity-90 sm:opacity-100' : 'bg-[#da2d46] text-white opacity-90 sm:opacity-100'}`}>
-                    {unit.isHero ? <img src={(unit.unit as HeroProfile).avatar} alt="Hero" className="w-full h-full sm:w-5 sm:h-5 object-cover" /> : <span className="text-[10px] sm:text-xs">👹</span>}
-                  </div>
-                );
-              })}
-            </div>
+          <div className="absolute right-2 sm:right-4 top-2 sm:top-4 pointer-events-auto z-50">
+            {renderTurnBar()}
           </div>
         )}
       </div>
-
       {/* MOVED: Party Drawer extracted from z-20 container and elevated to z-50 to sit above the mobile drag overlay */}
       <div className={`lg:hidden absolute z-50 top-[25%] left-0 flex items-center pointer-events-auto transition-all duration-300 ease-in-out ${introStep === 'dialogue' ? 'opacity-0 pointer-events-none' : 'opacity-100'} ${isPartyDrawerOpen ? 'translate-x-0' : '-translate-x-[calc(100%-2.5rem)]'}`}>
-        <div className="flex flex-col gap-1.5 p-2 bg-[#151828]/95 backdrop-blur-md border-y-[3px] border-r-[3px] border-[#0f0c0c] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.4)] w-[220px] rounded-r-xl">
-          {partyList.map((hero) => {
-            const isTurn = isHeroTurn && activeHero.id === hero.id;
-            const inst = dex[hero.equippedId] || dex['cebuano_gitara']!;
-            return (
-              <div key={hero.id} className={`flex items-center gap-2 p-1.5 border-[2px] border-[#0f0c0c] transition-all -skew-x-3 ${isTurn ? 'bg-[#facc15] text-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c]' : 'bg-[#1e2238]/90 text-white opacity-90'}`}>
-                <img src={hero.avatar} alt={hero.name} className="w-8 h-8 object-cover" />
-                <div className="flex flex-col flex-1 overflow-hidden">
-                  <div className="font-orbitron font-black text-[10px] flex items-center gap-1">
-                    <span className="truncate">{hero.name}</span>
-                    <span className="text-[8px] shrink-0 flex items-center justify-center bg-[#0f0c0c] p-0.5 border border-[#0f0c0c]">
-                      <img src={`/assets/instruments/${inst.id}.png`} alt={inst.name} className="w-2.5 h-2.5 object-contain" />
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[8px] font-bold font-orbitron">
-                    <span className="truncate">HP: {hero.hp}/{hero.maxHp}</span>
-                    <span className="truncate">AP: {hero.ap}/{hero.maxAp}</span>
-                  </div>
-                  <div className="flex gap-0.5 mt-0.5">
-                    {Array.from({ length: hero.maxAp }).map((_, i) => (
-                      <div key={i} className={`w-1.5 h-1.5 border border-[#0f0c0c] ${i < hero.ap ? (isTurn ? 'bg-[#da2d46]' : 'bg-[#38bdf8]') : 'bg-slate-700'}`} />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+        <div className="flex flex-col gap-1.5 p-2 bg-plum-900 border-y-[3px] border-r-[3px] border-ink w-[220px]">
+          {partyList.map((hero) => (
+            <PartyMemberCard
+              key={hero.id}
+              hero={hero}
+              instrument={dex[hero.equippedId] || dex['cebuano_gitara']}
+              isTurn={isHeroTurn && activeHero.id === hero.id}
+            />
+          ))}
         </div>
 
         <button
           onClick={() => setIsPartyDrawerOpen(!isPartyDrawerOpen)}
-          className={`w-10 h-16 flex flex-col items-center justify-center border-y-[3px] border-r-[3px] border-[#0f0c0c] rounded-r-lg shadow-[4px_4px_0px_0px_#0f0c0c] transition-all
-            ${isPartyDrawerOpen ? 'bg-[#2a2d43] text-white hover:bg-[#383d5a]' : 'bg-[#facc15] text-[#0f0c0c] hover:bg-[#ffdf3d]'}
-            ${!isPartyDrawerOpen && isHeroTurn ? 'animate-pulse' : ''}
-          `}
+          aria-label={isPartyDrawerOpen ? 'Hide party' : 'Show party'}
+          className="px-btn px-btn-secondary w-10 h-16 p-0 flex-col gap-1 [&_svg]:size-4"
         >
-          {isPartyDrawerOpen ? <ChevronLeft className="w-5 h-5 font-black" /> : <div className="flex flex-col items-center gap-1"><Users className="w-4 h-4 fill-current" /><ChevronRight className="w-3 h-3 font-black" /></div>}
-        </button>
-      </div>
+          {isPartyDrawerOpen ? <PxChevronLeft /> : <><PxUsers /><PxChevronRight /></>}
+        </button>      </div>
 
       <div className="absolute inset-0 z-20 pointer-events-none flex flex-col justify-end">
 
         <div className={`hidden lg:flex absolute bottom-[100px] left-6 flex-row gap-3 z-40 transition-opacity duration-1000 ${introStep === 'dialogue' ? 'opacity-0 pointer-events-none' : 'opacity-100'} pointer-events-auto`}>
-          {partyList.map((hero) => {
-            const isTurn = isHeroTurn && activeHero.id === hero.id;
-            const inst = dex[hero.equippedId] || dex['cebuano_gitara']!;
-            return (
-              <div key={hero.id} className={`flex items-center gap-2 p-2 border-[3px] border-[#0f0c0c] transition-all -skew-x-6 w-48 ${isTurn ? 'bg-[#facc15] text-[#0f0c0c] scale-105 shadow-[4px_4px_0px_0px_#0f0c0c]' : 'bg-[#1e2238]/90 text-white opacity-90 backdrop-blur-sm'}`}>
-                <img src={hero.avatar} alt={hero.name} className="w-10 h-10 object-cover border-2 border-[#0f0c0c] shrink-0" />
-                <div className="flex flex-col flex-1 overflow-hidden">
-                  <div className="font-orbitron font-black text-xs flex items-center justify-between gap-1">
-                    <span className="truncate">{hero.name}</span>
-                    <span className="text-[10px] bg-white border border-[#0f0c0c] w-4 h-4 flex items-center justify-center shrink-0">
-                      <img src={`/assets/instruments/${inst.id}.png`} alt={inst.name} className="w-full h-full object-contain scale-110 mix-blend-multiply" />
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[9px] font-bold font-orbitron mt-0.5">
-                    <span>HP: {hero.hp}/{hero.maxHp}</span>
-                  </div>
-                  <div className="flex gap-0.5 mt-1">
-                    {Array.from({ length: hero.maxAp }).map((_, i) => (
-                      <div key={i} className={`w-2 h-2 border border-[#0f0c0c] ${i < hero.ap ? (isTurn ? 'bg-[#da2d46]' : 'bg-[#38bdf8]') : 'bg-slate-700'}`} />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {partyList.map((hero) => (
+            <div key={hero.id} className="w-52">
+              <PartyMemberCard
+                hero={hero}
+                instrument={dex[hero.equippedId] || dex['cebuano_gitara']}
+                isTurn={isHeroTurn && activeHero.id === hero.id}
+              />
+            </div>
+          ))}
         </div>
 
         {isShrineBandit ? (
           <>
             {introStep === 'combat' && (
               <div className="hidden lg:flex absolute left-8 xl:left-12 top-[35%] flex-col items-center pointer-events-auto z-50">
-                <div className="text-[#38bdf8] font-orbitron font-black text-sm mb-2 drop-shadow-[0px_2px_4px_rgba(0,0,0,0.8)]">SHIFT: DASH</div>
-                <div className="text-white font-orbitron font-bold text-sm mb-2 mt-4 drop-shadow-[0px_2px_4px_rgba(0,0,0,0.8)]">UP</div>
+                <div className="text-xp font-pixel font-bold text-sm mb-2 drop-shadow-[0px_2px_4px_rgba(0,0,0,0.8)]">SHIFT: DASH</div>
+                <div className="text-parchment-100 font-pixel font-semibold text-sm mb-2 mt-4 drop-shadow-[0px_2px_4px_rgba(0,0,0,0.8)]">UP</div>
                 <input
                   type="range"
                   min="0"
@@ -1498,10 +1460,10 @@ export function HarmonyStage({
                   }}
                   onPointerUp={() => setIsMovingUp(false)}
                   onMouseLeave={() => setIsMovingUp(false)}
-                  className={`flex-1 appearance-none border-4 rounded-full h-32 w-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.9)] transition-colors ${isDashing ? 'bg-[#38bdf8] border-white' : 'bg-[#0f0c0c]/80 border-[#facc15]'}`}
+                  className={`flex-1 appearance-none border-[3px] rounded-full h-32 w-6  transition-colors ${isDashing ? 'bg-xp border-parchment-300' : 'bg-plum-950/80 border-gold-300'}`}
                   style={{ writingMode: 'vertical-lr', direction: 'rtl' }}
                 />
-                <div className="text-white font-orbitron font-bold text-sm mt-2 drop-shadow-[0px_2px_4px_rgba(0,0,0,0.8)]">DOWN</div>
+                <div className="text-parchment-100 font-pixel font-semibold text-sm mt-2 drop-shadow-[0px_2px_4px_rgba(0,0,0,0.8)]">DOWN</div>
               </div>
             )}
 
@@ -1533,7 +1495,7 @@ export function HarmonyStage({
                 </div>
               )}
               {parryFlashes.map(flash => (
-                <svg key={flash.id} viewBox="0 0 100 200" className="absolute -right-12 top-1/2 -translate-y-1/2 w-16 h-32 lg:w-20 lg:h-40 drop-shadow-[0_0_12px_rgba(255,255,255,0.9)] animate-parry-arc pointer-events-none z-30">
+                <svg key={flash.id} viewBox="0 0 100 200" className="absolute -right-12 top-1/2 -translate-y-1/2 w-16 h-32 lg:w-20 lg:h-40 animate-parry-arc pointer-events-none z-30">
                   <path d="M 0 0 C 100 50, 100 150, 0 200 C 50 150, 50 50, 0 0 Z" fill="white" />
                 </svg>
               ))}
@@ -1551,14 +1513,14 @@ export function HarmonyStage({
 
                 return (
                   <div key={e.id} className="flex flex-col items-center gap-3 cursor-pointer transition-all" onClick={() => e.hp > 0 && setTargetEnemyIndex(idx)}>
-                    <div className="w-24 h-2 bg-[#0f0c0c]/80 border-2 border-white/50 flex mb-2 shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6">
-                      <div className="bg-[#da2d46] h-full transition-all" style={{ width: `${Math.max(0, (e.hp / e.maxHp) * 100)}%` }} />
+                    <div className="w-24 h-2 bg-plum-950 border-2 border-ink flex mb-2">
+                      <div className="bg-hp h-full transition-all" style={{ width: `${Math.max(0, (e.hp / e.maxHp) * 100)}%` }} />
                     </div>
                     <div className={`relative transition-transform flex items-center justify-center ${e.staggered ? 'animate-bounce' : isAttacking ? 'animate-pulse scale-110' : ''}`}>
                       <img src={`/assets/expedition/enemy_frame_${isAttacking ? enemyFrame : 0}.png`} alt={e.name} className={`w-40 h-40 lg:w-56 lg:h-56 object-contain scale-x-[-1] transition-all duration-300 ${isCurrent ? 'drop-shadow-[0px_0px_12px_rgba(250,204,21,1)]' : 'drop-shadow-[0px_12px_24px_rgba(0,0,0,0.8)]'}`} />
-                      {e.hp <= 0 && <div className="absolute inset-0 bg-red-600/50 mix-blend-color-burn rounded-full animate-[ping_0.5s_cubic-bezier(0,0,0.2,1)_infinite]" />}
+                      {e.hp <= 0 && <div className="absolute inset-0 bg-hp/50 mix-blend-color-burn rounded-full animate-[ping_0.5s_cubic-bezier(0,0,0.2,1)_infinite]" />}
                     </div>
-                    <span className={`font-orbitron font-black text-xs lg:text-sm uppercase tracking-wider text-[#da2d46] bg-[#0f0c0c] px-4 py-1 border-[2px] border-[#da2d46] shadow-[3px_3px_0px_0px_#0f0c0c] -skew-x-6 ${!isCurrent ? 'opacity-80' : ''}`}>{e.name}</span>
+                    <UnitNameplate side="enemy" size="md" className={cn(!isCurrent && 'opacity-80')}>{e.name}</UnitNameplate>
                   </div>
                 );
               })
@@ -1567,7 +1529,7 @@ export function HarmonyStage({
                 <div className={`relative transition-transform flex items-center justify-center ${enemy.staggered ? 'animate-bounce' : ''}`}>
                   <img src={`/assets/expedition/enemy_frame_${enemyFrame}.png`} alt={enemy.name} className="w-56 h-56 lg:w-72 lg:h-72 object-contain drop-shadow-[0px_12px_24px_rgba(0,0,0,0.8)] scale-x-[-1]" />
                 </div>
-                <span className="font-orbitron font-black text-sm uppercase tracking-wider text-[#da2d46] bg-[#0f0c0c] px-4 py-1 border-[2px] border-[#da2d46] shadow-[3px_3px_0px_0px_#0f0c0c] -skew-x-6">{enemy.name}</span>
+                <UnitNameplate side="enemy" size="md">{enemy.name}</UnitNameplate>
               </div>
             )}
           </div>
@@ -1582,127 +1544,36 @@ export function HarmonyStage({
             else setIntroStep('hint');
           }}
         >
-          <div className="flex items-center gap-3 sm:gap-6 bg-[#0f0c0c]/90 border-[4px] border-[#facc15] shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)] p-4 sm:p-6 max-w-2xl w-[90%] -skew-x-3 hover:scale-[1.02] transition-transform pointer-events-none">
-            <img src={introDialogue[dialogueIndex].avatar} className="w-16 h-16 sm:w-20 sm:h-20 object-cover shrink-0" />
-            <div className="flex flex-col justify-center">
-              <span className="font-orbitron font-black text-[#facc15] text-lg sm:text-xl uppercase tracking-widest mb-1">{introDialogue[dialogueIndex].name}</span>
-              <span className="text-white font-medium text-sm sm:text-lg leading-snug font-sans">{introDialogue[dialogueIndex].text}</span>
-              <span className="text-slate-400 text-[10px] sm:text-xs font-bold mt-2 sm:mt-3 animate-pulse uppercase tracking-wider">Click anywhere to continue...</span>
+          <PixelPanel frame="wood" padding="none" className="max-w-2xl w-[90%] pointer-events-none">
+            <div className="flex items-center gap-4 p-4 sm:p-5">
+              <div className="px-frame px-frame-inset shrink-0 size-16 sm:size-20 p-1">
+                <img src={introDialogue[dialogueIndex].avatar} alt="" className="w-full h-full object-cover pixelated" />
+              </div>
+              <div className="flex flex-col gap-1.5 min-w-0">
+                <span className="font-bold text-lg sm:text-xl leading-none text-gold-300">{introDialogue[dialogueIndex].name}</span>
+                <span className="text-base sm:text-lg leading-snug text-parchment-100">{introDialogue[dialogueIndex].text}</span>
+                <span className="text-xs text-parchment-500">Click anywhere to continue</span>
+              </div>
             </div>
-          </div>
-        </div>
+          </PixelPanel>        </div>
       )}
 
       <div className={`absolute bottom-0 left-0 w-full z-40 transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isHeroTurn && introStep !== 'dialogue' ? 'translate-y-0' : 'translate-y-[110%]'}`}>
 
-        <div className="lg:hidden flex flex-col items-center justify-between gap-1.5 sm:gap-3 bg-[#1e2238] border-t-[2px] sm:border-t-[4px] border-[#0f0c0c] shadow-[0px_-3px_0px_0px_#0f0c0c] p-2 sm:p-3 pb-safe">
-          <div className="w-full sm:w-auto flex items-center justify-center gap-1.5 sm:gap-3 px-2 py-1 sm:px-4 py-2 bg-[#0f0c0c] text-[#facc15] border-[2px] sm:border-[3px] border-[#facc15] font-orbitron font-black text-[9px] sm:text-sm uppercase tracking-wider -skew-x-6">
-            <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-[#da2d46] fill-current animate-pulse" />
-            <span className="truncate">ACTIVE TURN: {isHeroTurn ? activeHero.name.toUpperCase() : "ENEMY ATTACK PHASE"}</span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-stretch gap-1.5 sm:gap-3 w-full sm:w-auto">
-            <button onClick={handleCommandAttack} disabled={!isHeroTurn || activeHero.ap < 1 || activeAction !== 'none' || isEndingBattle} className="col-span-1 px-1.5 py-1.5 sm:px-4 sm:py-3 bg-[#da2d46] text-white border-[2px] sm:border-[4px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-[8px] sm:text-sm uppercase -skew-x-6 hover:bg-[#ff3b56] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-1 sm:gap-2 active:translate-y-0.5 active:shadow-none">
-              <Sword className="w-3 h-3 sm:w-4 sm:h-4 fill-current shrink-0 hidden xs:block" />
-              <div className="flex flex-col text-left justify-center overflow-hidden">
-                <span className="leading-tight truncate">RHYTHM ATTACK</span>
-                <span className="text-[6px] sm:text-2xs font-bold opacity-80 leading-tight truncate">(1 AP) Note Highway</span>
-              </div>
-            </button>
-            <button onClick={handleCommandSkill} disabled={!isHeroTurn || activeHero.ap < 2 || activeAction !== 'none' || isEndingBattle} className="col-span-1 px-1.5 py-1.5 sm:px-4 sm:py-3 bg-[#facc15] text-[#0f0c0c] border-[2px] sm:border-[4px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-[8px] sm:text-sm uppercase -skew-x-6 hover:bg-[#ffdf3d] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-1 sm:gap-2 active:translate-y-0.5 active:shadow-none">
-              <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 fill-current shrink-0 hidden xs:block" />
-              <div className="flex flex-col text-left justify-center overflow-hidden">
-                <span className="leading-tight truncate">OVERDRIVE</span>
-                <span className="text-[6px] sm:text-2xs font-bold opacity-80 leading-tight truncate">(2 AP) Magic Circle</span>
-              </div>
-            </button>
-            <button onClick={handleCommandAttune} disabled={!isHeroTurn || activeAction !== 'none' || isEndingBattle} className="col-span-1 px-1.5 py-1.5 sm:px-4 sm:py-3 bg-[#38bdf8] text-[#0f0c0c] border-[2px] sm:border-[4px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-[8px] sm:text-sm uppercase -skew-x-6 hover:bg-[#5cd0ff] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-1 sm:gap-2 active:translate-y-0.5 active:shadow-none">
-              <Disc className="w-3 h-3 sm:w-4 sm:h-4 fill-current shrink-0 hidden xs:block" />
-              <div className="flex flex-col text-left justify-center overflow-hidden">
-                <span className="leading-tight truncate">ATTUNE / CAPTURE</span>
-                <span className="text-[6px] sm:text-2xs font-bold opacity-80 leading-tight truncate">(HP &lt; 35%) Seal Inst</span>
-              </div>
-            </button>
-            <button onClick={handleCommandDefend} disabled={!isHeroTurn || activeAction !== 'none' || isEndingBattle} className="col-span-1 px-1.5 py-1.5 sm:px-4 sm:py-3 bg-[#4ade80] text-[#0f0c0c] border-[2px] sm:border-[4px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-[8px] sm:text-sm uppercase -skew-x-6 hover:bg-[#6bee9c] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-1 sm:gap-2 active:translate-y-0.5 active:shadow-none">
-              <Shield className="w-4 h-4 fill-current" />
-              <div className="flex flex-col text-left justify-center overflow-hidden">
-                <span className="leading-tight truncate">PARRY STANCE</span>
-                <span className="text-[6px] sm:text-2xs font-bold opacity-80 leading-tight truncate">(+2 AP) Block</span>
-              </div>
-            </button>
-            <button onClick={onFlee} disabled={isEndingBattle} className="col-span-2 sm:col-span-1 px-1.5 py-1.5 sm:px-4 sm:py-3 bg-[#2a2d43] text-white border-[2px] sm:border-[4px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-[8px] sm:text-sm uppercase -skew-x-6 hover:bg-[#383d5a] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center sm:justify-start gap-1 sm:gap-2 active:translate-y-0.5 active:shadow-none">
-              <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
-              <div className="flex flex-col text-left justify-center">
-                <span className="leading-tight">RETREAT</span>
-                <span className="text-[6px] sm:text-2xs font-bold opacity-80 leading-tight hidden sm:block">Flee Battle</span>
-              </div>
-            </button>
-            <button onClick={() => setShowItemsMenu(true)} disabled={isEndingBattle || !isHeroTurn} className="col-span-2 sm:col-span-1 px-1.5 py-1.5 sm:px-4 sm:py-3 bg-[#7c3aed] text-white border-[2px] sm:border-[4px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] sm:shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-[8px] sm:text-sm uppercase -skew-x-6 hover:bg-[#9f5ffc] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center sm:justify-start gap-1 sm:gap-2 active:translate-y-0.5 active:shadow-none">
-              <Package className="w-3 h-3 sm:w-4 sm:h-4 shrink-0 hidden xs:block" />
-              <div className="flex flex-col text-left justify-center overflow-hidden">
-                <span className="leading-tight truncate">ITEMS</span>
-                <span className="text-[6px] sm:text-2xs font-bold opacity-80 leading-tight hidden sm:block">Open Inventory</span>
-              </div>
-            </button>
-          </div>
+        <div className="lg:hidden flex flex-col gap-2 bg-plum-900 border-t-[3px] border-ink p-2 sm:p-3 pb-safe">
+          <CommandMenu commands={combatCommands} />
         </div>
 
-        <div className="hidden lg:flex items-center justify-between gap-4 bg-[#1e2238] border-t-[4px] border-[#0f0c0c] shadow-[0px_-4px_0px_0px_#0f0c0c] p-4">
-          <div className="flex items-center gap-3 px-4 py-2 bg-[#0f0c0c] text-[#facc15] border-[3px] border-[#facc15] font-orbitron font-black text-sm uppercase tracking-wider -skew-x-6 shrink-0">
-            <Zap className="w-4 h-4 text-[#da2d46] fill-current animate-pulse shrink-0" />
-            <span>ACTIVE TURN: {isHeroTurn ? activeHero.name.toUpperCase() : "ENEMY ATTACK PHASE"}</span>
+        <div className="hidden lg:flex items-center justify-between gap-4 bg-plum-900 border-t-[3px] border-ink px-4 py-3">
+          <div className="shrink-0">
+            {renderTurnBar()}
           </div>
-
-          <div className="flex flex-wrap items-center justify-end gap-3">
-            <button onClick={handleCommandAttack} disabled={!isHeroTurn || activeHero.ap < 1 || activeAction !== 'none' || isEndingBattle} className="px-4 py-3 bg-[#da2d46] text-white border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#ff3b56] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2 active:translate-y-0.5 active:shadow-none">
-              <Sword className="w-4 h-4 fill-current" />
-              <div className="flex flex-col text-left">
-                <span>RHYTHM ATTACK</span>
-                <span className="text-2xs font-bold opacity-80">(1 AP) Note Highway</span>
-              </div>
-            </button>
-            <button onClick={handleCommandSkill} disabled={!isHeroTurn || activeHero.ap < 2 || activeAction !== 'none' || isEndingBattle} className="px-4 py-3 bg-[#facc15] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#ffdf3d] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2 active:translate-y-0.5 active:shadow-none">
-              <Sparkles className="w-4 h-4 fill-current" />
-              <div className="flex flex-col text-left">
-                <span>OVERDRIVE ULTIMATE</span>
-                <span className="text-2xs font-bold opacity-80">(2 AP) Magic Circle</span>
-              </div>
-            </button>
-            <button onClick={handleCommandAttune} disabled={!isHeroTurn || activeAction !== 'none' || isEndingBattle} className="px-4 py-3 bg-[#38bdf8] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#5cd0ff] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2 active:translate-y-0.5 active:shadow-none">
-              <Disc className="w-4 h-4 fill-current" />
-              <div className="flex flex-col text-left">
-                <span>ATTUNE / CAPTURE</span>
-                <span className="text-2xs font-bold opacity-80">(HP &lt; 35%) Seal Instrument</span>
-              </div>
-            </button>
-            <button onClick={handleCommandDefend} disabled={!isHeroTurn || activeAction !== 'none' || isEndingBattle} className="px-4 py-3 bg-[#4ade80] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#6bee9c] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2 active:translate-y-0.5 active:shadow-none">
-              <Shield className="w-4 h-4 fill-current" />
-              <div className="flex flex-col text-left">
-                <span>PARRY STANCE</span>
-                <span className="text-2xs font-bold opacity-80">(+2 AP) Block &amp; Counter</span>
-              </div>
-            </button>
-            <button onClick={onFlee} disabled={isEndingBattle} className="px-4 py-3 bg-[#2a2d43] text-white border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#383d5a] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2 active:translate-y-0.5 active:shadow-none">
-              <ArrowLeft className="w-4 h-4" />
-              <div className="flex flex-col text-left">
-                <span>RETREAT</span>
-                <span className="text-2xs font-bold opacity-80">Flee Battle</span>
-              </div>
-            </button>
-            <button onClick={() => setShowItemsMenu(true)} disabled={isEndingBattle || !isHeroTurn} className="px-4 py-3 bg-[#7c3aed] text-white border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#9f5ffc] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2 active:translate-y-0.5 active:shadow-none">
-              <Package className="w-4 h-4" />
-              <div className="flex flex-col text-left">
-                <span>ITEMS</span>
-                <span className="text-2xs font-bold opacity-80">Open Inventory</span>
-              </div>
-            </button>
-          </div>
-        </div>
-      </div>
+          <CommandMenu commands={combatCommands} />
+        </div>      </div>
 
       {activeAction !== 'none' && (
         <div className="absolute inset-0 z-[60] flex items-center justify-center pointer-events-none">
-          <div className="pointer-events-auto w-full h-full max-w-4xl flex items-center justify-center landscape:scale-[0.75] sm:landscape:scale-100 origin-center [&>div]:!bg-transparent [&>div]:!backdrop-blur-none">
+          <div className="pointer-events-auto w-full h-full max-w-4xl flex items-center justify-center landscape:scale-[0.75] sm:landscape:scale-100 origin-center [&>div]:!bg-transparent [&>div]:!">
             {activeAction === 'rhythm' && <RhythmHighwayOverlay mode="attack" preset={enemy.preset} isCapture={false} onComplete={(stats) => handleRhythmComplete(stats, false)} />}
             {activeAction === 'spell' && <UltimateSequenceOverlay hero={activeHero} instrument={dex[activeHero.equippedId] || dex['cebuano_gitara']!} onComplete={handleSpellComplete} />}
             {activeAction === 'parry' && !parryResolved && !canCounterAttack && <ParryQteOverlay enemyName={enemy.name} onParry={handleParryResult} />}

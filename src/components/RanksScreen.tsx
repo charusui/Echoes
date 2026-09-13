@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { ArrowLeft, Flame, Trophy, Shield, MapPin, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Fire as Flame, Trophy, Shield, MapPin, Search, TrendingUp } from 'pixelarticons/react';
+import { PixelButton, PixelChip, PixelIconButton, PixelPanel, PixelTabs } from './ui';
+import { cn } from '../lib/cn';
 import { useProgress } from '../context/ProgressProvider';
 
 interface RanksScreenProps {
@@ -35,258 +37,158 @@ export function RanksScreen({ onBack, onOpenBadges }: RanksScreenProps) {
     return `/assets/badges/${id}.png?v=2`;
   };
 
-  const getRankBadgeColor = (rank: number) => {
-    if (rank === 1) return 'bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 text-black border-amber-200 shadow-[0_0_12px_rgba(250,204,21,0.8)]';
-    if (rank === 2) return 'bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 text-black border-white shadow-[0_0_12px_rgba(203,213,225,0.8)]';
-    if (rank === 3) return 'bg-gradient-to-br from-amber-600 via-orange-500 to-amber-700 text-white border-amber-300 shadow-[0_0_12px_rgba(249,115,22,0.8)]';
-    return 'bg-[#2a2d43] text-white border-[#888ea1] font-black shadow-sm';
-  };
+  const PODIUM = [
+    { entry: topThree[1], place: 2, label: 'Silver', chip: 'bg-parchment-300 text-ink', frame: 'px-frame-plum', lift: '' },
+    { entry: topThree[0], place: 1, label: 'Champion', chip: 'bg-gold-500 text-ink', frame: 'px-frame-wood', lift: 'md:-translate-y-3' },
+    { entry: topThree[2], place: 3, label: 'Bronze', chip: 'bg-orange-500 text-ink', frame: 'px-frame-plum', lift: '' },
+  ];
 
   return (
-    <div className="min-h-screen bg-[#0f0c0c] text-[#e0e5ed] font-space-mono flex flex-col justify-between p-3 sm:p-6 relative overflow-x-hidden selection:bg-[#da2d46] selection:text-white">
-      {/* Background ambient glow */}
-      <div className="absolute top-[5%] right-[15%] w-[450px] h-[450px] bg-[#da2d46]/15 blur-[140px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-[10%] left-[10%] w-[500px] h-[500px] bg-[#1e3a8a]/20 blur-[160px] rounded-full pointer-events-none" />
-
+    <div className="min-h-screen bg-plum-950 text-parchment-100 flex flex-col">
       {/* Header */}
-      <div className="max-w-6xl w-full mx-auto z-10">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 pb-5 border-b-[3px] border-[#da2d46]">
-          {/* Title Area */}
-          <div className="flex items-center gap-4 sm:gap-6 flex-1 min-w-0">
-            <button
-              onClick={onBack}
-              className="p-2.5 sm:p-3 bg-[#2a2d43] border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#da2d46] -skew-x-6 hover:bg-[#da2d46] hover:text-white transition-all flex-shrink-0 active:translate-x-0.5 active:translate-y-0.5"
-            >
-              <ArrowLeft size={20} className="skew-x-6 sm:w-[22px] sm:h-[22px]" />
-            </button>
-            <div className="skew-x-2 min-w-0 flex-1">
-              <div className="flex items-center gap-2 sm:gap-2.5 flex-nowrap">
-                <Flame className="text-[#da2d46] animate-pulse flex-shrink-0 w-6 h-6 sm:w-7 sm:h-7" />
-                <h1 className="font-orbitron font-black text-lg sm:text-3xl md:text-4xl tracking-wide uppercase bg-gradient-to-r from-white via-[#f0dde0] to-[#da2d46] bg-clip-text text-transparent truncate">
-                  Expedition Leaderboard
-                </h1>
-              </div>
-              <p className="text-xs sm:text-sm text-[#cbd5e1] mt-1 font-bold line-clamp-2 sm:line-clamp-none">
-                Honoring the top Filipino ethnomusicologists, rhythm weavers, and instrument scouts.
+      <header className="bg-plum-900 border-b-[3px] border-ink">
+        <div className="max-w-6xl mx-auto px-3 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <PixelIconButton icon={<ArrowLeft />} label="Back to map" sound="ui_back" onClick={onBack} />
+            <div className="min-w-0">
+              <h1 className="flex items-center gap-2 font-bold text-2xl sm:text-3xl leading-none">
+                <Trophy className="size-6 shrink-0 text-gold-300" aria-hidden />
+                Leaderboard
+              </h1>
+              <p className="hidden sm:block mt-1 text-sm text-parchment-300">
+                The top instrument scouts and rhythm weavers of the Visayas.
               </p>
             </div>
           </div>
 
-          {/* Player Summary Pill & Actions */}
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4 self-start lg:self-center flex-shrink-0">
-            {onOpenBadges && (
-              <button
-                onClick={onOpenBadges}
-                className="px-5 py-2.5 bg-[#2a2d43] border-[2px] border-[#da2d46] -skew-x-6 hover:bg-[#da2d46] hover:text-white transition-all shadow-[3px_3px_0px_0px_#0f0c0c] flex items-center gap-2.5 text-xs sm:text-sm font-bold flex-shrink-0 group"
-              >
-                <Shield size={18} className="skew-x-6 text-[#da2d46] group-hover:text-white" />
-                <span className="skew-x-6 whitespace-nowrap">View Badges Archive</span>
-              </button>
-            )}
-
-            <div className="bg-[#da2d46] px-5 py-2 border-[2px] border-[#0f0c0c] -skew-x-6 shadow-[3px_3px_0px_0px_#0f0c0c] flex items-center gap-4 text-white flex-shrink-0">
-              <div className="text-right skew-x-6">
-                <div className="text-[9px] sm:text-[10px] uppercase font-bold opacity-90 tracking-wider whitespace-nowrap">Your Rank</div>
-                <div className="font-orbitron font-black text-sm sm:text-base whitespace-nowrap">#{playerRankNumber} Overall</div>
-              </div>
-              <div className="h-8 w-[2px] bg-white/30 skew-x-6 flex-shrink-0" />
-              <div className="text-right skew-x-6">
-                <div className="text-[9px] sm:text-[10px] uppercase font-bold opacity-90 tracking-wider whitespace-nowrap">Total XP</div>
-                <div className="font-orbitron font-black text-sm sm:text-base whitespace-nowrap">{progress.xp} XP</div>
-              </div>
+          <div className="flex items-center gap-2">
+            <div className="px-frame px-frame-inset px-frame-sm flex items-center gap-3 px-3 py-1.5">
+              <span className="text-xs text-parchment-500">You</span>
+              <span className="font-label text-base leading-none text-gold-300">#{playerRankNumber}</span>
+              <span className="font-label text-base leading-none text-xp">{progress.xp} XP</span>
             </div>
+            {onOpenBadges && (
+              <PixelButton size="sm" icon={<Shield />} onClick={onOpenBadges}>Badges</PixelButton>
+            )}
           </div>
         </div>
 
-        {/* Filter Tabs & Search Bar */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mt-6">
-          <div className="flex flex-wrap gap-2">
-            {tabs.map(tab => (
-              <button
-                key={tab}
-                onClick={() => setSelectedTab(tab)}
-                className={`px-4 py-1.5 font-bold text-xs uppercase -skew-x-6 border-[2px] border-[#0f0c0c] transition-all ${
-                  selectedTab === tab
-                    ? 'bg-[#da2d46] text-white shadow-[3px_3px_0px_0px_#0f0c0c] translate-y-[-2px]'
-                    : 'bg-[#2a2d43] text-[#888ea1] hover:bg-[#2a2d43]/80 hover:text-white'
-                }`}
-              >
-                <span className="skew-x-6 block">{tab}</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="relative w-full sm:w-64 -skew-x-6">
+        <div className="max-w-6xl mx-auto px-3 sm:px-6 flex flex-col-reverse sm:flex-row sm:items-end justify-between gap-2">
+          <PixelTabs value={selectedTab} onChange={setSelectedTab} tabs={tabs.map(t => ({ id: t, label: t }))} />
+          <label className="relative sm:w-64 sm:mb-2">
+            <span className="sr-only">Search musicians</span>
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-parchment-500" aria-hidden />
             <input
               type="text"
-              placeholder="Search Filipino musicians..."
+              placeholder="Search musicians"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-[#18161a] border-[2px] border-[#2a2d43] px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#da2d46] skew-x-6 placeholder-[#888ea1]"
+              className="w-full h-10 pl-8 pr-3 bg-plum-950 border-[3px] border-ink text-sm text-parchment-100 placeholder:text-parchment-500 focus:border-gold-300 focus:outline-none"
             />
-          </div>
+          </label>
         </div>
-      </div>
+      </header>
 
-      {/* Top 3 Podium Showcase (Only show on All Ranks when not filtering) */}
-      {selectedTab === 'All Ranks' && !searchQuery && topThree.length >= 3 && (
-        <div className="max-w-6xl w-full mx-auto my-6 z-10 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-          {/* #2 Rank (Silver) */}
-          <div className="order-2 md:order-1 bg-[#18161a] border-[3px] border-slate-300 p-4 -skew-x-2 shadow-[4px_4px_0px_0px_#0f0c0c] relative flex flex-col items-center text-center">
-            <div className="absolute top-2 left-2 px-2.5 py-0.5 bg-gradient-to-r from-slate-300 to-slate-400 text-slate-900 font-orbitron font-black text-xs rounded-full">
-              #2 SILVER
-            </div>
-            <div className="w-20 h-20 relative my-3">
-              <div className="absolute inset-0 bg-slate-400/20 rounded-full blur-md" />
-              <img src={getBadgeImage(topThree[1].badgeId)} alt="badge" className="w-full h-full object-contain" />
-            </div>
-            <h3 className="font-orbitron font-black text-base text-white truncate w-full">{topThree[1].name}</h3>
-            <p className="text-[10px] text-slate-300 font-bold uppercase mt-0.5">{topThree[1].title}</p>
-            <div className="w-full flex justify-between items-center bg-[#0f0c0c] p-2 mt-3 border border-slate-400/30 text-xs font-bold">
-              <span className="text-slate-300 flex items-center gap-1"><Flame size={14} className="text-amber-400" /> {topThree[1].streak}d streak</span>
-              <span className="font-orbitron text-white">{topThree[1].xp} XP</span>
-            </div>
-          </div>
-
-          {/* #1 Rank (Gold - Center & Taller) */}
-          <div className="order-1 md:order-2 bg-gradient-to-b from-[#2a1f14] to-[#18161a] border-[4px] border-amber-400 p-5 -skew-x-2 shadow-[0_0_25px_rgba(251,191,36,0.3),6px_6px_0px_0px_#0f0c0c] relative flex flex-col items-center text-center md:translate-y-[-12px]">
-            <div className="absolute top-2 left-2 px-3 py-1 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-amber-950 font-orbitron font-black text-xs rounded-full flex items-center gap-1 shadow-md">
-              <Trophy size={14} /> #1 CHAMPION
-            </div>
-            <div className="w-24 h-24 relative my-3 animate-bounce-subtle">
-              <div className="absolute inset-0 bg-amber-400/30 rounded-full blur-xl animate-pulse" />
-              <img src={getBadgeImage(topThree[0].badgeId)} alt="badge" className="w-full h-full object-contain drop-shadow-[0_5px_10px_rgba(251,191,36,0.5)]" />
-            </div>
-            <h3 className="font-orbitron font-black text-lg text-amber-300 truncate w-full">{topThree[0].name}</h3>
-            <p className="text-xs text-amber-200/90 font-bold uppercase mt-0.5">{topThree[0].title}</p>
-            <div className="w-full flex justify-between items-center bg-[#0f0c0c] p-2.5 mt-4 border border-amber-400/50 text-xs font-bold shadow-inner">
-              <span className="text-amber-300 flex items-center gap-1"><Flame size={16} className="text-orange-500 animate-pulse" /> {topThree[0].streak}d streak</span>
-              <span className="font-orbitron font-black text-sm text-amber-400">{topThree[0].xp} XP</span>
-            </div>
-          </div>
-
-          {/* #3 Rank (Bronze) */}
-          <div className="order-3 md:order-3 bg-[#18161a] border-[3px] border-amber-700 p-4 -skew-x-2 shadow-[4px_4px_0px_0px_#0f0c0c] relative flex flex-col items-center text-center">
-            <div className="absolute top-2 left-2 px-2.5 py-0.5 bg-gradient-to-r from-amber-700 to-amber-600 text-amber-100 font-orbitron font-black text-xs rounded-full">
-              #3 BRONZE
-            </div>
-            <div className="w-20 h-20 relative my-3">
-              <div className="absolute inset-0 bg-amber-700/20 rounded-full blur-md" />
-              <img src={getBadgeImage(topThree[2].badgeId)} alt="badge" className="w-full h-full object-contain" />
-            </div>
-            <h3 className="font-orbitron font-black text-base text-white truncate w-full">{topThree[2].name}</h3>
-            <p className="text-[10px] text-amber-500 font-bold uppercase mt-0.5">{topThree[2].title}</p>
-            <div className="w-full flex justify-between items-center bg-[#0f0c0c] p-2 mt-3 border border-amber-700/30 text-xs font-bold">
-              <span className="text-amber-500 flex items-center gap-1"><Flame size={14} className="text-amber-400" /> {topThree[2].streak}d streak</span>
-              <span className="font-orbitron text-white">{topThree[2].xp} XP</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Leaderboard Table */}
-      <div className="max-w-6xl w-full mx-auto my-6 z-10 flex-1 bg-[#18161a] border-[3px] border-[#2a2d43] p-4 sm:p-6 -skew-x-2 shadow-[6px_6px_0px_0px_#0f0c0c] overflow-x-auto">
-        <div className="skew-x-2 min-w-[600px]">
-          {/* Table Header */}
-          <div className="grid grid-cols-12 gap-3 pb-3 border-b-[2px] border-[#2a2d43] text-[#888ea1] font-orbitron font-bold text-xs uppercase tracking-wider">
-            <div className="col-span-1 text-center">Rank</div>
-            <div className="col-span-4">Musician & Title</div>
-            <div className="col-span-3">Region</div>
-            <div className="col-span-2 text-center">Streak</div>
-            <div className="col-span-2 text-right">Expedition XP</div>
-          </div>
-
-          {/* Table Rows */}
-          <div className="divide-y divide-[#2a2d43]/50 lg:max-h-[50vh] lg:overflow-y-auto pr-2 custom-scrollbar mt-2">
-            {filteredLeaderboard.map(entry => {
-              const actualRank = leaderboard.findIndex(e => e.id === entry.id) + 1;
-              const badgeStyle = getRankBadgeColor(actualRank);
-
-              return (
-                <div
-                  key={entry.id}
-                  className={`grid grid-cols-12 gap-3 py-3.5 items-center transition-all ${
-                    entry.isPlayer
-                      ? 'bg-[#da2d46]/15 border-l-[4px] border-[#da2d46] px-2 font-bold my-1 rounded-r shadow-[0_0_15px_rgba(218,45,70,0.2)]'
-                      : 'hover:bg-[#2a2d43]/40 px-2'
-                  }`}
-                >
-                  {/* Rank Column */}
-                  <div className="col-span-1 flex justify-center">
-                    <span className={`w-8 h-8 rounded-full flex items-center justify-center font-orbitron font-black text-xs border ${badgeStyle}`}>
-                      {actualRank}
-                    </span>
-                  </div>
-
-                  {/* Musician Column with Badge Avatar */}
-                  <div className="col-span-4 flex items-center gap-3 truncate">
-                    <div className="w-10 h-10 rounded-full bg-[#2a2d43] border-[2px] border-[#0f0c0c] overflow-hidden flex-shrink-0 flex items-center justify-center relative shadow-sm" style={{ backgroundColor: entry.avatarBg || '#2a2d43' }}>
-                      <img
-                        src={getBadgeImage(entry.badgeId)}
-                        alt="avatar"
-                        className="w-8 h-8 object-contain drop-shadow"
-                      />
-                    </div>
-                    <div className="truncate">
-                      <div className={`font-orbitron font-bold text-sm truncate flex items-center gap-1.5 ${entry.isPlayer ? 'text-[#da2d46]' : 'text-white'}`}>
-                        <span>{entry.name}</span>
-                        {entry.isPlayer && (
-                          <span className="px-1.5 py-0.2 bg-[#da2d46] text-white text-[9px] rounded uppercase font-black tracking-tighter">
-                            YOU
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[10px] text-[#cbd5e1] font-bold uppercase truncate">
-                        {entry.title}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Region Column */}
-                  <div className="col-span-3 flex items-center gap-1.5 text-xs text-[#e0e5ed] font-bold truncate">
-                    <MapPin size={13} className="text-[#da2d46] flex-shrink-0" />
-                    <span className="truncate">{entry.region}</span>
-                  </div>
-
-                  {/* Streak Column */}
-                  <div className="col-span-2 flex justify-center items-center gap-1 text-xs font-bold text-amber-400">
-                    <Flame size={15} className="text-orange-500 animate-pulse" />
-                    <span>{entry.streak} days</span>
-                  </div>
-
-                  {/* XP Score Column */}
-                  <div className="col-span-2 text-right font-orbitron font-black text-sm text-white">
-                    <span className={entry.isPlayer ? 'text-[#da2d46]' : 'text-[#f0dde0]'}>
-                      {entry.xp.toLocaleString()}
-                    </span>{' '}
-                    <span className="text-[10px] text-[#cbd5e1] font-normal">XP</span>
-                  </div>
+      <main className="flex-1 max-w-6xl w-full mx-auto p-3 sm:p-6 flex flex-col gap-6">
+        {/* Podium */}
+        {selectedTab === 'All Ranks' && !searchQuery && topThree.length >= 3 && (
+          <section className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            {PODIUM.map(({ entry, place, label, chip, frame, lift }) => (
+              <div
+                key={entry.id}
+                className={cn('px-frame relative flex flex-col items-center gap-2 p-4 text-center', frame, lift, place === 1 ? 'order-1 md:order-2' : place === 2 ? 'order-2 md:order-1' : 'order-3')}
+              >
+                <span className={cn('absolute top-2 left-2 px-2 py-1 border-2 border-ink text-xs font-semibold leading-none', chip)}>
+                  #{place} {label}
+                </span>
+                <img src={getBadgeImage(entry.badgeId)} alt="" className={cn('object-contain mt-4', place === 1 ? 'size-24' : 'size-20')} />
+                <h3 className={cn('w-full truncate font-bold leading-none', place === 1 ? 'text-xl text-gold-300' : 'text-lg text-parchment-100')}>{entry.name}</h3>
+                <p className="text-sm text-parchment-300">{entry.title}</p>
+                <div className="w-full px-frame px-frame-inset px-frame-sm flex items-center justify-between px-3 py-2 text-sm">
+                  <span className="flex items-center gap-1 text-orange-300"><Flame className="size-4" aria-hidden />{entry.streak} days</span>
+                  <span className="font-label text-base text-parchment-100">{entry.xp.toLocaleString()} XP</span>
                 </div>
-              );
-            })}
+              </div>
+            ))}
+          </section>
+        )}
+
+        {/* Table */}
+        <PixelPanel padding="none" className="overflow-x-auto">
+          <div className="min-w-[600px]">
+            <div className="grid grid-cols-12 gap-3 px-4 py-3 bg-plum-900 border-b-[3px] border-ink text-xs text-parchment-500">
+              <div className="col-span-1 text-center">Rank</div>
+              <div className="col-span-4">Musician</div>
+              <div className="col-span-3">Region</div>
+              <div className="col-span-2 text-center">Streak</div>
+              <div className="col-span-2 text-right">XP</div>
+            </div>
+
+            <ol className="lg:max-h-[50vh] lg:overflow-y-auto">
+              {filteredLeaderboard.map(entry => {
+                const actualRank = leaderboard.findIndex(e => e.id === entry.id) + 1;
+                return (
+                  <li
+                    key={entry.id}
+                    className={cn(
+                      'grid grid-cols-12 gap-3 px-4 py-3 items-center border-b-2 border-plum-900',
+                      entry.isPlayer ? 'bg-gold-500/15' : 'hover:bg-plum-700/40',
+                    )}
+                  >
+                    <div className="col-span-1 flex justify-center">
+                      <span className={cn('size-8 flex items-center justify-center border-2 border-ink font-label text-base leading-none', RANK_CHIP[actualRank] ?? 'bg-plum-700 text-parchment-100')}>
+                        {actualRank}
+                      </span>
+                    </div>
+                    <div className="col-span-4 flex items-center gap-3 min-w-0">
+                      <span className="shrink-0 size-10 flex items-center justify-center border-2 border-ink bg-plum-900">
+                        <img src={getBadgeImage(entry.badgeId)} alt="" className="size-8 object-contain" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className={cn('flex items-center gap-2 truncate font-semibold text-sm', entry.isPlayer ? 'text-gold-300' : 'text-parchment-100')}>
+                          <span className="truncate">{entry.name}</span>
+                          {entry.isPlayer && <PixelChip tone="gold">You</PixelChip>}
+                        </span>
+                        <span className="block truncate text-xs text-parchment-500">{entry.title}</span>
+                      </span>
+                    </div>
+                    <div className="col-span-3 flex items-center gap-1.5 text-sm text-parchment-300 min-w-0">
+                      <MapPin className="size-4 shrink-0 text-parchment-500" aria-hidden />
+                      <span className="truncate">{entry.region}</span>
+                    </div>
+                    <div className="col-span-2 flex justify-center items-center gap-1 text-sm text-orange-300">
+                      <Flame className="size-4" aria-hidden />{entry.streak}d
+                    </div>
+                    <div className="col-span-2 text-right font-label text-base text-parchment-100">
+                      {entry.xp.toLocaleString()}
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
 
             {filteredLeaderboard.length === 0 && (
-              <div className="py-8 text-center text-[#888ea1] font-bold text-sm">
-                No musicians found matching your search or tab filter.
-              </div>
+              <p className="py-8 text-center text-sm text-parchment-500">No musicians match this filter.</p>
             )}
           </div>
-        </div>
-      </div>
+        </PixelPanel>
+      </main>
 
-      {/* Footer Navigation */}
-      <div className="max-w-6xl w-full mx-auto z-10 pt-4 border-t-[2px] border-[#2a2d43] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#888ea1]">
-        <div className="flex items-center gap-2">
-          <TrendingUp size={16} className="text-[#da2d46]" />
-          <span>Leaderboard ranks update in real-time as you scan instruments and complete rhythm weave tracks!</span>
+      <footer className="border-t-[3px] border-ink bg-plum-900">
+        <div className="max-w-6xl mx-auto px-3 sm:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="flex items-center gap-2 text-sm text-parchment-500">
+            <TrendingUp className="size-4 text-heal" aria-hidden />
+            Ranks update as you scan instruments and finish rhythm tracks.
+          </p>
+          <PixelButton variant="primary" sound="ui_back" onClick={onBack}>Back to Map</PixelButton>
         </div>
-        <button
-          onClick={onBack}
-          className="px-6 py-2 bg-[#da2d46] text-white font-orbitron font-bold uppercase tracking-wider -skew-x-6 hover:bg-white hover:text-[#0f0c0c] transition-all shadow-[3px_3px_0px_0px_#0f0c0c]"
-        >
-          <span className="skew-x-6 block">Return to Map</span>
-        </button>
-      </div>
+      </footer>
     </div>
   );
 }
+
+const RANK_CHIP: Record<number, string> = {
+  1: 'bg-gold-500 text-ink',
+  2: 'bg-parchment-300 text-ink',
+  3: 'bg-orange-500 text-ink',
+};

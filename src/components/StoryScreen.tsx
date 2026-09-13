@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react';
 import type { ActiveInstrumentProfile } from '../types';
 import { useProgress } from '../context/ProgressProvider';
 import { useGemini } from '../context/GeminiProvider';
-import { ChevronRight, ArrowLeft } from 'lucide-react';
+import { ChevronRight, ArrowLeft } from 'pixelarticons/react';
+import { PixelButton, PixelChip, PixelPanel } from './ui';
+import { playUiSound } from '../hooks/useUiSound';
+import { cn } from '../lib/cn';
 import { GEMINI_MODEL } from '../constants';
 
 interface StoryScreenProps {
@@ -94,23 +97,12 @@ Return strictly in this JSON format:
   // ─── ERROR STATE ──────────────────────────────────────────────────────────
   if (error) {
     return (
-      <div className="min-h-screen bg-[#2a2d43] flex flex-col items-center justify-center p-6 relative z-0">
-        <div className="absolute inset-0 z-[-1] opacity-30 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#da2d46 2px, transparent 2px)', backgroundSize: '20px 20px' }} />
-        
-        <div className="bg-[#f0dde0] border-[6px] border-[#0f0c0c] p-6 -skew-x-2 shadow-[8px_8px_0px_0px_#da2d46] text-center max-w-sm">
-          <div className="inline-block bg-[#0f0c0c] text-[#da2d46] px-3 py-1 mb-4 font-orbitron font-black uppercase tracking-widest -skew-x-6">
-            SYSTEM FAILURE
-          </div>
-          <p className="font-space-mono font-bold text-[#0f0c0c] mb-6 skew-x-2">
-            The ancestors are quiet right now. Transmission lost.
-          </p>
-          <button 
-            onClick={onComplete} 
-            className="w-full px-6 py-3 bg-[#da2d46] border-[4px] border-[#0f0c0c] text-[#0f0c0c] font-orbitron font-black tracking-widest uppercase shadow-[4px_4px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all skew-x-2"
-          >
-            CONTINUE
-          </button>
-        </div>
+      <div className="min-h-screen bg-plum-950 text-parchment-100 flex items-center justify-center p-6">
+        <PixelPanel frame="wood" padding="lg" className="max-w-sm flex flex-col items-center gap-4 text-center">
+          <h2 className="font-bold text-2xl leading-none">The story went quiet</h2>
+          <p className="text-base text-parchment-300">We couldn't reach the storyteller right now. Let's keep going!</p>
+          <PixelButton variant="primary" fullWidth icon={<ChevronRight />} onClick={onComplete}>Continue</PixelButton>
+        </PixelPanel>
       </div>
     );
   }
@@ -118,187 +110,85 @@ Return strictly in this JSON format:
   // ─── LOADING STATE ────────────────────────────────────────────────────────
   if (isLoading || !story) {
     return (
-      <div className="min-h-screen bg-[#2a2d43] flex flex-col items-center justify-center p-6 relative z-0">
-        <div className="absolute inset-0 z-[-1] opacity-30 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#da2d46 2px, transparent 2px)', backgroundSize: '20px 20px' }} />
-        
-        <div className="bg-[#0f0c0c] border-[4px] border-[#da2d46] p-8 -skew-x-2 shadow-[8px_8px_0px_0px_#da2d46] text-center animate-comic-pulse">
-          <h2 className="font-orbitron font-black text-[#e0e5ed] text-xl md:text-2xl tracking-widest uppercase skew-x-2">
-            Consulting<br/>Ancestors...
-          </h2>
-          <div className="mt-4 flex justify-center gap-2 skew-x-2">
-            <div className="w-4 h-4 bg-[#da2d46] border-[2px] border-[#e0e5ed] animate-block-bounce" style={{ animationDelay: '0ms' }} />
-            <div className="w-4 h-4 bg-[#da2d46] border-[2px] border-[#e0e5ed] animate-block-bounce" style={{ animationDelay: '150ms' }} />
-            <div className="w-4 h-4 bg-[#da2d46] border-[2px] border-[#e0e5ed] animate-block-bounce" style={{ animationDelay: '300ms' }} />
+      <div className="min-h-screen bg-plum-950 text-parchment-100 flex items-center justify-center p-6">
+        <PixelPanel frame="wood" padding="lg" className="flex flex-col items-center gap-4 text-center" aria-live="polite">
+          <h2 className="font-bold text-2xl leading-none">Gathering a story...</h2>
+          <div className="flex gap-2" aria-hidden>
+            {[0, 150, 300].map(delay => (
+              <span key={delay} className="size-4 border-2 border-ink bg-gold-500 animate-bounce" style={{ animationDelay: `${delay}ms` }} />
+            ))}
           </div>
-        </div>
-
-        <style>{`
-          @keyframes comic-pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(0.98); opacity: 0.9; }
-          }
-          @keyframes block-bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
-          }
-          .animate-comic-pulse { animation: comic-pulse 2s ease-in-out infinite; }
-          .animate-block-bounce { animation: block-bounce 0.6s infinite ease-in-out; }
-        `}</style>
+        </PixelPanel>
       </div>
     );
   }
 
   // ─── MAIN STORY CONTENT ───────────────────────────────────────────────────
+  const OUTCOME = (xp: number) =>
+    xp >= 15 ? { label: 'Great choice', tone: 'heal' as const, frame: 'px-frame-parchment' }
+      : xp > 0 ? { label: 'Okay choice', tone: 'gold' as const, frame: 'px-frame-parchment' }
+        : { label: 'Not respectful', tone: 'hp' as const, frame: 'px-frame-inset' };
+
   return (
-    <div className="min-h-screen bg-[#2a2d43] flex flex-col p-4 pt-10 md:pt-12 relative overflow-hidden pb-12 md:pb-16 pb-safe z-0">
-      
-      {/* Halftone Pattern Background */}
-      <div 
-        className="absolute inset-0 z-[-3] opacity-30 pointer-events-none" 
-        style={{ backgroundImage: 'radial-gradient(#da2d46 2px, transparent 2px)', backgroundSize: '20px 20px' }}
-      />
-      
-      {/* Heavy Diagonal Background Block */}
-      <div className="absolute top-0 right-0 w-[120%] h-[35%] bg-[#0f0c0c] -skew-y-3 -translate-y-10 z-[-2] border-b-[8px] border-[#da2d46]" />
+    <div className="min-h-screen bg-plum-950 text-parchment-100 flex flex-col items-center px-4 pt-6 pb-12 pb-safe">
+      <div className="w-full max-w-lg flex flex-col gap-5">
+        <header className="flex items-center justify-between gap-3">
+          <PixelButton size="sm" variant="ghost" icon={<ArrowLeft />} sound="ui_back" onClick={onBack}>Quit</PixelButton>
+          <h1 className="font-bold text-2xl leading-none">Story Time</h1>
+          <span className="w-16" aria-hidden />
+        </header>
 
-      <div className="flex-1 flex flex-col max-w-lg mx-auto w-full pt-4 pb-12 relative z-10">
-        
-        {/* Header Bar */}
-        <div className="flex items-center justify-between w-full mb-8">
-          <button 
-            onClick={onBack}
-            className="px-4 py-2 bg-[#f0dde0] border-[3px] border-[#0f0c0c] hover:bg-[#da2d46] text-[#0f0c0c] transition-all flex items-center gap-1.5 font-orbitron text-[10px] md:text-xs font-black tracking-widest uppercase -skew-x-6 shadow-[3px_3px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none"
-          >
-            <ArrowLeft size={16} className="skew-x-6 stroke-[3px]" /> 
-            <span className="skew-x-6 hidden sm:block">ABORT</span>
-          </button>
-          
-          <div className="bg-[#0f0c0c] border-[3px] border-[#da2d46] px-3 py-1 -skew-x-6 shadow-[4px_4px_0px_0px_#da2d46]">
-            <span className="font-space-mono text-[9px] md:text-xs text-[#f0dde0] font-black tracking-widest uppercase skew-x-6 block">
-              CULTURAL NARRATIVE
-            </span>
-          </div>
-        </div>
+        <PixelPanel frame="parchment" padding="lg" title="What happens">
+          <p className="text-lg leading-snug text-ink">{story.scenario}</p>
+        </PixelPanel>
 
-        {/* Title */}
-        <div className="text-center mb-8">
-          <h2 
-            className="font-orbitron font-black text-[#e0e5ed] text-3xl md:text-4xl tracking-widest uppercase leading-none"
-            style={{ textShadow: '4px 4px 0px #0f0c0c, -2px -2px 0px #da2d46' }}
-          >
-            MUSIKULTURA
-          </h2>
-        </div>
-
-        {/* Story Text Box (Narrator Panel) */}
-        <div className="w-full bg-[#e0e5ed] border-[6px] border-[#0f0c0c] p-5 md:p-8 shadow-[12px_12px_0px_0px_#0f0c0c] relative mb-10 -skew-x-1">
-          {/* Top-Left Tag */}
-          <div className="absolute -top-4 -left-2 bg-[#da2d46] border-[3px] border-[#0f0c0c] px-3 py-1 shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-6">
-            <span className="font-orbitron text-[10px] md:text-xs text-[#0f0c0c] font-black tracking-widest uppercase skew-x-6 block">
-              SCENARIO LOG
-            </span>
-          </div>
-
-          <p className="font-space-mono font-bold text-[#0f0c0c] text-sm md:text-base mt-2 leading-relaxed skew-x-1">
-            {story.scenario}
-          </p>
-        </div>
-
-        {/* Choices Container */}
-        <div className="space-y-4 mt-auto">
-          <div className="inline-block bg-[#0f0c0c] border-[2px] border-[#e0e5ed] px-2 py-0.5 mb-2 -skew-x-6">
-            <span className="block font-space-mono text-[10px] text-[#e0e5ed] font-black tracking-widest uppercase skew-x-6">
-              CHOOSE YOUR REACTION:
-            </span>
-          </div>
-          
+        <section className="flex flex-col gap-2.5">
+          <h2 className="font-semibold text-base text-parchment-300">What do you do?</h2>
           {story.choices.map((choice, idx) => {
             const isSelected = selectedIdx === idx;
             const hasSelection = selectedIdx !== null;
+            const outcome = OUTCOME(choice.xp);
             const letters = ['A', 'B', 'C'];
-            
-            let btnClass = "w-full text-left p-4 md:p-5 border-[4px] transition-all duration-300 relative flex flex-col items-start gap-2 -skew-x-2 outline-none ";
-            let letterClass = "font-orbitron font-black w-6 h-6 md:w-8 md:h-8 border-[2px] flex items-center justify-center shrink-0 skew-x-2 ";
-
-            if (!hasSelection) {
-              // Unselected idle state
-              btnClass += "bg-[#2a2d43] border-[#0f0c0c] text-[#e0e5ed] shadow-[4px_4px_0px_0px_#0f0c0c] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none cursor-pointer";
-              letterClass += "bg-[#0f0c0c] border-[#0f0c0c] text-[#e0e5ed]";
-            } else if (isSelected) {
-              // Selected state (Locking down the clicked option)
-              btnClass += "shadow-none translate-y-1 translate-x-1 cursor-default ";
-              letterClass += "bg-[#0f0c0c] border-[#0f0c0c] ";
-              
-              if (choice.xp === 15) {
-                btnClass += "bg-[#4ade80] border-[#0f0c0c] text-[#0f0c0c]"; // Green (Optimal)
-                letterClass += "text-[#4ade80]";
-              } else if (choice.xp > 0) {
-                btnClass += "bg-[#fbbf24] border-[#0f0c0c] text-[#0f0c0c]"; // Yellow (Neutral)
-                letterClass += "text-[#fbbf24]";
-              } else {
-                btnClass += "bg-[#da2d46] border-[#0f0c0c] text-[#0f0c0c]"; // Red (Poor)
-                letterClass += "text-[#da2d46]";
-              }
-            } else {
-              // Unselected disabled state
-              btnClass += "bg-[#e0e5ed] border-[#888ea1] border-dashed text-[#888ea1] shadow-none opacity-60 pointer-events-none";
-              letterClass += "bg-transparent border-[#888ea1] text-[#888ea1]";
-            }
+            const colors = ['bg-xp text-ink', 'bg-heal text-ink', 'bg-purple-500 text-parchment-100'];
 
             return (
-              <button 
+              <button
                 key={idx}
-                onClick={() => handleSelect(idx)}
-                className={btnClass}
+                type="button"
+                onClick={() => { playUiSound(choice.xp >= 15 ? 'perfect' : choice.xp > 0 ? 'good' : 'miss'); handleSelect(idx); }}
                 disabled={hasSelection}
+                className={cn(
+                  'px-frame w-full flex flex-col gap-2 p-3 text-left focus-visible:outline-[3px] focus-visible:outline-gold-300',
+                  !hasSelection && 'px-frame-plum hover:brightness-115',
+                  isSelected && outcome.frame,
+                  hasSelection && !isSelected && 'px-frame-inset opacity-50',
+                )}
               >
-                <div className="flex items-center gap-3 w-full">
-                  <div className={letterClass}>
-                    <span>{letters[idx]}</span>
-                  </div>
-                  <span className="flex-1 font-space-mono font-bold text-sm leading-snug skew-x-2">
+                <span className="flex items-center gap-3">
+                  <span className={cn('shrink-0 size-10 flex items-center justify-center border-[3px] border-ink font-label text-base leading-none', colors[idx])}>
+                    {letters[idx]}
+                  </span>
+                  <span className={cn('flex-1 text-base leading-snug', isSelected && outcome.frame === 'px-frame-parchment' ? 'text-ink font-semibold' : 'text-parchment-100')}>
                     {choice.text}
                   </span>
-                </div>
-                
-                {/* Feedback Panel (Appears inside the selected choice) */}
+                </span>
                 {isSelected && (
-                  <div className={`mt-3 w-full pt-3 border-t-[3px] border-[#0f0c0c]/20 skew-x-2 animate-comic-pop`}>
-                    <div className="font-orbitron font-black text-[10px] md:text-xs tracking-widest uppercase mb-2 bg-[#0f0c0c] text-[#e0e5ed] inline-block px-2 py-0.5">
-                      {choice.xp === 15 ? 'OPTIMAL' : choice.xp > 0 ? 'ACCEPTABLE' : 'FAUX PAS'} [+{(choice.xp).toString()} XP]
-                    </div>
-                    <p className="font-space-mono text-xs md:text-sm font-bold leading-relaxed">
-                      {choice.feedback}
-                    </p>
-                  </div>
+                  <span className="flex flex-col gap-2 pt-2 border-t-2 border-parchment-300 px-rise-in">
+                    <PixelChip tone={outcome.tone} className="self-start">{outcome.label} · +{choice.xp} XP</PixelChip>
+                    <span className={cn('text-sm leading-snug', outcome.frame === 'px-frame-parchment' ? 'text-wood-700' : 'text-parchment-300')}>{choice.feedback}</span>
+                  </span>
                 )}
               </button>
             );
           })}
-        </div>
+        </section>
 
         {selectedIdx !== null && (
-          <div className="w-full flex justify-end mt-8 animate-comic-pop">
-            <button 
-              onClick={onComplete}
-              className="px-8 py-4 bg-[#da2d46] border-[4px] border-[#0f0c0c] font-orbitron text-sm md:text-base font-black tracking-widest uppercase text-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[8px_8px_0px_0px_#0f0c0c] active:translate-y-2 active:translate-x-2 active:shadow-none transition-all flex items-center gap-2 -skew-x-6"
-            >
-              <span className="skew-x-6">CONTINUE</span> <ChevronRight size={20} className="skew-x-6 stroke-[3px]" />
-            </button>
-          </div>
+          <PixelButton variant="primary" size="lg" className="self-end px-rise-in" icon={<ChevronRight />} onClick={onComplete}>
+            Continue
+          </PixelButton>
         )}
       </div>
-
-      <style>{`
-        @keyframes comic-pop {
-          0% { transform: scale(0.9) translateY(10px); opacity: 0; }
-          60% { transform: scale(1.02) translateY(-2px); opacity: 1; }
-          100% { transform: scale(1) translateY(0); opacity: 1; }
-        }
-        .animate-comic-pop {
-          animation: comic-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-      `}</style>
     </div>
   );
 }

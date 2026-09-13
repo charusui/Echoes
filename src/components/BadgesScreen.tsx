@@ -1,5 +1,8 @@
 import { useState } from 'react';
-import { ArrowLeft, Shield, Lock, Sparkles, CheckCircle2, Eye, EyeOff, Star } from 'lucide-react';
+import { ArrowLeft, Shield, Lock, Sparkles, Check as CheckCircle2, Eye, EyeOff, Star } from 'pixelarticons/react';
+import { PixelButton, PixelChip, PixelIconButton, PixelPanel, PixelTabs } from './ui';
+import { playUiSound } from '../hooks/useUiSound';
+import { cn } from '../lib/cn';
 import { useProgress } from '../context/ProgressProvider';
 import { BADGES_LIST } from '../constants/badges';
 import type { BadgeMetadata } from '../types';
@@ -34,247 +37,131 @@ export function BadgesScreen({ onBack }: BadgesScreenProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f0c0c] text-[#e0e5ed] font-space-mono flex flex-col justify-between p-3 sm:p-6 relative overflow-x-hidden selection:bg-[#da2d46] selection:text-white">
-      {/* Background ambient glow */}
-      <div className="absolute top-[-10%] left-[20%] w-[400px] h-[400px] bg-[#da2d46]/15 blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[10%] w-[500px] h-[500px] bg-[#2a2d43]/30 blur-[150px] rounded-full pointer-events-none" />
-
-      {/* Top Header */}
-      <div className="max-w-6xl w-full mx-auto z-10">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 pb-5 border-b-[3px] border-[#da2d46]">
-          {/* Title Area */}
-          <div className="flex items-center gap-4 sm:gap-6 flex-1 min-w-0">
-            <button
-              onClick={onBack}
-              className="p-2.5 sm:p-3 bg-[#2a2d43] border-[3px] border-[#0f0c0c] shadow-[3px_3px_0px_0px_#da2d46] -skew-x-6 hover:bg-[#da2d46] hover:text-white transition-all flex-shrink-0 active:translate-x-0.5 active:translate-y-0.5"
-            >
-              <ArrowLeft size={20} className="skew-x-6 sm:w-[22px] sm:h-[22px]" />
-            </button>
-            <div className="skew-x-2 min-w-0 flex-1">
-              <div className="flex items-center gap-2 sm:gap-2.5 flex-nowrap">
-                <Shield className="text-[#da2d46] flex-shrink-0 w-6 h-6 sm:w-7 sm:h-7" />
-                <h1 className="font-orbitron font-black text-xl sm:text-3xl md:text-4xl tracking-wide uppercase bg-gradient-to-r from-white via-[#f0dde0] to-[#da2d46] bg-clip-text text-transparent truncate">
-                  Cultural Badges
-                </h1>
-              </div>
-              <p className="text-xs sm:text-sm text-[#cbd5e1] mt-1 font-bold line-clamp-2 sm:line-clamp-none">
-                Collect indigenous medals by exploring Visayan musical heritage and rhythm mastery.
+    <div className="min-h-screen bg-plum-950 text-parchment-100 flex flex-col">
+      {/* Header */}
+      <header className="bg-plum-900 border-b-[3px] border-ink">
+        <div className="max-w-6xl mx-auto px-3 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <PixelIconButton icon={<ArrowLeft />} label="Back to map" sound="ui_back" onClick={onBack} />
+            <div className="min-w-0">
+              <h1 className="flex items-center gap-2 font-bold text-2xl sm:text-3xl leading-none">
+                <Shield className="size-6 shrink-0 text-gold-300" aria-hidden />
+                Cultural Badges
+              </h1>
+              <p className="hidden sm:block mt-1 text-sm text-parchment-300">
+                Earn medals by exploring Visayan musical heritage and mastering rhythms.
               </p>
             </div>
           </div>
 
-          {/* Stats & Demo Toggle */}
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4 self-start lg:self-center flex-shrink-0">
-            <button
+          <div className="flex items-center gap-2">
+            <PixelChip tone="gold">{unlockedCount} / {BADGES_LIST.length}</PixelChip>
+            <PixelChip tone="xp">+{totalXpRewards} XP</PixelChip>
+            <PixelButton
+              size="sm"
+              variant="ghost"
+              icon={demoUnlockAll ? <Eye /> : <EyeOff />}
+              title="Preview every badge in its unlocked state"
               onClick={() => setDemoUnlockAll(!demoUnlockAll)}
-              className={`px-4 py-2.5 border-[2px] border-[#0f0c0c] font-bold text-xs sm:text-sm flex items-center gap-2 -skew-x-6 transition-all shadow-[2px_2px_0px_0px_#0f0c0c] flex-shrink-0 ${
-                demoUnlockAll ? 'bg-[#da2d46] text-white' : 'bg-[#2a2d43] text-[#cbd5e1]'
-              }`}
-              title="Toggle to preview all badges in unlocked glowing state"
             >
-              {demoUnlockAll ? <Eye size={16} className="skew-x-6" /> : <EyeOff size={16} className="skew-x-6" />}
-              <span className="skew-x-6 whitespace-nowrap">{demoUnlockAll ? 'Demo: All Unlocked' : 'Real Progress'}</span>
-            </button>
-
-            <div className="bg-[#2a2d43] px-5 py-2 border-[2px] border-[#da2d46] -skew-x-6 shadow-[3px_3px_0px_0px_#0f0c0c] flex items-center gap-4 flex-shrink-0">
-              <div className="text-right skew-x-6">
-                <div className="text-[9px] sm:text-[10px] text-[#cbd5e1] uppercase font-bold tracking-wider whitespace-nowrap">Unlocked</div>
-                <div className="font-orbitron font-black text-sm sm:text-base text-[#da2d46] whitespace-nowrap">
-                  {unlockedCount} / {BADGES_LIST.length}
-                </div>
-              </div>
-              <div className="h-8 w-[2px] bg-[#888ea1]/30 skew-x-6 flex-shrink-0" />
-              <div className="text-right skew-x-6">
-                <div className="text-[9px] sm:text-[10px] text-[#cbd5e1] uppercase font-bold tracking-wider whitespace-nowrap">Badge XP</div>
-                <div className="font-orbitron font-black text-sm sm:text-base text-[#f0dde0] whitespace-nowrap">
-                  +{totalXpRewards} XP
-                </div>
-              </div>
-            </div>
+              {demoUnlockAll ? 'Demo: all unlocked' : 'Real progress'}
+            </PixelButton>
           </div>
         </div>
 
-        {/* Category Filter Tabs */}
-        <div className="flex flex-wrap gap-2 mt-6">
-          {categories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-1.5 font-bold text-xs uppercase -skew-x-6 border-[2px] border-[#0f0c0c] transition-all ${
-                selectedCategory === cat
-                  ? 'bg-[#da2d46] text-white shadow-[3px_3px_0px_0px_#0f0c0c] translate-y-[-2px]'
-                  : 'bg-[#2a2d43] text-[#888ea1] hover:bg-[#2a2d43]/80 hover:text-white'
-              }`}
-            >
-              <span className="skew-x-6 block">{cat}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+        <PixelTabs
+          className="max-w-6xl mx-auto px-3 sm:px-6"
+          value={selectedCategory}
+          onChange={setSelectedCategory}
+          tabs={categories.map(cat => ({ id: cat, label: cat }))}
+        />
+      </header>
 
-      {/* Main Badges Grid & Showcase */}
-      <div className="max-w-6xl w-full mx-auto my-6 z-10 flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        {/* Badges Grid (Left 2 Columns) */}
-        <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 lg:max-h-[68vh] lg:overflow-y-auto pr-1 sm:pr-2 custom-scrollbar">
+      {/* Grid + inspector */}
+      <main className="flex-1 max-w-6xl w-full mx-auto p-3 sm:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <ul className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 lg:max-h-[72vh] lg:overflow-y-auto p-1">
           {filteredBadges.map(badge => {
             const unlocked = isUnlocked(badge);
             const isSelected = selectedBadge?.id === badge.id;
 
             return (
-              <div
-                key={badge.id}
-                onClick={() => setSelectedBadge(badge)}
-                className={`group relative p-3 bg-[#18161a] border-[3px] transition-all duration-300 cursor-pointer flex flex-col items-center justify-between gap-2 -skew-x-3 ${
-                  isSelected
-                    ? 'border-[#da2d46] bg-[#2a2d43] shadow-[0_0_15px_rgba(218,45,70,0.5)] translate-y-[-4px]'
-                    : unlocked
-                    ? 'border-[#2a2d43] hover:border-[#f0dde0] hover:bg-[#221f26] shadow-[3px_3px_0px_0px_#0f0c0c]'
-                    : 'border-[#1f1d22] bg-[#121013] opacity-60 hover:opacity-80'
-                }`}
-              >
-                {/* Category & ID tag */}
-                <div className="w-full flex justify-between items-center text-[9px] font-bold tracking-tighter uppercase skew-x-3 text-[#888ea1]">
-                  <span>#{badge.id}</span>
-                  {unlocked ? (
-                    <span className="text-[#da2d46] font-black">+{badge.xpReward} XP</span>
-                  ) : (
-                    <Lock size={10} className="text-[#888ea1]" />
+              <li key={badge.id}>
+                <button
+                  type="button"
+                  aria-pressed={isSelected}
+                  onClick={() => { playUiSound('ui_click'); setSelectedBadge(badge); }}
+                  className={cn(
+                    'px-frame w-full flex flex-col items-center gap-2 p-3 text-center focus-visible:outline-[3px] focus-visible:outline-gold-300',
+                    isSelected ? 'px-frame-parchment' : unlocked ? 'px-frame-plum hover:brightness-110' : 'px-frame-inset opacity-70',
                   )}
-                </div>
-
-                {/* Badge Image Container */}
-                <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center my-1 skew-x-3">
-                  {unlocked && (
-                    <div className="absolute inset-0 bg-radial from-[#da2d46]/20 to-transparent rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
-                  )}
-                  <img
-                    src={`/assets/badges/${badge.id}.png?v=2`}
-                    alt={badge.name}
-                    className={`w-full h-full object-contain transition-transform duration-300 group-hover:scale-110 ${
-                      !unlocked ? 'grayscale contrast-125 brightness-50' : ''
-                    }`}
-                  />
-                  {!unlocked && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full">
-                      <Lock size={22} className="text-[#888ea1] animate-pulse" />
-                    </div>
-                  )}
-                </div>
-
-                {/* Badge Name */}
-                <div className="text-center w-full skew-x-3">
-                  <div className={`font-orbitron font-bold text-[11px] leading-tight truncate ${unlocked ? 'text-white' : 'text-[#888ea1]'}`}>
+                >
+                  <span className="relative size-20 sm:size-24">
+                    <img
+                      src={`/assets/badges/${badge.id}.png?v=2`}
+                      alt=""
+                      className={cn('w-full h-full object-contain', !unlocked && 'grayscale brightness-50')}
+                    />
+                    {!unlocked && <Lock className="absolute inset-0 m-auto size-6 text-parchment-300" aria-label="Locked" />}
+                  </span>
+                  <span className={cn('w-full truncate font-semibold text-sm leading-none', isSelected ? 'text-ink' : unlocked ? 'text-parchment-100' : 'text-parchment-500')}>
                     {badge.name}
-                  </div>
-                  <div className="text-[9px] text-[#da2d46] font-bold uppercase mt-0.5 truncate">
-                    {badge.title}
-                  </div>
-                </div>
-
-                {/* Unlocked status accent line */}
-                <div className={`w-full h-[3px] skew-x-3 mt-1 ${unlocked ? 'bg-gradient-to-r from-transparent via-[#da2d46] to-transparent' : 'bg-[#2a2d43]'}`} />
-              </div>
+                  </span>
+                  <span className={cn('text-xs leading-none', isSelected ? 'text-wood-700' : 'text-gold-300')}>
+                    {unlocked ? `+${badge.xpReward} XP` : 'Locked'}
+                  </span>
+                </button>
+              </li>
             );
           })}
-        </div>
+        </ul>
 
-        {/* Selected Badge Feature Panel (Right Column) */}
-        <div className="lg:col-span-1 bg-[#18161a] border-[3px] border-[#da2d46] p-5 -skew-x-2 shadow-[6px_6px_0px_0px_#0f0c0c] relative overflow-hidden flex flex-col justify-between min-h-[360px]">
+        <PixelPanel frame="wood" padding="lg" className="lg:sticky lg:top-6">
           {selectedBadge ? (
-            <>
-              {/* Background watermark */}
-              <div className="absolute -right-10 -bottom-10 opacity-10 pointer-events-none skew-x-2">
-                <img src={`/assets/badges/${selectedBadge.id}.png?v=2`} alt="watermark" className="w-64 h-64 object-contain" />
+            <div className="flex flex-col items-center gap-3 text-center">
+              <PixelChip tone="dark">{selectedBadge.category} · #{selectedBadge.id}</PixelChip>
+              <img
+                src={`/assets/badges/${selectedBadge.id}.png?v=2`}
+                alt={selectedBadge.name}
+                className={cn('size-36 object-contain', !isUnlocked(selectedBadge) && 'grayscale brightness-50')}
+              />
+              <div>
+                <h2 className="font-bold text-2xl leading-none text-parchment-100">{selectedBadge.name}</h2>
+                <p className="mt-1 text-base text-gold-300">{selectedBadge.title}</p>
+              </div>
+              {isUnlocked(selectedBadge)
+                ? <PixelChip tone="heal" icon={<CheckCircle2 />}>Unlocked</PixelChip>
+                : <PixelChip tone="dark" icon={<Lock />}>Locked</PixelChip>}
+
+              <PixelPanel frame="parchment" padding="sm" title="How to earn it" className="w-full text-left">
+                <p className="text-sm leading-snug text-ink">{selectedBadge.description}</p>
+              </PixelPanel>
+
+              <div className="w-full px-frame px-frame-inset px-frame-sm flex items-center justify-between px-3 py-2">
+                <span className="text-sm text-parchment-300">Reward</span>
+                <span className="flex items-center gap-1 font-label text-base text-xp"><Sparkles className="size-4" aria-hidden />+{selectedBadge.xpReward} XP</span>
               </div>
 
-              <div className="skew-x-2 relative z-10 flex flex-col items-center text-center">
-                <div className="inline-block px-3 py-1 bg-[#2a2d43] border border-[#da2d46] text-[#da2d46] text-[10px] font-bold uppercase tracking-widest rounded-full mb-3">
-                  {selectedBadge.category} Medal • #{selectedBadge.id}
-                </div>
-
-                {/* Hero Icon */}
-                <div className="w-36 h-36 relative flex items-center justify-center my-2">
-                  <div className="absolute inset-0 bg-[#da2d46]/20 rounded-full blur-xl animate-pulse" />
-                  <img
-                    src={`/assets/badges/${selectedBadge.id}.png?v=2`}
-                    alt={selectedBadge.name}
-                    className={`w-full h-full object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.8)] ${
-                      !isUnlocked(selectedBadge) ? 'grayscale contrast-125 brightness-50' : ''
-                    }`}
-                  />
-                </div>
-
-                <h2 className="font-orbitron font-black text-xl sm:text-2xl text-white mt-3 uppercase tracking-wide">
-                  {selectedBadge.name}
-                </h2>
-                <div className="text-sm font-bold text-[#da2d46] uppercase tracking-wider mt-0.5">
-                  « {selectedBadge.title} »
-                </div>
-
-                {/* Status Badge */}
-                <div className="mt-4 flex items-center justify-center gap-2">
-                  {isUnlocked(selectedBadge) ? (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-950/80 border border-emerald-500/50 text-emerald-400 text-xs font-bold rounded-full">
-                      <CheckCircle2 size={14} /> Unlocked Honor
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-950/80 border border-amber-500/50 text-amber-400 text-xs font-bold rounded-full">
-                      <Lock size={14} /> Locked Achievement
-                    </span>
-                  )}
-                </div>
-
-                <div className="w-full h-[1px] bg-[#2a2d43] my-4" />
-
-                {/* Description & Criteria */}
-                <div className="text-left w-full">
-                  <div className="text-[10px] text-[#888ea1] uppercase font-bold tracking-wider mb-1">
-                    Unlocking Criteria & Lore
-                  </div>
-                  <p className="text-xs sm:text-sm text-[#e0e5ed] leading-relaxed bg-[#0f0c0c]/80 p-3 border-l-[3px] border-[#da2d46]">
-                    {selectedBadge.description}
-                  </p>
-                </div>
-
-                {/* Reward info */}
-                <div className="w-full flex justify-between items-center bg-[#2a2d43]/60 p-3 mt-4 border border-[#2a2d43]">
-                  <span className="text-xs font-bold text-[#888ea1]">Mastery Bonus:</span>
-                  <span className="font-orbitron font-black text-sm text-[#da2d46] flex items-center gap-1">
-                    <Sparkles size={14} /> +{selectedBadge.xpReward} XP
-                  </span>
-                </div>
-
-                {!isUnlocked(selectedBadge) && !demoUnlockAll && (
-                  <button
-                    onClick={() => handleUnlockBadge(selectedBadge)}
-                    className="w-full mt-4 py-2.5 bg-[#da2d46] text-white font-orbitron font-bold text-xs uppercase tracking-wider -skew-x-6 hover:bg-white hover:text-[#0f0c0c] transition-all shadow-[3px_3px_0px_0px_#0f0c0c]"
-                  >
-                    <span className="skew-x-6 block">Unlock Now (Test Mode)</span>
-                  </button>
-                )}
-              </div>
-            </>
-          ) : (
-            <div className="h-full flex items-center justify-center text-[#888ea1] font-bold text-sm">
-              Select a badge from the grid to inspect.
+              {!isUnlocked(selectedBadge) && !demoUnlockAll && (
+                <PixelButton fullWidth size="sm" onClick={() => handleUnlockBadge(selectedBadge)}>
+                  Unlock now (test mode)
+                </PixelButton>
+              )}
             </div>
+          ) : (
+            <p className="py-12 text-center text-sm text-parchment-500">Select a badge to inspect it.</p>
           )}
-        </div>
-      </div>
+        </PixelPanel>
+      </main>
 
-      {/* Footer Banner */}
-      <div className="max-w-6xl w-full mx-auto z-10 pt-4 border-t-[2px] border-[#2a2d43] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#888ea1]">
-        <div className="flex items-center gap-2">
-          <Star size={14} className="text-[#da2d46]" />
-          <span>Badges are permanently awarded to your Visayan Expedition Archive.</span>
+      <footer className="border-t-[3px] border-ink bg-plum-900">
+        <div className="max-w-6xl mx-auto px-3 sm:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="flex items-center gap-2 text-sm text-parchment-500">
+            <Star className="size-4 text-gold-300" aria-hidden />
+            Badges are saved to your expedition archive forever.
+          </p>
+          <PixelButton variant="primary" sound="ui_back" onClick={onBack}>Back to Map</PixelButton>
         </div>
-        <button
-          onClick={onBack}
-          className="px-6 py-2 bg-[#da2d46] text-white font-orbitron font-bold uppercase tracking-wider -skew-x-6 hover:bg-white hover:text-[#0f0c0c] transition-all shadow-[3px_3px_0px_0px_#0f0c0c]"
-        >
-          <span className="skew-x-6 block">Return to Map</span>
-        </button>
-      </div>
+      </footer>
     </div>
   );
 }

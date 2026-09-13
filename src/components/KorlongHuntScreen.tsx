@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ChevronLeft, MapPin, RefreshCw, Star } from 'lucide-react';
+import { ChevronLeft, MapPin, Reload as RefreshCw, Star } from 'pixelarticons/react';
+import { PixelButton, PixelIconButton, PixelPanel } from './ui';
+import { cn } from '../lib/cn';
 import { KorlongCutscene } from './KorlongCutscene';
 import visayasMap from '../assets/png/visayas_map.png?v=2';
 import {
@@ -274,7 +276,6 @@ export function KorlongHuntScreen({ onBack, onDiscovered }: KorlongHuntScreenPro
   };
 
   const tier = getTier();
-  const tierColor = { arrived: '#e0e5ed', close: '#da2d46', near: '#888ea1', far: '#2a2d43' }[tier];
 
   useEffect(() => {
     if (!audioRef.current) return;
@@ -301,268 +302,161 @@ export function KorlongHuntScreen({ onBack, onDiscovered }: KorlongHuntScreenPro
   }, [tier, showDiscovery]);
 
   return (
-    <div className="min-h-screen bg-[#2a2d43] flex flex-col relative overflow-hidden">
-
-      {/* Map Background */}
-      <div 
-        className="absolute inset-0 z-0 opacity-40 pointer-events-none mix-blend-screen"
-        style={{ 
-          backgroundImage: `url(${visayasMap})`, 
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          filter: 'sepia(100%) hue-rotate(310deg) saturate(300%) contrast(150%) brightness(80%)'
-        }} 
-      />
-      
-      {/* Grid overlay */}
-      <div className="absolute inset-0 z-0 opacity-20 pointer-events-none"
-        style={{ 
-          backgroundImage: 'linear-gradient(rgba(218, 45, 70, 0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(218, 45, 70, 0.2) 1px, transparent 1px)', 
-          backgroundSize: '40px 40px' 
-        }} 
-      />
-
-      {/* Radar sweep animation overlay */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden opacity-30 mix-blend-screen">
-        <div className="absolute top-1/2 left-1/2 w-[150vw] h-[150vw] -translate-x-1/2 -translate-y-1/2 rounded-full border-[2px] border-[#da2d46]/20 animate-[spin_8s_linear_infinite]"
-             style={{ background: 'conic-gradient(from 0deg, transparent 70%, rgba(218,45,70,0.1) 80%, rgba(218,45,70,0.5) 100%)' }}
-        />
-      </div>
+    <div className="min-h-screen bg-plum-950 text-parchment-100 flex flex-col relative overflow-hidden">
+      {/* Map backdrop */}
+      <img src={visayasMap} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-plum-950/60 via-plum-950/80 to-plum-950 pointer-events-none" aria-hidden />
 
       {/* Header */}
-      <div className="relative z-10 px-4 pt-12 pb-4 flex items-center justify-between border-b-[6px] border-[#0f0c0c] bg-[#0f0c0c] shrink-0">
-        <button
-          onClick={onBack}
-          className="w-10 h-10 bg-[#e0e5ed] border-4 border-[#da2d46] flex items-center justify-center text-[#0f0c0c] shadow-[4px_4px_0px_0px_#da2d46] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all -skew-x-6"
-        >
-          <ChevronLeft size={22} className="skew-x-6 stroke-[3px]" />
-        </button>
-
-        <div className="text-center">
-          <h1 className="font-orbitron text-xl font-black tracking-widest text-[#da2d46] uppercase"
-            style={{ textShadow: '2px 2px 0px #0f0c0c' }}>
-            KORLONG HUNT
-          </h1>
-          <p className="font-space-mono text-[10px] text-[#888ea1] tracking-widest uppercase">★ LEGENDARY INSTRUMENT</p>
+      <header className="relative z-10 shrink-0 bg-plum-900 border-b-[3px] border-ink">
+        <div className="max-w-xl mx-auto px-3 pt-10 sm:pt-3 pb-3 flex items-center gap-3">
+          <PixelIconButton icon={<ChevronLeft />} label="Back" sound="ui_back" onClick={onBack} />
+          <div className="flex-1 min-w-0">
+            <h1 className="font-bold text-2xl leading-none">Korlong Hunt</h1>
+            <p className="mt-1 flex items-center gap-1 text-sm text-gold-300"><Star className="size-4" aria-hidden />Legendary instrument</p>
+          </div>
         </div>
+      </header>
 
-        <div className="w-10" />
-      </div>
+      <main className="relative z-10 flex-1 w-full max-w-xl mx-auto flex flex-col items-center justify-center gap-6 px-4 py-8">
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 gap-8 py-8 relative z-10">
-
-        {/* ── No GPS ── */}
         {huntState === 'no-gps' && (
-          <div className="text-center space-y-4">
-            <MapPin size={56} className="text-[#888ea1] mx-auto" />
-            <p className="font-orbitron font-black text-[#da2d46] text-lg tracking-widest uppercase">GPS UNAVAILABLE</p>
-            <p className="font-space-mono text-sm text-[#888ea1] leading-relaxed">
-              Enable location services to hunt for the Korlong.
-              This device or browser doesn't have GPS access.
+          <PixelPanel frame="wood" padding="lg" className="w-full flex flex-col items-center gap-3 text-center">
+            <MapPin className="size-12 text-parchment-500" aria-hidden />
+            <h2 className="font-bold text-2xl leading-none">Location unavailable</h2>
+            <p className="text-base text-parchment-300">Turn on location services to hunt for the Korlong. This device or browser doesn't have GPS access.</p>
+          </PixelPanel>
+        )}
+
+        {huntState === 'locating' && (
+          <div className="flex flex-col items-center gap-4 text-center" aria-live="polite">
+            <div className="px-frame px-frame-inset size-20 flex items-center justify-center">
+              <MapPin className="size-8 text-gold-300 animate-pulse" aria-hidden />
+            </div>
+            <p className="font-bold text-xl leading-none">Finding your location...</p>
+            <p className="text-sm text-parchment-500">Checking for Korlong signals nearby</p>
+          </div>
+        )}
+
+        {huntState === 'no-spawn' && (
+          <div className="w-full flex flex-col gap-4">
+            <PixelPanel frame="wood" padding="lg" className="text-center">
+              <h2 className="font-bold text-2xl leading-none">No signal nearby</h2>
+              <p className="mt-2 text-base text-parchment-300">
+                The Korlong hasn't appeared here. It shows up more often near historic sites in Eastern Visayas. Keep moving and try again.
+              </p>
+            </PixelPanel>
+            <PixelButton variant="primary" size="lg" fullWidth icon={<RefreshCw />} disabled={retryCountdown > 0} onClick={handleRetry}>
+              {retryCountdown > 0 ? `Try again in ${retryCountdown}s` : 'Search Again'}
+            </PixelButton>
+          </div>
+        )}
+
+        {huntState === 'hunting' && spawn && (
+          <div className="w-full flex flex-col items-center gap-6">
+            {spawn.nearSite && (
+              <PixelPanel frame="parchment" padding="sm" title={`Near ${spawn.nearSite.name}`} className="w-full">
+                <p className="text-sm leading-snug text-ink">{spawn.nearSite.loreFragment}</p>
+              </PixelPanel>
+            )}
+
+            {/* Compass */}
+            <div className="relative size-64 my-4">
+              <div className="absolute inset-0 rounded-full border-[3px] border-ink bg-plum-900" />
+              <div className="absolute inset-3 rounded-full border-2 border-dashed border-plum-600" />
+              {['N', 'E', 'S', 'W'].map((dir, i) => {
+                const rad = ((i * 90 - 90) * Math.PI) / 180;
+                return (
+                  <span
+                    key={dir}
+                    className={cn('absolute font-label text-base leading-none', dir === 'N' ? 'text-gold-300' : 'text-parchment-500')}
+                    style={{ left: `calc(50% + ${90 * Math.cos(rad)}px)`, top: `calc(50% + ${90 * Math.sin(rad)}px)`, transform: 'translate(-50%, -50%)' }}
+                  >
+                    {dir}
+                  </span>
+                );
+              })}
+              {Array.from({ length: 12 }).map((_, i) => (
+                <span
+                  key={i}
+                  className="absolute w-1 h-3 bg-plum-600"
+                  style={{ top: '50%', left: '50%', transform: `translate(-50%, -50%) rotate(${i * 30}deg) translateY(-106px)` }}
+                />
+              ))}
+              <div className="absolute inset-0 flex items-center justify-center transition-transform duration-500 ease-out" style={{ transform: `rotate(${compassRotation}deg)` }}>
+                <div className="absolute top-8 w-0 h-0 border-l-[14px] border-r-[14px] border-b-[48px] border-l-transparent border-r-transparent border-b-gold-500" />
+                <div className="absolute top-[80px] w-2 h-12 bg-gold-700" />
+              </div>
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-7 bg-parchment-100 border-[3px] border-ink" />
+              {tier === 'arrived' && (
+                <div className="absolute inset-0 rounded-full flex items-center justify-center bg-gold-500/25 animate-pulse">
+                  <Star className="size-16 text-gold-300" aria-hidden />
+                </div>
+              )}
+            </div>
+
+            <div className="px-frame px-frame-wood px-8 py-3 text-center" aria-live="polite">
+              <p className={cn('font-label text-3xl leading-none', TIER_TEXT[tier])}>
+                {distanceMeters === Infinity ? '---' : formatDistance(distanceMeters)}
+              </p>
+              <p className="mt-2 text-sm text-parchment-300">
+                {tier === 'arrived' ? "You've arrived!" : tier === 'close' ? 'Getting close' : tier === 'near' ? 'Signal detected' : 'Keep moving'}
+              </p>
+            </div>
+
+            <p className="text-sm text-parchment-500 text-center">
+              Signal lasts {Math.round((spawn.expiresAt - Date.now()) / 60000)} min · The needle points to the Korlong
             </p>
           </div>
         )}
 
-        {/* ── Locating ── */}
-        {huntState === 'locating' && (
-          <div className="text-center space-y-4">
-            <div className="relative w-20 h-20 mx-auto">
-              <div className="absolute inset-0 border-4 border-[#da2d46] rounded-full animate-ping opacity-30" />
-              <div className="w-20 h-20 bg-[#0f0c0c] border-[4px] border-[#da2d46] rounded-full flex items-center justify-center">
-                <MapPin size={28} className="text-[#da2d46]" />
-              </div>
-            </div>
-            <p className="font-orbitron font-black text-[#e0e5ed] tracking-widest uppercase">ACQUIRING SIGNAL...</p>
-            <p className="font-space-mono text-xs text-[#888ea1]">Checking for Korlong presence in your area</p>
-          </div>
-        )}
-
-        {/* ── No Spawn ── */}
-        {huntState === 'no-spawn' && (
-          <div className="text-center space-y-6 w-full">
-            <div className="bg-[#0f0c0c] border-[4px] border-[#da2d46] p-6 -skew-x-2 shadow-[6px_6px_0px_0px_#da2d46]">
-              <p className="font-orbitron font-black text-[#da2d46] text-base tracking-widest uppercase skew-x-2">NO SIGNAL DETECTED</p>
-              <p className="font-space-mono text-xs text-[#888ea1] mt-2 skew-x-2 leading-relaxed">
-                The Korlong hasn't manifested nearby. It appears more frequently near sites of
-                historical significance in Eastern Visayas. Keep moving and try again.
-              </p>
-            </div>
-
-            <button
-              onClick={handleRetry}
-              disabled={retryCountdown > 0}
-              className={`w-full py-4 border-[4px] border-[#0f0c0c] font-orbitron font-black text-sm tracking-widest uppercase -skew-x-6 shadow-[6px_6px_0px_0px_#0f0c0c] transition-all flex items-center justify-center gap-3 ${
-                retryCountdown > 0
-                  ? 'bg-[#888ea1] text-[#2a2d43] cursor-not-allowed opacity-70'
-                  : 'bg-[#da2d46] text-[#0f0c0c] hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#0f0c0c] active:translate-y-1 active:shadow-none'
-              }`}
-            >
-              <RefreshCw size={18} className="skew-x-6" />
-              <span className="skew-x-6">
-                {retryCountdown > 0 ? `RETRY IN ${retryCountdown}s` : 'SEARCH AGAIN'}
-              </span>
-            </button>
-          </div>
-        )}
-
-        {/* ── Hunting ── */}
-        {huntState === 'hunting' && spawn && (
-          <div className="w-full flex flex-col items-center gap-6">
-
-            {/* Lore fragment (only if near a historical site) */}
-            {spawn.nearSite && (
-              <div className="w-full bg-[#0f0c0c] border-[4px] border-[#da2d46] p-4 -skew-x-1 shadow-[4px_4px_0px_0px_#da2d46]">
-                <p className="font-space-mono text-[10px] text-[#da2d46] font-black uppercase tracking-wider mb-1 skew-x-1">
-                  HISTORICAL RESONANCE — {spawn.nearSite.name.toUpperCase()}
-                </p>
-                <p className="font-space-mono text-xs text-[#f0dde0] italic skew-x-1 leading-relaxed">
-                  {spawn.nearSite.loreFragment}
-                </p>
-              </div>
-            )}
-
-            {/* Compass */}
-            <div className="relative mt-8 mb-6">
-              {/* Radar rings */}
-              <div className="absolute inset-0 rounded-full border-[2px] border-dashed border-[#da2d46]/40 animate-[spin_20s_linear_infinite_reverse] scale-[1.3]" />
-              <div className="absolute inset-0 rounded-full border-[1px] border-[#888ea1]/20 scale-[1.6]" />
-              
-              {/* Outer ring */}
-              <div
-                className="w-64 h-64 rounded-full border-[8px] border-[#0f0c0c] flex items-center justify-center shadow-[0_0_40px_rgba(218,45,70,0.4)] relative bg-[#0f0c0c]/90 backdrop-blur-md"
-              >
-                {/* Cardinal labels */}
-                {['N', 'E', 'S', 'W'].map((dir, i) => {
-                  const angle = i * 90;
-                  const rad = ((angle - 90) * Math.PI) / 180;
-                  const r = 90; // radius from center
-                  return (
-                    <span
-                      key={dir}
-                      className="absolute font-orbitron font-black text-sm text-[#888ea1] z-10"
-                      style={{ 
-                        left: `calc(50% + ${r * Math.cos(rad)}px)`, 
-                        top: `calc(50% + ${r * Math.sin(rad)}px)`, 
-                        transform: 'translate(-50%, -50%)' 
-                      }}
-                    >
-                      {dir}
-                    </span>
-                  );
-                })}
-
-                {/* Compass markers */}
-                {Array.from({ length: 12 }).map((_, i) => (
-                  <div 
-                    key={i} 
-                    className="absolute w-1 h-3 bg-[#da2d46]/50" 
-                    style={{ 
-                      top: '50%', left: '50%',
-                      transform: `translate(-50%, -50%) rotate(${i * 30}deg) translateY(-106px)` 
-                    }} 
-                  />
-                ))}
-
-                {/* Needle Container - Rotates to bearing */}
-                <div
-                  className="absolute inset-0 flex items-center justify-center transition-transform duration-500 ease-out"
-                  style={{ transform: `rotate(${compassRotation}deg)` }}
-                >
-                   {/* Cool Sci-fi Needle */}
-                   <div className="absolute top-6 w-0 h-0 border-l-[14px] border-r-[14px] border-b-[50px] border-l-transparent border-r-transparent border-b-[#da2d46] filter drop-shadow-[0_0_12px_#da2d46]" />
-                   <div className="absolute top-[56px] w-2 h-[72px] bg-gradient-to-b from-[#da2d46] to-transparent" />
-                </div>
-                
-                {/* Center node */}
-                <div className="absolute w-8 h-8 bg-[#e0e5ed] border-[6px] border-[#da2d46] rounded-full shadow-[0_0_20px_#da2d46]" />
-
-                {tier === 'arrived' && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-[#da2d46]/30 rounded-full backdrop-blur-sm animate-pulse">
-                    <Star size={70} className="text-[#e0e5ed] fill-[#e0e5ed]" style={{ filter: 'drop-shadow(0 0 15px #e0e5ed)' }} />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Distance display */}
-            <div
-              className="bg-[#0f0c0c] border-[4px] px-8 py-3 -skew-x-6 shadow-[6px_6px_0px_0px_#0f0c0c] text-center"
-              style={{ borderColor: tierColor }}
-            >
-              <p className="font-orbitron font-black text-3xl skew-x-6" style={{ color: tierColor }}>
-                {distanceMeters === Infinity ? '---' : formatDistance(distanceMeters)}
-              </p>
-              <p className="font-space-mono text-[10px] text-[#888ea1] skew-x-6 uppercase tracking-widest mt-1">
-                {tier === 'arrived' ? 'YOU\'VE ARRIVED' : tier === 'close' ? 'GETTING CLOSE' : tier === 'near' ? 'SIGNAL DETECTED' : 'KEEP MOVING'}
-              </p>
-            </div>
-
-            {/* Spawn expiry hint */}
-            {spawn && (
-              <p className="font-space-mono text-[10px] text-[#888ea1] text-center">
-                Signal active for {Math.round((spawn.expiresAt - Date.now()) / 60000)}min · Compass points to spawn
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* ── Auth Required ── */}
         {huntState === 'auth-required' && !showDiscovery && (
-          <div className="w-full max-w-sm flex flex-col items-center gap-6 mt-12 animate-fade-in z-50">
-            <div className="bg-[#0f0c0c] border-[4px] border-[#da2d46] p-6 -skew-x-2 shadow-[6px_6px_0px_0px_#da2d46] text-center w-full">
-              <p className="font-orbitron font-black text-[#da2d46] text-xl tracking-widest uppercase skew-x-2">SIGNAL SECURED</p>
-              <p className="font-space-mono text-xs text-[#888ea1] mt-4 skew-x-2 leading-relaxed">
-                You have successfully tracked down the Korlong! Connect your GameOn Portal account to extract the artifact data into your profile.
+          <div className="w-full flex flex-col items-center gap-4">
+            <PixelPanel frame="wood" padding="lg" className="w-full text-center">
+              <h2 className="font-bold text-2xl leading-none text-gold-300">You found the Korlong!</h2>
+              <p className="mt-3 text-base text-parchment-300">
+                Connect your GameOn Portal account to add this legendary instrument to your profile.
               </p>
-
               {auth.status === 'error' && (
-                <p className="font-space-mono text-xs text-red-500 mt-4 skew-x-2 font-bold">{auth.errorMsg}</p>
+                <p className="mt-3 text-sm font-semibold text-hp-light">{auth.errorMsg}</p>
               )}
-            </div>
+            </PixelPanel>
 
-            <button
-              onClick={auth.startAuthFlow}
+            <PixelButton
+              variant="primary"
+              size="lg"
+              fullWidth
               disabled={auth.status !== 'idle' && auth.status !== 'error'}
-              className={`w-full py-4 border-[4px] border-[#0f0c0c] font-orbitron font-black text-sm tracking-widest uppercase -skew-x-6 shadow-[6px_6px_0px_0px_#0f0c0c] transition-all flex items-center justify-center gap-3 ${
-                (auth.status !== 'idle' && auth.status !== 'error')
-                  ? 'bg-[#888ea1] text-[#2a2d43] cursor-not-allowed opacity-70'
-                  : 'bg-[#da2d46] text-[#0f0c0c] hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#0f0c0c] active:translate-y-1 active:shadow-none'
-              }`}
+              onClick={auth.startAuthFlow}
             >
-              <span className="skew-x-6">
-                {auth.status === 'initializing' ? 'INITIALIZING...' : 
-                 auth.status === 'waiting-for-auth' ? 'WAITING FOR BROWSER...' :
-                 auth.status === 'unlocking' ? 'EXTRACTING ARTIFACT...' :
-                 'CONNECT GAMEON ACCOUNT'}
-              </span>
-            </button>
-            
+              {auth.status === 'initializing' ? 'Starting...'
+                : auth.status === 'waiting-for-auth' ? 'Waiting for browser...'
+                : auth.status === 'unlocking' ? 'Adding instrument...'
+                : 'Connect GameOn Account'}
+            </PixelButton>
+
             {(auth.status === 'waiting-for-auth' || auth.status === 'unlocking') && (
-               <p className="font-space-mono text-[10px] text-[#da2d46] animate-pulse mt-2 text-center">
-                 {auth.status === 'waiting-for-auth' 
-                   ? 'Please complete the login process in the browser window.' 
-                   : 'Finalizing extraction...'}
-               </p>
+              <p className="text-sm text-parchment-300 text-center" aria-live="polite">
+                {auth.status === 'waiting-for-auth' ? 'Finish signing in in the browser window.' : 'Almost done...'}
+              </p>
             )}
           </div>
         )}
 
-        {/* ── Cinematic Discovery Cutscene ── */}
         {showDiscovery && (
           <KorlongCutscene onComplete={handleCutsceneComplete} />
         )}
-      </div>
+      </main>
 
-      {/* Bottom info */}
       {huntState === 'hunting' && !showDiscovery && (
-        <div className="relative z-10 border-t-[4px] border-[#0f0c0c] bg-[#0f0c0c] px-6 py-3">
-          <p className="font-space-mono text-[10px] text-[#888ea1] text-center leading-relaxed">
-            The Korlong can spawn anywhere, but appears 75% more often near historical Eastern Visayas sites.
-            Discovery requires reaching within 30m of the spawn point.
+        <footer className="relative z-10 border-t-[3px] border-ink bg-plum-900 px-4 py-3">
+          <p className="max-w-xl mx-auto text-sm text-parchment-500 text-center">
+            The Korlong can appear anywhere, but shows up more often near historic Eastern Visayas sites. Get within 30 m to discover it.
           </p>
-        </div>
+        </footer>
       )}
     </div>
   );
 }
+
+const TIER_TEXT = { arrived: 'text-gold-300', close: 'text-heal', near: 'text-xp', far: 'text-parchment-300' } as const;

@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Sword, Sparkles, Shield, Disc, Zap, ArrowLeft, Users, ChevronLeft, ChevronRight, Package } from 'lucide-react';
+import { Sword, Sparkles, Shield, Music as Disc, Zap, ArrowLeft, Users, ChevronLeft, ChevronRight, Package } from 'pixelarticons/react';
 import { ItemMenuOverlay } from './ItemMenuOverlay';
 import { audioEngine } from '../../services/audioSynth';
 import { 
@@ -17,7 +17,12 @@ import { ParryQteOverlay } from './ParryQteOverlay';
 import { AttuneCaptureOverlay } from './AttuneCaptureOverlay';
 import { WingSlamCounterMinigame } from './WingSlamCounterMinigame';
 import { useCombatEngine, type TurnUpdateInfo } from './useCombatEngine';
-
+import {
+  ArrowLeft as PxArrowLeft, ChevronLeft as PxChevronLeft, ChevronRight as PxChevronRight, Music as PxMusic,
+  Package as PxPackage, Shield as PxShield, Sparkles as PxSparkles, Sword as PxSword, Users as PxUsers,
+} from 'pixelarticons/react';
+import { cn } from '../../lib/cn';
+import { CommandMenu, EnemyHealthBar, PartyMemberCard, TurnIndicator, UnitNameplate, type CombatCommand } from './hud';
 export interface ExpeditionCombatProps {
   party: Record<string, HeroProfile>;
   enemyId: string;
@@ -98,42 +103,30 @@ export function WakwakBossCombat(props: ExpeditionCombatProps) {
   const onCombatResult = props.onCombatResult;
   const dex = props.dex;
 
-  const hpPct = Math.max(0, (enemy.hp / enemy.maxHp) * 100);
-  const ghostPct = Math.max(0, (ghostHp / enemy.maxHp) * 100);
-  const staggerPct = Math.max(0, (enemy.stagger / enemy.maxStagger) * 100);
 
   const renderTurnBar = () => (
-    <div className="flex items-center gap-1 sm:gap-2 bg-[#1e2238] border-[2px] sm:border-[3px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] px-1.5 sm:px-3 py-1 sm:py-1.5 -skew-x-6 overflow-hidden">
-      <span className="font-orbitron font-black text-[8px] sm:text-2xs text-[#facc15] uppercase border-r border-slate-600 pr-1.5 sm:pr-2 shrink-0">
-        TURN
-      </span>
-      <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto hide-scrollbar">
-        {turnQueue.map((unit, idx) => {
-          const isCurrent = idx === turnIndex % turnQueue.length;
-          return (
-            <div 
-              key={idx}
-              className={`w-5 h-5 sm:w-6 sm:h-6 border border-[#0f0c0c] flex items-center justify-center shrink-0 overflow-hidden transition-all ${
-                isCurrent 
-                  ? 'bg-[#facc15] shadow-[1px_1px_0px_0px_#0f0c0c] scale-105' 
-                  : unit.isHero ? 'bg-[#2a2d43]' : 'bg-[#da2d46]'
-              }`}
-            >
-              {unit.isHero ? (
-                <img src={(unit.unit as HeroProfile).avatar} alt="H" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-[10px] sm:text-xs">👹</span>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
+    <TurnIndicator isHeroTurn={isHeroTurn} activeHeroName={activeHero.name} turnQueue={turnQueue} turnIndex={turnIndex} />
   );
+
+  const selectHeroTurn = (hero: HeroProfile) => {
+    if (isHeroTurn && activeAction === 'none' && !isEndingBattle && hero.hp > 0) {
+      const idx = turnQueue.findIndex(u => u.isHero && u.unit.id === hero.id);
+      if (idx !== -1) setTurnIndex(idx);
+    }
+  };
+
+  const combatCommands: CombatCommand[] = [
+    { id: 'attack', label: 'Rhythm Attack', hint: '1 AP', icon: <PxSword />, variant: 'primary', featured: true, onClick: handleCommandAttack, disabled: !isHeroTurn || activeHero.ap < 1 || activeAction !== 'none' || isEndingBattle },
+    { id: 'skill', label: 'Overdrive', hint: '2 AP', icon: <PxSparkles />, variant: 'purple', onClick: handleCommandSkill, disabled: !isHeroTurn || activeHero.ap < 2 || activeAction !== 'none' || isEndingBattle },
+    { id: 'attune', label: 'Attune', hint: 'Enemy HP < 35%', icon: <PxMusic />, variant: 'blue', onClick: handleCommandAttune, disabled: !isHeroTurn || activeAction !== 'none' || isEndingBattle },
+    { id: 'defend', label: 'Defend', hint: '+2 AP', icon: <PxShield />, variant: 'green', onClick: handleCommandDefend, disabled: !isHeroTurn || activeAction !== 'none' || isEndingBattle },
+    { id: 'items', label: 'Items', icon: <PxPackage />, variant: 'pink', onClick: () => setShowItemsMenu(true), disabled: isEndingBattle || !isHeroTurn || activeAction !== 'none' },
+    { id: 'flee', label: 'Retreat', icon: <PxArrowLeft />, variant: 'ghost', onClick: onFlee, disabled: isEndingBattle },
+  ];
 
   return (
     <div 
-      className="flex-1 flex flex-col justify-between relative overflow-hidden bg-[#151828] bg-cover bg-center bg-no-repeat select-none"
+      className="flex-1 flex flex-col justify-between relative overflow-hidden bg-plum-900 bg-cover bg-center bg-no-repeat select-none"
       style={{ backgroundImage: `linear-gradient(rgba(15, 12, 12, 0.35), rgba(15, 12, 12, 0.5)), url('/assets/expedition/battle_bg.png')` }}
     >
       <style>{`
@@ -186,17 +179,17 @@ export function WakwakBossCombat(props: ExpeditionCombatProps) {
 
       {/* PORTRAIT LOCK OVERLAY FOR MOBILE DEVICES */}
       {!isEndingBattle && (
-        <div className="portrait:flex hidden absolute inset-0 z-[9999] bg-[#0f0c0c] flex-col items-center justify-center p-6 text-center shadow-inner overflow-hidden pointer-events-auto">
+        <div className="portrait:flex hidden absolute inset-0 z-[9999] bg-plum-950 flex-col items-center justify-center p-6 text-center shadow-inner overflow-hidden pointer-events-auto">
           <div className="animate-bounce mb-6">
-            <svg className="w-20 h-20 text-[#facc15]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+            <svg className="w-20 h-20 text-gold-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
           </div>
-          <h2 className="text-white font-orbitron font-black text-3xl mb-4 tracking-wider text-shadow-md">ROTATE DEVICE</h2>
-          <p className="text-slate-300 font-sans text-lg">This boss encounter requires landscape mode for the intended layout.</p>
+          <h2 className="font-bold text-3xl mb-4 text-parchment-100">Rotate your device</h2>
+          <p className="text-parchment-300 text-lg">This boss encounter requires landscape mode for the intended layout.</p>
         </div>
       )}
 
       {enemy.hp <= 0 && (
-        <div className="absolute inset-0 bg-white z-50 pointer-events-none animate-[flashWhite_2s_ease-out_forwards]" />
+        <div className="absolute inset-0 bg-parchment-100 z-50 pointer-events-none animate-[flashWhite_2s_ease-out_forwards]" />
       )}
 
       {isBoss && (
@@ -204,7 +197,7 @@ export function WakwakBossCombat(props: ExpeditionCombatProps) {
           <div className="animate-boss-breathe w-full h-full flex flex-col items-center justify-center relative">
             {enemy.staggered && enemy.hp > 0 && (
               <div className="absolute -translate-y-40 sm:-translate-y-52 z-20 flex flex-col items-center justify-center pointer-events-none animate-fadeIn">
-                <div className="w-48 h-24 overflow-hidden relative drop-shadow-[0_0_8px_#facc15]">
+                <div className="w-48 h-24 overflow-hidden relative">
                   <img src="/assets/expedition/stun_spritesheet_tight.png" className="absolute top-0 left-0 h-full w-[500%] max-w-none animate-sprite-5" alt="Stun" />
                 </div>
               </div>
@@ -236,7 +229,7 @@ export function WakwakBossCombat(props: ExpeditionCombatProps) {
               <div
                 className={`flex items-center justify-center transition-all ${
                   bossAttackPhase === 'rise'
-                    ? 'duration-500 ease-out scale-120 -translate-y-36 sm:-translate-y-48 animate-pulse drop-shadow-[0_0_35px_rgba(250,204,21,0.9)]'
+                    ? 'duration-500 ease-out scale-120 -translate-y-36 sm:-translate-y-48 animate-pulse '
                     : bossAttackPhase === 'down'
                     ? 'duration-150 ease-in scale-95 translate-y-10 sm:translate-y-14'
                     : 'duration-300 scale-100 -translate-y-4 sm:-translate-y-6'
@@ -270,14 +263,14 @@ export function WakwakBossCombat(props: ExpeditionCombatProps) {
                     alt="Right Wing Sweep Slam"
                     className={`w-auto h-[54%] sm:h-[59%] max-w-none object-contain transition-all ${
                       bossAttackPhase === 'sweep_prep'
-                        ? 'duration-300 scale-125 translate-x-[80px] sm:translate-x-[180px] translate-y-12 sm:translate-y-20 drop-shadow-[0_0_30px_rgba(218,45,70,0.8)]'
-                        : 'duration-700 ease-out scale-135 -translate-x-[140px] sm:-translate-x-[300px] translate-y-12 sm:translate-y-20 drop-shadow-[0_0_50px_rgba(218,45,70,1)]'
+                        ? 'duration-300 scale-125 translate-x-[80px] sm:translate-x-[180px] translate-y-12 sm:translate-y-20 '
+                        : 'duration-700 ease-out scale-135 -translate-x-[140px] sm:-translate-x-[300px] translate-y-12 sm:translate-y-20 '
                     }`}
                   />
                 </div>
               </div>
             ) : (bossAttackPhase === 'slam' || (activeAction === 'parry' && enemyFrame >= 4 && !isBoss)) && (
-              <div className="flex items-center justify-center transition-all duration-200 scale-130 translate-y-20 sm:translate-y-28 drop-shadow-[0_0_40px_rgba(218,45,70,1)]">
+              <div className="flex items-center justify-center transition-all duration-200 scale-130 translate-y-20 sm:translate-y-28">
                 <img
                   src="/assets/expedition/echo_boss_wings_slam_left.png"
                   alt="Left Wing Slam on Floor"
@@ -315,18 +308,18 @@ export function WakwakBossCombat(props: ExpeditionCombatProps) {
             >
               <div className="absolute inset-0 flex items-center justify-center">
                 {p.effectType === 'slash' && (
-                  <div className="w-32 h-4 bg-white rounded-full shadow-[0_0_20px_#facc15,0_0_40px_#facc15]" style={{ animation: 'slashFx 0.4s ease-out forwards' }} />
+                  <div className="w-32 h-4 bg-parchment-100 rounded-full" style={{ animation: 'slashFx 0.4s ease-out forwards' }} />
                 )}
                 {p.effectType === 'magic' && (
-                  <Sparkles className="w-32 h-32 text-[#facc15] fill-[#facc15] opacity-0" style={{ animation: 'magicFx 0.6s ease-out forwards' }} />
+                  <Sparkles className="w-32 h-32 text-gold-300 fill-gold-300 opacity-0" style={{ animation: 'magicFx 0.6s ease-out forwards' }} />
                 )}
                 {p.effectType === 'block' && (
-                  <div className="w-20 h-20 border-[#38bdf8] rounded-full opacity-0 shadow-[0_0_15px_#38bdf8]" style={{ animation: 'blockFx 0.5s ease-out forwards' }} />
+                  <div className="w-20 h-20 border-xp rounded-full opacity-0" style={{ animation: 'blockFx 0.5s ease-out forwards' }} />
                 )}
               </div>
 
               <div
-                className="font-orbitron font-black tracking-widest text-2xl sm:text-4xl lg:text-6xl text-white relative z-10"
+                className="font-pixel font-bold text-2xl sm:text-4xl lg:text-6xl text-parchment-100 relative z-10"
                 style={{
                   color: p.color,
                   WebkitTextStroke: '3px #0f0c0c',
@@ -342,90 +335,38 @@ export function WakwakBossCombat(props: ExpeditionCombatProps) {
       </div>
 
       <div className="lg:hidden relative w-full flex flex-col items-center justify-center pt-2 px-2 z-20 gap-2">
-        <div className="flex flex-col items-center gap-1 sm:gap-2 shrink-0 portrait:flex landscape:hidden">
-          <div className="flex items-center justify-center gap-1.5 px-2 py-1 bg-[#0f0c0c] text-[#facc15] border-[2px] border-[#facc15] font-orbitron font-black text-[9px] uppercase tracking-wider -skew-x-6">
-            <Zap className="w-3 h-3 text-[#da2d46] fill-current animate-pulse" />
-            <span className="truncate">ACTIVE TURN: {isHeroTurn ? activeHero.name.toUpperCase() : "ENEMY ATTACK PHASE"}</span>
-          </div>
+        <div className="flex flex-col items-center shrink-0 portrait:flex landscape:hidden">
           {renderTurnBar()}
         </div>
 
-        <div className="w-full max-w-xl mx-auto flex flex-col gap-0.5 px-2 sm:px-4 pointer-events-auto">
-          <div className="flex flex-row items-center justify-between font-orbitron tracking-wide px-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] gap-1">
-            <span className="font-black text-[10px] sm:text-xs text-white uppercase tracking-wider text-left leading-tight truncate">
-              {enemy.name}
-            </span>
-            <span className="text-[8px] sm:text-[10px] text-[#facc15] font-bold text-right shrink-0">
-              LV. {enemy.level} {enemy.isBoss && 'BOSS'} — {enemy.hp}/{enemy.maxHp} HP
-            </span>
-          </div>
-
-          <div 
-            className="relative w-full h-2 sm:h-3 bg-[#0f0c0c]/90 border-[2px] border-slate-700 shadow-[0_2px_8px_rgba(0,0,0,0.9)] overflow-hidden"
-            style={{ animation: hpShaking ? 'hpShake 0.4s ease-out both' : 'none' }}
-          >
-            <div 
-              className="absolute top-0 left-0 h-full bg-white transition-all duration-700 ease-out" 
-              style={{ width: `${ghostPct}%` }} 
-            />
-            <div 
-              className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#da2d46] to-[#ff4b68] transition-all duration-150 ease-out" 
-              style={{ width: `${hpPct}%` }} 
-            />
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute top-0 bottom-0 left-[25%] w-[1px] bg-[#0f0c0c]/60" />
-              <div className="absolute top-0 bottom-0 left-[50%] w-[2px] bg-[#0f0c0c]/80" />
-              <div className="absolute top-0 bottom-0 left-[75%] w-[1px] bg-[#0f0c0c]/60" />
-            </div>
-          </div>
-
-          <div className="relative w-full h-1 sm:h-1 bg-[#0f0c0c]/80 border border-slate-800 overflow-hidden mt-0">
-            <div className="absolute top-0 left-0 h-full bg-[#facc15] transition-all duration-300" style={{ width: `${staggerPct}%` }} />
-          </div>
-        </div>
+        <EnemyHealthBar
+          className="max-w-xl mx-auto px-2 sm:px-4 pointer-events-auto"
+          name={enemy.name}
+          level={enemy.level}
+          isBoss={enemy.isBoss}
+          hp={enemy.hp}
+          maxHp={enemy.maxHp}
+          ghostHp={ghostHp}
+          stagger={enemy.stagger}
+          maxStagger={enemy.maxStagger}
+          shaking={hpShaking}
+        />
       </div>
 
-      <div className="hidden lg:flex relative w-full justify-center pt-2 z-20">
-        <div className="w-full max-w-xl flex flex-col gap-1 px-4">
-          <div className="flex items-baseline justify-between font-orbitron tracking-wide px-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
-            <span className="font-black text-base text-white uppercase tracking-wider">
-              {enemy.name}
-            </span>
-            <span className="text-xs text-[#facc15] font-bold">
-              LV. {enemy.level} {enemy.isBoss && 'BOSS'} — {enemy.hp}/{enemy.maxHp} HP
-            </span>
-          </div>
-
-          <div 
-            className="relative w-full h-4 bg-[#0f0c0c]/90 border-[2px] border-slate-700 shadow-[0_4px_16px_rgba(0,0,0,0.9)] overflow-hidden"
-            style={{ animation: hpShaking ? 'hpShake 0.4s ease-out both' : 'none' }}
-          >
-            <div 
-              className="absolute top-0 left-0 h-full bg-white transition-all duration-700 ease-out" 
-              style={{ width: `${ghostPct}%` }} 
-            />
-            <div 
-              className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#da2d46] to-[#ff4b68] transition-all duration-300"
-              style={{ width: `${hpPct}%` }} 
-            />
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute top-0 bottom-0 left-[25%] w-[1px] bg-[#0f0c0c]/60" />
-              <div className="absolute top-0 bottom-0 left-[50%] w-[2px] bg-[#0f0c0c]/80" />
-              <div className="absolute top-0 bottom-0 left-[75%] w-[1px] bg-[#0f0c0c]/60" />
-            </div>
-          </div>
-
-          <div className="relative w-full h-1.5 bg-[#0f0c0c]/80 border border-slate-800 overflow-hidden mt-0.5">
-            <div 
-              className="absolute top-0 left-0 h-full bg-[#facc15] transition-all duration-300"
-              style={{ width: `${staggerPct}%` }} 
-            />
-          </div>
-        </div>
-
-
+      <div className="hidden lg:flex relative w-full justify-center pt-3 z-20">
+        <EnemyHealthBar
+          className="max-w-xl px-4"
+          name={enemy.name}
+          level={enemy.level}
+          isBoss={enemy.isBoss}
+          hp={enemy.hp}
+          maxHp={enemy.maxHp}
+          ghostHp={ghostHp}
+          stagger={enemy.stagger}
+          maxStagger={enemy.maxStagger}
+          shaking={hpShaking}
+        />
       </div>
-
       <div className="lg:hidden flex-1 w-full relative z-10 flex items-center justify-center overflow-hidden">
         <div 
           className="absolute inset-x-0 bottom-0 h-24 sm:h-36 bg-repeat-x bg-bottom pointer-events-none z-10 opacity-95 drop-shadow-[0_-6px_12px_rgba(0,0,0,0.95)] translate-y-6 landscape:translate-y-12 sm:translate-y-8"
@@ -442,7 +383,7 @@ export function WakwakBossCombat(props: ExpeditionCombatProps) {
                 <div className="absolute -translate-y-28 sm:-translate-y-36 z-20 flex flex-col items-center justify-center pointer-events-none animate-fadeIn">
                   <div className="relative w-36 h-12 flex items-center justify-center">
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-28 h-14 sm:w-36 sm:h-18 overflow-hidden relative drop-shadow-[0_0_8px_#facc15]">
+                      <div className="w-28 h-14 sm:w-36 sm:h-18 overflow-hidden relative">
                         <img src="/assets/expedition/stun_spritesheet_tight.png" className="absolute top-0 left-0 h-full w-[500%] max-w-none animate-sprite-5" alt="Stun" />
                       </div>
                     </div>
@@ -476,7 +417,7 @@ export function WakwakBossCombat(props: ExpeditionCombatProps) {
                 <div
                   className={`w-full h-full flex items-center justify-center transition-all ${
                     bossAttackPhase === 'rise'
-                      ? 'duration-500 ease-out scale-110 -translate-y-12 sm:-translate-y-20 animate-pulse drop-shadow-[0_0_25px_rgba(250,204,21,0.9)]'
+                      ? 'duration-500 ease-out scale-110 -translate-y-12 sm:-translate-y-20 animate-pulse '
                       : bossAttackPhase === 'down'
                       ? 'duration-150 ease-in scale-95 translate-y-8 sm:translate-y-12'
                       : 'duration-300 scale-100 -translate-y-1 sm:-translate-y-2'
@@ -510,14 +451,14 @@ export function WakwakBossCombat(props: ExpeditionCombatProps) {
                       alt="Right Wing Sweep Slam"
                       className={`w-auto h-40 sm:h-52 max-w-none object-contain transition-all ${
                         bossAttackPhase === 'sweep_prep'
-                          ? 'duration-300 scale-110 translate-x-8 sm:translate-x-12 translate-y-10 sm:translate-y-14 drop-shadow-[0_0_20px_rgba(218,45,70,0.8)]'
-                          : 'duration-700 ease-out scale-115 -translate-x-16 sm:-translate-x-24 translate-y-10 sm:translate-y-14 drop-shadow-[0_0_30px_rgba(218,45,70,1)]'
+                          ? 'duration-300 scale-110 translate-x-8 sm:translate-x-12 translate-y-10 sm:translate-y-14 '
+                          : 'duration-700 ease-out scale-115 -translate-x-16 sm:-translate-x-24 translate-y-10 sm:translate-y-14 '
                       }`}
                     />
                   </div>
                 </div>
               ) : (bossAttackPhase === 'slam' || (activeAction === 'parry' && enemyFrame >= 4 && !isBoss)) && (
-                <div className="w-full h-full flex items-center justify-center -space-x-2 sm:-space-x-6 transition-all duration-200 scale-105 sm:scale-110 translate-y-10 sm:translate-y-16 drop-shadow-[0_0_25px_rgba(218,45,70,1)]">
+                <div className="w-full h-full flex items-center justify-center -space-x-2 sm:-space-x-6 transition-all duration-200 scale-105 sm:scale-110 translate-y-10 sm:translate-y-16">
                   <img
                     src="/assets/expedition/echo_boss_wings_slam_left.png"
                     alt="Left Wing Slam on Floor"
@@ -535,57 +476,26 @@ export function WakwakBossCombat(props: ExpeditionCombatProps) {
         )}
 
         <div className={`absolute top-1/4 left-0 z-40 flex items-center transition-transform duration-300 ease-in-out ${isPartyDrawerOpen ? 'translate-x-0' : '-translate-x-[calc(100%-2rem)] lg:-translate-x-[calc(100%-2.5rem)]'}`}>
-          <div className="flex flex-col gap-1 lg:gap-1.5 p-1 lg:p-2 bg-[#151828]/95 backdrop-blur-md border-y-[2px] lg:border-y-[3px] border-r-[2px] lg:border-r-[3px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_rgba(0,0,0,0.4)] lg:shadow-[8px_8px_0px_0px_rgba(0,0,0,0.4)] w-[160px] lg:w-[220px] rounded-r-lg lg:rounded-r-xl">
-            {partyList.map((hero) => {
-              const isTurn = isHeroTurn && activeHero.id === hero.id;
-              const inst = dex[hero.equippedId] || dex['cebuano_gitara']!;
-              return (
-                <div 
-                  key={hero.id}
-                  onClick={() => {
-                    if (isHeroTurn && activeAction === 'none' && !isEndingBattle && hero.hp > 0) {
-                      const idx = turnQueue.findIndex(u => u.isHero && u.unit.id === hero.id);
-                      if (idx !== -1) setTurnIndex(idx);
-                    }
-                  }}
-                  className={`flex items-center gap-1.5 lg:gap-2 p-1 lg:p-1.5 border-[2px] border-[#0f0c0c] transition-all -skew-x-3 cursor-pointer ${
-                    isTurn ? 'bg-[#facc15] text-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c]' : 'bg-[#1e2238]/90 text-white opacity-90 hover:opacity-100 hover:shadow-[2px_2px_0px_0px_#0f0c0c]'
-                  }`}
-                >
-                  <img src={hero.avatar} alt={hero.name} className="w-6 lg:w-8 h-6 lg:h-8 object-cover" />
-                  <div className="flex flex-col flex-1 overflow-hidden">
-                    <div className="font-orbitron font-black text-[8px] lg:text-[10px] flex items-center gap-1">
-                      <span className="truncate">{hero.name}</span>
-                      <span className="text-[6px] lg:text-[8px] shrink-0 flex items-center justify-center bg-[#0f0c0c] p-0.5 border border-[#0f0c0c]">
-                        <img src={`/assets/instruments/${inst.id}.png`} alt={inst.name} className="w-2 lg:w-2.5 h-2 lg:h-2.5 object-contain" />
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1 lg:gap-1.5 text-[7px] lg:text-[8px] font-bold font-orbitron">
-                      <span className="truncate flex items-center">HP: {hero.hp}/{hero.maxHp}{hero.shield > 0 && <span className="text-blue-400 ml-1 flex items-center gap-0.5"><Shield className="w-2 h-2 fill-current" />{hero.shield}</span>}</span>
-                      <span className="truncate">AP: {hero.ap}/{hero.maxAp}</span>
-                    </div>
-                    <div className="flex gap-0.5 mt-0.5">
-                      {Array.from({ length: hero.maxAp }).map((_, i) => (
-                        <div key={i} className={`w-1 lg:w-1.5 h-1 lg:h-1.5 border border-[#0f0c0c] ${i < hero.ap ? (isTurn ? 'bg-[#da2d46]' : 'bg-[#38bdf8]') : 'bg-slate-700'}`} />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="flex flex-col gap-1 lg:gap-1.5 p-1.5 lg:p-2 bg-plum-900 border-y-[3px] border-r-[3px] border-ink w-[170px] lg:w-[220px]">
+            {partyList.map((hero) => (
+              <PartyMemberCard
+                key={hero.id}
+                hero={hero}
+                instrument={dex[hero.equippedId] || dex['cebuano_gitara']}
+                isTurn={isHeroTurn && activeHero.id === hero.id}
+                onSelect={() => selectHeroTurn(hero)}
+              />
+            ))}
           </div>
 
           <button
             onClick={() => setIsPartyDrawerOpen(!isPartyDrawerOpen)}
-            className={`w-8 lg:w-10 h-12 lg:h-16 flex flex-col items-center justify-center border-y-[2px] lg:border-y-[3px] border-r-[2px] lg:border-r-[3px] border-[#0f0c0c] rounded-r-md lg:rounded-r-lg shadow-[2px_2px_0px_0px_#0f0c0c] lg:shadow-[4px_4px_0px_0px_#0f0c0c] transition-all
-              ${isPartyDrawerOpen ? 'bg-[#2a2d43] text-white hover:bg-[#383d5a]' : 'bg-[#facc15] text-[#0f0c0c] hover:bg-[#ffdf3d]'}
-              ${!isPartyDrawerOpen && isHeroTurn ? 'animate-pulse' : ''}
-            `}
+            aria-label={isPartyDrawerOpen ? 'Hide party' : 'Show party'}
+            className="px-btn px-btn-secondary w-8 lg:w-10 h-12 lg:h-16 p-0 flex-col gap-1 [&_svg]:size-4"
           >
-            {isPartyDrawerOpen ? <ChevronLeft className="w-4 lg:w-5 h-4 lg:h-5 font-black" /> : <div className="flex flex-col items-center gap-1"><Users className="w-3 lg:w-4 h-3 lg:h-4 fill-current" /><ChevronRight className="w-2 lg:w-3 h-2 lg:h-3 font-black" /></div>}
+            {isPartyDrawerOpen ? <PxChevronLeft /> : <><PxUsers /><PxChevronRight /></>}
           </button>
         </div>
-
         {/* Mobile Party Display (All 3 Heroes) */}
         <div className="absolute bottom-[20%] left-[50%] -translate-x-1/2 flex items-end justify-center gap-1.5 sm:gap-3 z-20 pointer-events-none transition-all duration-300">
           {partyList.map((hero) => {
@@ -599,11 +509,7 @@ export function WakwakBossCombat(props: ExpeditionCombatProps) {
                     className={`w-24 h-24 sm:w-32 sm:h-32 object-contain ${isActive ? 'drop-shadow-[0px_0px_10px_rgba(250,204,21,0.9)]' : 'drop-shadow-[0px_4px_8px_rgba(0,0,0,0.8)]'}`} 
                   />
                 </div>
-                <span className={`relative z-30 -mt-5 sm:-mt-7 font-orbitron font-black text-[7px] sm:text-[8px] uppercase tracking-wider px-1.5 py-0.5 border-[1.5px] shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 truncate text-center ${
-                  isActive ? 'text-[#facc15] bg-[#0f0c0c] border-[#facc15]' : 'text-slate-300 bg-[#151828] border-slate-600'
-                }`}>
-                  {hero.name}
-                </span>
+                <UnitNameplate side="hero" className={cn('-mt-5 sm:-mt-7', !isActive && 'opacity-70')}>{hero.name}</UnitNameplate>
               </div>
             );
           })}
@@ -625,45 +531,41 @@ export function WakwakBossCombat(props: ExpeditionCombatProps) {
                     className={`flex flex-col items-center gap-0.5 cursor-pointer transition-all ${zIndex}`}
                     onClick={() => e.hp > 0 && setTargetEnemyIndex(idx)}
                   >
-                    <div className="w-12 h-1.5 bg-[#0f0c0c]/80 border border-white/50 flex">
-                      <div className="bg-[#da2d46] h-full transition-all" style={{ width: `${Math.max(0, (e.hp / e.maxHp) * 100)}%` }} />
+                    <div className="w-12 h-1.5 bg-plum-950 border-2 border-ink flex">
+                      <div className="bg-hp h-full transition-all" style={{ width: `${Math.max(0, (e.hp / e.maxHp) * 100)}%` }} />
                     </div>
                     <div className={`relative origin-bottom flex items-center justify-center ${e.hp <= 0 ? 'animate-[bossDeath_2s_ease-in_forwards]' : e.staggered ? 'animate-bounce' : isAttacking ? 'animate-pulse scale-110' : 'transition-all duration-300'}`}>
                       <img src={`/assets/expedition/enemy_frame_${isAttacking ? enemyFrame : 0}.png`} alt={e.name} className={`w-20 h-20 sm:w-24 sm:h-24 object-contain scale-x-[-1] transition-all duration-300 ${isCurrent ? 'drop-shadow-[0px_0px_6px_rgba(250,204,21,1)]' : 'drop-shadow-[0px_6px_12px_rgba(0,0,0,0.8)]'}`} onError={(ev) => { (ev.currentTarget as HTMLElement).style.display = 'none'; }} />
-                      {e.hp <= 0 && <div className="absolute inset-0 bg-red-600/50 mix-blend-color-burn rounded-full animate-[ping_0.5s_cubic-bezier(0,0,0.2,1)_infinite]" />}
+                      {e.hp <= 0 && <div className="absolute inset-0 bg-hp/50 mix-blend-color-burn rounded-full animate-[ping_0.5s_cubic-bezier(0,0,0.2,1)_infinite]" />}
                       {e.staggered && e.hp > 0 && (
                         <div className="absolute inset-x-0 -top-4 z-20 flex items-center justify-center pointer-events-none">
-                          <div className="w-20 h-10 overflow-hidden relative drop-shadow-[0_0_6px_#facc15]">
+                          <div className="w-20 h-10 overflow-hidden relative">
                             <img src="/assets/expedition/stun_spritesheet_tight.png" className="absolute top-0 left-0 h-full w-[500%] max-w-none animate-sprite-5" alt="Stun" />
                           </div>
                         </div>
                       )}
                     </div>
-                    <span className={`font-orbitron font-black text-[7px] uppercase tracking-wider text-[#da2d46] bg-[#0f0c0c] px-1.5 py-0.5 border-[2px] border-[#da2d46] shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 truncate max-w-[80px] text-center ${!isCurrent ? 'opacity-80' : ''}`}>
-                      {e.name}
-                    </span>
+                    <UnitNameplate side="enemy" className={cn('max-w-[80px]', !isCurrent && 'opacity-80')}>{e.name}</UnitNameplate>
                   </div>
                 );
               })
             ) : (
               <div className="flex flex-col items-center gap-0.5">
-                <div className="w-16 h-1.5 bg-[#0f0c0c]/80 border border-white/50 flex shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6">
-                  <div className="bg-[#da2d46] h-full transition-all" style={{ width: `${Math.max(0, (enemy.hp / enemy.maxHp) * 100)}%` }} />
+                <div className="w-16 h-1.5 bg-plum-950 border-2 border-ink flex">
+                  <div className="bg-hp h-full transition-all" style={{ width: `${Math.max(0, (enemy.hp / enemy.maxHp) * 100)}%` }} />
                 </div>
                 <div className={`relative origin-bottom flex items-center justify-center ${enemy.hp <= 0 ? 'animate-[bossDeath_2s_ease-in_forwards]' : enemy.staggered ? 'animate-bounce' : 'transition-all duration-300'}`}>
                   <img src={`/assets/expedition/enemy_frame_${enemyFrame}.png`} alt={enemy.name} className="w-28 h-28 sm:w-32 sm:h-32 object-contain drop-shadow-[0px_8px_16px_rgba(0,0,0,0.8)] scale-x-[-1]" onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }} />
-                  {enemy.hp <= 0 && <div className="absolute inset-0 bg-red-600/50 mix-blend-color-burn rounded-full animate-[ping_0.5s_cubic-bezier(0,0,0.2,1)_infinite]" />}
+                  {enemy.hp <= 0 && <div className="absolute inset-0 bg-hp/50 mix-blend-color-burn rounded-full animate-[ping_0.5s_cubic-bezier(0,0,0.2,1)_infinite]" />}
                   {enemy.staggered && enemy.hp > 0 && (
                     <div className="absolute inset-x-0 -top-6 z-20 flex items-center justify-center pointer-events-none">
-                      <div className="w-24 h-12 overflow-hidden relative drop-shadow-[0_0_8px_#facc15]">
+                      <div className="w-24 h-12 overflow-hidden relative">
                         <img src="/assets/expedition/stun_spritesheet_tight.png" className="absolute top-0 left-0 h-full w-[500%] max-w-none animate-sprite-5" alt="Stun" />
                       </div>
                     </div>
                   )}
                 </div>
-                <span className="font-orbitron font-black text-[8px] uppercase tracking-wider text-[#da2d46] bg-[#0f0c0c] px-2 py-0.5 border-[2px] border-[#da2d46] shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6 truncate max-w-[120px] text-center">
-                  {enemy.name}
-                </span>
+                <UnitNameplate side="enemy">{enemy.name}</UnitNameplate>
               </div>
             )}
           </div>
@@ -672,50 +574,18 @@ export function WakwakBossCombat(props: ExpeditionCombatProps) {
 
       <div className="hidden lg:flex flex-1 items-center justify-between px-12 py-8 relative z-20">
         <div className="flex flex-col gap-4 z-40">
-          {partyList.map((hero) => {
-            const isTurn = isHeroTurn && activeHero.id === hero.id;
-            const inst = dex[hero.equippedId] || dex['cebuano_gitara']!;
-            return (
-              <div 
-                key={hero.id}
-                onClick={() => {
-                  if (isHeroTurn && activeAction === 'none' && !isEndingBattle && hero.hp > 0) {
-                    const idx = turnQueue.findIndex(u => u.isHero && u.unit.id === hero.id);
-                    if (idx !== -1) setTurnIndex(idx);
-                  }
-                }}
-                className={`flex items-center gap-3 p-3 border-[4px] border-[#0f0c0c] transition-all -skew-x-6 cursor-pointer hover:scale-[1.02] ${
-                  isTurn ? 'bg-[#facc15] text-[#0f0c0c] scale-105 shadow-[6px_6px_0px_0px_#0f0c0c]' : 'bg-[#1e2238] text-white opacity-80 hover:opacity-100 hover:shadow-[4px_4px_0px_0px_#0f0c0c]'
-                }`}
-              >
-                <img src={hero.avatar} alt={hero.name} className="w-14 h-14 object-cover" />
-                <div className="flex flex-col">
-                  <div className="font-orbitron font-black text-sm flex items-center gap-2">
-                    <span>{hero.name}</span>
-                    <span className="text-xs bg-white border border-[#0f0c0c] w-5 h-5 flex items-center justify-center overflow-hidden">
-                      <img src={`/assets/instruments/${inst.id}.png`} alt={inst.name} className="w-full h-full object-contain scale-110 mix-blend-multiply" />
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-2xs font-bold font-orbitron">
-                    <span className="flex items-center">HP: {hero.hp}/{hero.maxHp}{hero.shield > 0 && <span className="text-blue-400 ml-1 flex items-center gap-0.5"><Shield className="w-2.5 h-2.5 fill-current" />{hero.shield}</span>}</span>
-                    <span>AP: {hero.ap}/{hero.maxAp}</span>
-                  </div>
-                  <div className="flex gap-1 mt-1">
-                    {Array.from({ length: hero.maxAp }).map((_, i) => (
-                      <div 
-                        key={i} 
-                        className={`w-2.5 h-2.5 border border-[#0f0c0c] ${
-                          i < hero.ap ? (isTurn ? 'bg-[#da2d46]' : 'bg-[#38bdf8]') : 'bg-slate-700'
-                        }`} 
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {partyList.map((hero) => (
+            <div key={hero.id} className="w-64">
+              <PartyMemberCard
+                size="md"
+                hero={hero}
+                instrument={dex[hero.equippedId] || dex['cebuano_gitara']}
+                isTurn={isHeroTurn && activeHero.id === hero.id}
+                onSelect={() => selectHeroTurn(hero)}
+              />
+            </div>
+          ))}
         </div>
-
         {/* Desktop Party Display (All 3 Heroes) */}
         <div className="absolute bottom-[10%] left-[50%] -translate-x-1/2 xl:left-[52%] z-20 pointer-events-none flex items-end justify-center gap-3 lg:gap-5 xl:gap-8 transition-all duration-300">
           {partyList.map((hero) => {
@@ -729,11 +599,7 @@ export function WakwakBossCombat(props: ExpeditionCombatProps) {
                     className={`w-32 h-32 lg:w-44 lg:h-44 xl:w-52 xl:h-52 object-contain ${isActive ? 'drop-shadow-[0px_0px_16px_rgba(250,204,21,0.9)]' : 'drop-shadow-[0px_8px_16px_rgba(0,0,0,0.8)]'}`} 
                   />
                 </div>
-                <span className={`relative z-30 -mt-8 lg:-mt-12 font-orbitron font-black text-[8px] lg:text-xs uppercase tracking-wider px-2.5 py-0.5 border-[2px] shadow-[3px_3px_0px_0px_#0f0c0c] -skew-x-6 text-center ${
-                  isActive ? 'text-[#facc15] bg-[#0f0c0c] border-[#facc15]' : 'text-slate-300 bg-[#151828] border-slate-600'
-                }`}>
-                  {hero.name}
-                </span>
+                <UnitNameplate side="hero" className={cn('-mt-8 lg:-mt-12', !isActive && 'opacity-70')}>{hero.name}</UnitNameplate>
               </div>
             );
           })}
@@ -755,197 +621,60 @@ export function WakwakBossCombat(props: ExpeditionCombatProps) {
                     className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${zIndex}`}
                     onClick={() => e.hp > 0 && setTargetEnemyIndex(idx)}
                   >
-                    <div className="w-24 h-2 bg-[#0f0c0c]/80 border-2 border-white/50 flex shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6">
-                      <div className="bg-[#da2d46] h-full transition-all" style={{ width: `${Math.max(0, (e.hp / e.maxHp) * 100)}%` }} />
+                    <div className="w-24 h-2 bg-plum-950 border-2 border-ink flex">
+                      <div className="bg-hp h-full transition-all" style={{ width: `${Math.max(0, (e.hp / e.maxHp) * 100)}%` }} />
                     </div>
                     <div className={`relative transition-transform flex items-center justify-center ${e.staggered ? 'animate-bounce' : isAttacking ? 'animate-pulse scale-110' : ''}`}>
                       <img src={`/assets/expedition/enemy_frame_${isAttacking ? enemyFrame : 0}.png`} alt={e.name} className={`w-56 h-56 object-contain scale-x-[-1] transition-all duration-300 ${isCurrent ? 'drop-shadow-[0px_0px_12px_rgba(250,204,21,1)]' : 'drop-shadow-[0px_12px_24px_rgba(0,0,0,0.8)]'}`} onError={(ev) => { (ev.currentTarget as HTMLElement).style.display = 'none'; }} />
-                      {e.hp <= 0 && <div className="absolute inset-0 bg-red-600/50 mix-blend-color-burn rounded-full animate-[ping_0.5s_cubic-bezier(0,0,0.2,1)_infinite]" />}
+                      {e.hp <= 0 && <div className="absolute inset-0 bg-hp/50 mix-blend-color-burn rounded-full animate-[ping_0.5s_cubic-bezier(0,0,0.2,1)_infinite]" />}
                       {e.staggered && e.hp > 0 && (
                         <div className="absolute inset-x-0 -top-8 z-20 flex items-center justify-center pointer-events-none">
-                          <div className="w-36 h-18 overflow-hidden relative drop-shadow-[0_0_10px_#facc15]">
+                          <div className="w-36 h-18 overflow-hidden relative">
                             <img src="/assets/expedition/stun_spritesheet_tight.png" className="absolute top-0 left-0 h-full w-[500%] max-w-none animate-sprite-5" alt="Stun" />
                           </div>
                         </div>
                       )}
                     </div>
-                    <span className={`font-orbitron font-black text-sm uppercase tracking-wider text-[#da2d46] bg-[#0f0c0c] px-4 py-1 border-[2px] border-[#da2d46] shadow-[3px_3px_0px_0px_#0f0c0c] -skew-x-6 ${!isCurrent ? 'opacity-80' : ''}`}>
-                      {e.name}
-                    </span>
+                    <UnitNameplate side="enemy" size="md" className={cn(!isCurrent && 'opacity-80')}>{e.name}</UnitNameplate>
                   </div>
                 );
               })
             ) : (
               <div className="flex flex-col items-center gap-1 -translate-x-20 z-10">
-                <div className="w-32 h-2 bg-[#0f0c0c]/80 border-2 border-white/50 flex shadow-[2px_2px_0px_0px_#0f0c0c] -skew-x-6">
-                  <div className="bg-[#da2d46] h-full transition-all" style={{ width: `${Math.max(0, (enemy.hp / enemy.maxHp) * 100)}%` }} />
+                <div className="w-32 h-2 bg-plum-950 border-2 border-ink flex">
+                  <div className="bg-hp h-full transition-all" style={{ width: `${Math.max(0, (enemy.hp / enemy.maxHp) * 100)}%` }} />
                 </div>
                 <div className={`relative transition-transform flex items-center justify-center ${enemy.staggered ? 'animate-bounce' : ''}`}>
                   <img src={`/assets/expedition/enemy_frame_${enemyFrame}.png`} alt={enemy.name} className="w-72 h-72 object-contain drop-shadow-[0px_12px_24px_rgba(0,0,0,0.8)] scale-x-[-1]" onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }} />
-                  {enemy.hp <= 0 && <div className="absolute inset-0 bg-red-600/50 mix-blend-color-burn rounded-full animate-[ping_0.5s_cubic-bezier(0,0,0.2,1)_infinite]" />}
+                  {enemy.hp <= 0 && <div className="absolute inset-0 bg-hp/50 mix-blend-color-burn rounded-full animate-[ping_0.5s_cubic-bezier(0,0,0.2,1)_infinite]" />}
                   {enemy.staggered && enemy.hp > 0 && (
                     <div className="absolute inset-x-0 -top-8 z-20 flex items-center justify-center pointer-events-none">
-                      <div className="w-48 h-24 overflow-hidden relative drop-shadow-[0_0_10px_#facc15]">
+                      <div className="w-48 h-24 overflow-hidden relative">
                         <img src="/assets/expedition/stun_spritesheet_tight.png" className="absolute top-0 left-0 h-full w-[500%] max-w-none animate-sprite-5" alt="Stun" />
                       </div>
                     </div>
                   )}
                 </div>
-                <span className="font-orbitron font-black text-sm uppercase tracking-wider text-[#da2d46] bg-[#0f0c0c] px-4 py-1 border-[2px] border-[#da2d46] shadow-[3px_3px_0px_0px_#0f0c0c] -skew-x-6">
-                  {enemy.name}
-                </span>
+                <UnitNameplate side="enemy" size="md">{enemy.name}</UnitNameplate>
               </div>
             )}
           </div>
         ) : null}
       </div>
 
-      <div className="lg:hidden relative z-40 flex flex-col items-center gap-2 bg-[#1e2238] border-t-[2px] border-[#0f0c0c] shadow-[0px_-2px_0px_0px_#0f0c0c] p-1.5 w-full">
-        <div className="w-full flex flex-row items-center justify-between gap-1 sm:gap-2">
-          <div className="hidden landscape:flex flex-col gap-1 sm:gap-2 shrink-0">
-            <div className="w-full sm:w-auto flex items-center justify-center gap-1 sm:gap-1.5 px-2 py-1 bg-[#0f0c0c] text-[#facc15] border-[2px] border-[#facc15] font-orbitron font-black text-[9px] uppercase tracking-wider -skew-x-6 shrink-0">
-              <Zap className="w-3 h-3 text-[#da2d46] fill-current animate-pulse shrink-0" />
-              <span className="truncate">ACTIVE TURN: {isHeroTurn ? activeHero.name.toUpperCase() : "ENEMY ATTACK PHASE"}</span>
-            </div>
-            {renderTurnBar()}
-          </div>
-
-        <div className="grid grid-cols-3 sm:flex sm:flex-row sm:flex-wrap items-stretch justify-end gap-1 w-full sm:w-auto sm:flex-1">
-          <button onClick={handleCommandAttack} disabled={!isHeroTurn || activeHero.ap < 1 || activeAction !== 'none' || isEndingBattle} className="col-span-1 px-1 py-1 bg-[#da2d46] text-white border-[2px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] font-orbitron font-black text-[7px] sm:text-[9px] uppercase -skew-x-4 hover:bg-[#ff3b56] disabled:opacity-50 disabled:pointer-events-none transition-all flex flex-row items-center justify-center sm:justify-start gap-1 active:translate-y-0.5 active:shadow-none">
-            <Sword className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current shrink-0 hidden xs:block" />
-            <div className="flex flex-col text-center sm:text-left justify-center overflow-hidden w-full">
-              <span className="leading-tight truncate w-full">RHYTHM ATTACK</span>
-              <span className="text-[5px] sm:text-[7px] font-bold opacity-80 leading-tight truncate w-full">(1 AP) Note Highway</span>
-            </div>
-          </button>
-
-          <button onClick={handleCommandSkill} disabled={!isHeroTurn || activeHero.ap < 2 || activeAction !== 'none' || isEndingBattle} className="col-span-1 px-1 py-1 bg-[#facc15] text-[#0f0c0c] border-[2px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] font-orbitron font-black text-[7px] sm:text-[9px] uppercase -skew-x-4 hover:bg-[#ffdf3d] disabled:opacity-50 disabled:pointer-events-none transition-all flex flex-row items-center justify-center sm:justify-start gap-1 active:translate-y-0.5 active:shadow-none">
-            <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current shrink-0 hidden xs:block" />
-            <div className="flex flex-col text-center sm:text-left justify-center overflow-hidden w-full">
-              <span className="leading-tight truncate w-full">OVERDRIVE</span>
-              <span className="text-[5px] sm:text-[7px] font-bold opacity-80 leading-tight truncate w-full">(2 AP) Magic Circle</span>
-            </div>
-          </button>
-
-          <button onClick={handleCommandAttune} disabled={!isHeroTurn || activeAction !== 'none' || isEndingBattle} className="col-span-1 px-1 py-1 bg-[#38bdf8] text-[#0f0c0c] border-[2px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] font-orbitron font-black text-[7px] sm:text-[9px] uppercase -skew-x-4 hover:bg-[#5cd0ff] disabled:opacity-50 disabled:pointer-events-none transition-all flex flex-row items-center justify-center sm:justify-start gap-1 active:translate-y-0.5 active:shadow-none">
-            <Disc className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current shrink-0 hidden xs:block" />
-            <div className="flex flex-col text-center sm:text-left justify-center overflow-hidden w-full">
-              <span className="leading-tight truncate w-full">ATTUNE / CAPTURE</span>
-              <span className="text-[5px] sm:text-[7px] font-bold opacity-80 leading-tight truncate w-full">(HP &lt; 35%) Seal Inst</span>
-            </div>
-          </button>
-
-          <button onClick={handleCommandDefend} disabled={!isHeroTurn || activeAction !== 'none' || isEndingBattle} className="col-span-1 px-1 py-1 bg-[#4ade80] text-[#0f0c0c] border-[2px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] font-orbitron font-black text-[7px] sm:text-[9px] uppercase -skew-x-4 hover:bg-[#6bee9c] disabled:opacity-50 disabled:pointer-events-none transition-all flex flex-row items-center justify-center sm:justify-start gap-1 active:translate-y-0.5 active:shadow-none">
-            <Shield className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current shrink-0 hidden xs:block" />
-            <div className="flex flex-col text-center sm:text-left justify-center overflow-hidden w-full">
-              <span className="leading-tight truncate w-full">DEFEND</span>
-              <span className="text-[5px] sm:text-[7px] font-bold opacity-80 leading-tight truncate w-full">(+2 AP) Block</span>
-            </div>
-          </button>
-
-          <button onClick={() => setShowItemsMenu(true)} disabled={isEndingBattle || !isHeroTurn} className="col-span-1 px-1 py-1 bg-[#7c3aed] text-white border-[2px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] font-orbitron font-black text-[7px] sm:text-[9px] uppercase -skew-x-4 hover:bg-[#9f5ffc] disabled:opacity-50 disabled:pointer-events-none transition-all flex flex-row items-center justify-center sm:justify-start gap-1 active:translate-y-0.5 active:shadow-none">
-            <Package className="w-2.5 h-2.5 sm:w-3 sm:h-3 stroke-[2.5px] shrink-0 hidden xs:block" />
-            <div className="flex flex-col text-center sm:text-left justify-center overflow-hidden w-full">
-              <span className="leading-tight truncate w-full">ITEMS</span>
-              <span className="text-[5px] sm:text-[7px] font-bold opacity-80 leading-tight truncate w-full">Use items</span>
-            </div>
-          </button>
-
-          <button onClick={onFlee} disabled={isEndingBattle} className="col-span-1 px-1 py-1 bg-[#2a2d43] text-white border-[2px] border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] font-orbitron font-black text-[7px] sm:text-[9px] uppercase -skew-x-4 hover:bg-[#383d5a] disabled:opacity-50 disabled:pointer-events-none transition-all flex flex-row items-center justify-center sm:justify-start gap-1 active:translate-y-0.5 active:shadow-none">
-            <ArrowLeft className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0 hidden xs:block" />
-            <div className="flex flex-col text-center sm:text-left justify-center overflow-hidden w-full">
-              <span className="leading-tight truncate w-full">RETREAT</span>
-              <span className="text-[5px] sm:text-[7px] font-bold opacity-80 leading-tight truncate w-full">Flee Battle</span>
-            </div>
-          </button>
-        </div>
-      </div>
-      </div>
-
-      <div className="hidden lg:flex relative z-40 items-center justify-between gap-4 bg-[#1e2238] border-[4px] border-[#0f0c0c] shadow-[0px_-4px_0px_0px_#0f0c0c] p-4">
-        <div className="flex flex-col gap-2 shrink-0">
-          <div className="flex items-center gap-3 px-4 py-2 bg-[#0f0c0c] text-[#facc15] border-[3px] border-[#facc15] font-orbitron font-black text-sm uppercase tracking-wider -skew-x-6 shrink-0">
-            <Zap className="w-4 h-4 text-[#da2d46] fill-current animate-pulse shrink-0" />
-            <span>ACTIVE TURN: {isHeroTurn ? activeHero.name.toUpperCase() : "ENEMY ATTACK PHASE"}</span>
-          </div>
+      <div className="lg:hidden relative z-40 w-full flex flex-col gap-2 bg-plum-900 border-t-[3px] border-ink p-2 sm:p-3 pb-safe">
+        <div className="hidden landscape:flex justify-center">
           {renderTurnBar()}
         </div>
-
-        <div className="flex flex-wrap items-center justify-end gap-3">
-          <button
-            onClick={handleCommandAttack}
-            disabled={!isHeroTurn || activeHero.ap < 1 || activeAction !== 'none' || isEndingBattle}
-            className="px-4 py-3 bg-[#da2d46] text-white border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#ff3b56] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2 active:translate-y-0.5 active:shadow-none"
-          >
-            <Sword className="w-4 h-4 fill-current" />
-            <div className="flex flex-col text-left">
-              <span>RHYTHM ATTACK</span>
-              <span className="text-2xs font-bold opacity-80">(1 AP) Note Highway</span>
-            </div>
-          </button>
-
-          <button
-            onClick={handleCommandSkill}
-            disabled={!isHeroTurn || activeHero.ap < 2 || activeAction !== 'none' || isEndingBattle}
-            className="px-4 py-3 bg-[#facc15] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#ffdf3d] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2 active:translate-y-0.5 active:shadow-none"
-          >
-            <Sparkles className="w-4 h-4 fill-current" />
-            <div className="flex flex-col text-left">
-              <span>OVERDRIVE ULTIMATE</span>
-              <span className="text-2xs font-bold opacity-80">(2 AP) Magic Circle</span>
-            </div>
-          </button>
-
-          <button
-            onClick={handleCommandAttune}
-            disabled={!isHeroTurn || activeAction !== 'none' || isEndingBattle}
-            className="px-4 py-3 bg-[#38bdf8] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#5cd0ff] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2 active:translate-y-0.5 active:shadow-none"
-          >
-            <Disc className="w-4 h-4 fill-current" />
-            <div className="flex flex-col text-left">
-              <span>ATTUNE / CAPTURE</span>
-              <span className="text-2xs font-bold opacity-80">(HP &lt; 35%) Seal Instrument</span>
-            </div>
-          </button>
-
-          <button
-            onClick={handleCommandDefend}
-            disabled={!isHeroTurn || activeAction !== 'none' || isEndingBattle}
-            className="px-4 py-3 bg-[#4ade80] text-[#0f0c0c] border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#6bee9c] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2 active:translate-y-0.5 active:shadow-none"
-          >
-            <Shield className="w-4 h-4 fill-current" />
-            <div className="flex flex-col text-left">
-              <span>DEFEND</span>
-              <span className="text-2xs font-bold opacity-80">(+2 AP) Block &amp; Counter</span>
-            </div>
-          </button>
-
-          <button
-            onClick={() => setShowItemsMenu(true)}
-            disabled={isEndingBattle || !isHeroTurn}
-            className="px-4 py-3 bg-[#7c3aed] text-white border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#9f5ffc] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2 active:translate-y-0.5 active:shadow-none"
-          >
-            <Package className="w-4 h-4 stroke-[2.5px]" />
-            <div className="flex flex-col text-left">
-              <span>ITEMS</span>
-              <span className="text-2xs font-bold opacity-80">Use consumables</span>
-            </div>
-          </button>
-
-          <button
-            onClick={onFlee}
-            disabled={isEndingBattle}
-            className="px-4 py-3 bg-[#2a2d43] text-white border-[4px] border-[#0f0c0c] shadow-[4px_4px_0px_0px_#0f0c0c] font-orbitron font-black text-xs sm:text-sm uppercase -skew-x-6 hover:bg-[#383d5a] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-2 active:translate-y-0.5 active:shadow-none"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <div className="flex flex-col text-left">
-              <span>RETREAT</span>
-              <span className="text-2xs font-bold opacity-80">Flee Battle</span>
-            </div>
-          </button>
-        </div>
+        <CommandMenu commands={combatCommands} />
       </div>
 
+      <div className="hidden lg:flex relative z-40 items-center justify-between gap-4 bg-plum-900 border-t-[3px] border-ink px-4 py-3">
+        <div className="shrink-0">
+          {renderTurnBar()}
+        </div>
+        <CommandMenu commands={combatCommands} />
+      </div>
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[60]">
         <div className="pointer-events-auto w-full max-w-2xl flex items-center justify-center p-4">
           {activeAction === 'rhythm' && (

@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ChevronLeft, Send, BookOpen } from 'lucide-react';
+import { ChevronLeft, Send, BookOpen } from 'pixelarticons/react';
+import { PixelBar, PixelButton, PixelChip, PixelIconButton, type PixelChipTone } from './ui';
+import { playUiSound } from '../hooks/useUiSound';
+import { cn } from '../lib/cn';
 import { useGemini } from '../context/GeminiProvider';
 import { STUDENT_PROFILES, sendStudentMessage, type ChatMessage, type StudentProfile } from '../services/studentService';
 
@@ -76,108 +79,50 @@ export function TeachableStudentScreen({
 
   // ── Student Selection ──────────────────────────────────────────────────────
 
+  const CATEGORY_TONE: Record<string, PixelChipTone> = { percussion: 'perc', string: 'string', wind: 'wood', woodwind: 'wood' };
+
   if (!selectedStudent) {
     return (
-      <div className="min-h-screen bg-[#2a2d43] flex flex-col relative overflow-hidden">
-        <div className="absolute inset-0 z-[-2] opacity-10 pointer-events-none"
-          style={{ backgroundImage: 'radial-gradient(#da2d46 2px, transparent 2px)', backgroundSize: '20px 20px' }} />
-
-        {/* Header */}
-        <div className="relative z-10 px-4 pt-12 pb-4 flex items-center justify-between border-b-[6px] border-[#0f0c0c] bg-[#da2d46] shrink-0">
-          <button
-            onClick={onBack}
-            className="w-10 h-10 bg-[#e0e5ed] border-4 border-[#0f0c0c] flex items-center justify-center shadow-[4px_4px_0px_0px_#0f0c0c] active:translate-y-1 active:shadow-none transition-all -skew-x-6"
-          >
-            <ChevronLeft size={22} className="skew-x-6 stroke-[3px] text-[#0f0c0c]" />
-          </button>
-          <div className="text-center">
-            <h1 className="font-orbitron text-xl font-black tracking-widest text-[#0f0c0c] uppercase"
-              style={{ textShadow: '2px 2px 0px rgba(255,255,255,0.2)' }}>
-              TEACH A STUDENT
-            </h1>
-            <p className="font-space-mono text-[10px] text-[#0f0c0c] tracking-widest uppercase opacity-70">Endgame Content</p>
-          </div>
-          <div className="w-10" />
-        </div>
-
-        {/* Intro */}
-        <div className="px-6 pt-8 pb-4">
-          <div className="bg-[#0f0c0c] border-[4px] border-[#da2d46] p-4 -skew-x-1 shadow-[6px_6px_0px_0px_#da2d46]">
-            <div className="flex items-start gap-3 skew-x-1">
-              <BookOpen size={20} className="text-[#da2d46] shrink-0 mt-0.5" />
-              <p className="font-space-mono text-xs text-[#e0e5ed] leading-relaxed">
-                A student wants to learn about the instruments you've collected.
-                They each have a personality — choose your student and teach them what you know!
-              </p>
+      <div className="min-h-screen bg-plum-950 text-parchment-100 flex flex-col">
+        <header className="bg-plum-900 border-b-[3px] border-ink">
+          <div className="max-w-6xl mx-auto px-3 sm:px-6 pt-10 sm:pt-3 pb-3 flex items-center gap-3">
+            <PixelIconButton icon={<ChevronLeft />} label="Back" sound="ui_back" onClick={onBack} />
+            <div>
+              <h1 className="font-bold text-2xl sm:text-3xl leading-none">Teach a Student</h1>
+              <p className="mt-1 text-sm text-parchment-300">Share what you know about the instruments you've collected.</p>
             </div>
           </div>
-        </div>
+        </header>
 
-        {/* Student cards */}
-        <div className="flex-1 px-6 pb-8 grid grid-cols-1 md:grid-cols-3 gap-6 overflow-y-auto">
-          {STUDENT_PROFILES.map((student) => (
-            <button
-              key={student.id}
-              onClick={() => handleSelectStudent(student)}
-              className="w-full h-full bg-[#e0e5ed] border-[4px] border-[#0f0c0c] p-6 flex flex-col items-center text-center shadow-[8px_8px_0px_0px_#0f0c0c] hover:-translate-y-2 hover:-translate-x-1 hover:shadow-[12px_12px_0px_0px_#0f0c0c] active:translate-y-1 active:translate-x-1 active:shadow-none transition-all group relative overflow-hidden"
-            >
-              {/* Scattered Stickers */}
-              <div className="absolute inset-0 z-0 pointer-events-none mix-blend-multiply opacity-50 group-hover:opacity-90 transition-opacity duration-500 overflow-hidden">
-                {[...Array(9)].map((_, i) => {
-                  // Deterministic pseudo-random positions clustered closer to the middle
-                  const positions = [
-                    { top: '5%', left: '5%', rot: -15, scale: 1.0 },
-                    { top: '15%', right: '5%', rot: 25, scale: 1.05 },
-                    { bottom: '15%', left: '2%', rot: -30, scale: 1.2 },
-                    { bottom: '5%', right: '10%', rot: 15, scale: 0.95 },
-                    { top: '40%', left: '2%', rot: 45, scale: 0.85 },
-                    { top: '50%', right: '2%', rot: -20, scale: 1.0 },
-                    { top: '2%', left: '40%', rot: 10, scale: 1.05 },
-                    { bottom: '2%', left: '35%', rot: -10, scale: 0.95 },
-                    { top: '70%', left: '50%', rot: 35, scale: 0.8 },
-                  ];
-                  const pos = positions[i];
-                  return (
-                    <img 
-                      key={i}
-                      src={`/assets/avatars/${student.id}_sticker_${i + 1}.png?v=2`}
-                      alt=""
-                      className="absolute w-28 h-28 object-contain transition-all duration-500 drop-shadow-sm group-hover:drop-shadow-md"
-                      style={{
-                        top: pos.top,
-                        left: pos.left,
-                        right: pos.right,
-                        bottom: pos.bottom,
-                        transform: `rotate(${pos.rot}deg) scale(${pos.scale})`,
-                        transformOrigin: 'center'
-                      }}
-                    />
-                  );
-                })}
-              </div>
+        <main className="flex-1 max-w-6xl w-full mx-auto p-3 sm:p-6 flex flex-col gap-4">
+          <p className="flex items-start gap-2 text-base text-parchment-300">
+            <BookOpen className="size-5 shrink-0 mt-0.5 text-gold-300" aria-hidden />
+            Each student has a personality. Pick one and answer their questions to earn XP.
+          </p>
 
-              <div className="relative z-10 w-32 h-32 xl:w-48 xl:h-48 bg-[#0f0c0c] border-[4px] border-[#da2d46] flex items-center justify-center shrink-0 shadow-[4px_4px_0px_0px_#da2d46] overflow-hidden mb-6 transition-transform duration-300 group-hover:scale-[1.03]">
-                <img src={student.avatar} alt={student.name} className="w-full h-full object-cover" />
-              </div>
-              
-              <div className="flex flex-col items-center flex-1 w-full relative z-10">
-                <div className="flex flex-col items-center gap-3 mb-4 w-full">
-                  <h3 className="font-orbitron font-black text-2xl xl:text-3xl text-[#0f0c0c] tracking-widest uppercase bg-[#e0e5ed] px-2 -skew-x-2">{student.name}</h3>
-                  <span className="inline-block bg-[#da2d46] border-[2px] border-[#0f0c0c] px-3 py-1 font-space-mono text-[10px] xl:text-xs font-black text-[#0f0c0c] -skew-x-6 shadow-[3px_3px_0px_0px_#0f0c0c]">
-                    <span className="skew-x-6 block">{student.trait}</span>
+          <ul className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {STUDENT_PROFILES.map((student) => (
+              <li key={student.id}>
+                <button
+                  type="button"
+                  onClick={() => { playUiSound('ui_click'); handleSelectStudent(student); }}
+                  className="group px-frame px-frame-plum w-full h-full flex flex-col items-center gap-3 p-4 text-center hover:brightness-110 focus-visible:outline-[3px] focus-visible:outline-gold-300"
+                >
+                  <span className="px-frame px-frame-inset size-36 xl:size-44 overflow-hidden">
+                    <img src={student.avatar} alt="" className="w-full h-full object-cover" />
                   </span>
-                </div>
-                <div className="bg-[#e0e5ed] border-[2px] border-[#0f0c0c] p-3 -skew-x-1 shadow-[4px_4px_0px_0px_#0f0c0c]">
-                  <p className="font-space-mono text-sm xl:text-base text-[#2a2d43] leading-relaxed max-w-[250px] skew-x-1">
-                    Curious about <strong>{student.focusCategory}</strong> instruments.
-                    <br className="hidden md:block" />
-                    <span className="inline-block mt-2 opacity-80 font-bold">Favorite: {student.favoriteInstrument}</span>
-                  </p>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
+                  <span className="font-bold text-2xl leading-none text-parchment-100 group-hover:text-gold-300">{student.name}</span>
+                  <PixelChip tone={CATEGORY_TONE[String(student.focusCategory).toLowerCase()] ?? 'neutral'}>{student.trait}</PixelChip>
+                  <span className="text-sm leading-snug text-parchment-300">
+                    Curious about <strong className="font-semibold text-parchment-100">{student.focusCategory}</strong> instruments.
+                    <span className="block mt-1 text-parchment-500">Favorite: {student.favoriteInstrument}</span>
+                  </span>
+                  <span className="mt-auto px-btn px-btn-secondary min-h-10 px-4 text-sm">Teach {student.name}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </main>
       </div>
     );
   }
@@ -185,107 +130,72 @@ export function TeachableStudentScreen({
   // ── Chat View ──────────────────────────────────────────────────────────────
 
   return (
-    <div className="h-screen bg-[#2a2d43] flex flex-col relative overflow-hidden">
-      <div className="absolute inset-0 z-[-2] opacity-10 pointer-events-none"
-        style={{ backgroundImage: 'radial-gradient(#da2d46 2px, transparent 2px)', backgroundSize: '20px 20px' }} />
-
-      {/* Chat Header */}
-      <div className="relative z-10 px-4 pt-12 pb-3 flex items-center gap-3 border-b-[6px] border-[#0f0c0c] bg-[#0f0c0c] shrink-0">
-        <button
-          onClick={() => setSelectedStudent(null)}
-          className="w-9 h-9 bg-[#e0e5ed] border-[3px] border-[#da2d46] flex items-center justify-center shadow-[3px_3px_0px_0px_#da2d46] active:translate-y-0.5 active:shadow-none transition-all -skew-x-6 shrink-0"
-        >
-          <ChevronLeft size={18} className="skew-x-6 stroke-[3px] text-[#0f0c0c]" />
-        </button>
-
-        <div className="w-10 h-10 bg-[#2a2d43] border-[3px] border-[#da2d46] flex items-center justify-center shrink-0 shadow-[3px_3px_0px_0px_#da2d46] overflow-hidden">
-          <img src={selectedStudent.avatar} alt={selectedStudent.name} className="w-full h-full object-cover" />
-        </div>
-
-        <div className="flex-1">
-          <p className="font-orbitron font-black text-sm text-[#e0e5ed] tracking-wider uppercase">{selectedStudent.name}</p>
-          <div className="flex items-center gap-2">
-            <span className="inline-block bg-[#da2d46] border-[2px] border-[#0f0c0c] px-1.5 py-0 font-space-mono text-[8px] font-black text-[#0f0c0c]">
-              {selectedStudent.trait}
-            </span>
-            <span className="font-space-mono text-[9px] text-[#888ea1]">
-              {exchangeCount}/{SESSION_EXCHANGE_LIMIT} exchanges
-            </span>
+    <div className="h-screen bg-plum-950 text-parchment-100 flex flex-col">
+      <header className="shrink-0 bg-plum-900 border-b-[3px] border-ink">
+        <div className="max-w-3xl mx-auto px-3 pt-10 sm:pt-3 pb-3 flex items-center gap-3">
+          <PixelIconButton icon={<ChevronLeft />} label="Choose another student" sound="ui_back" onClick={() => setSelectedStudent(null)} />
+          <span className="px-frame px-frame-inset px-frame-sm size-11 shrink-0 overflow-hidden">
+            <img src={selectedStudent.avatar} alt="" className="w-full h-full object-cover" />
+          </span>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-lg leading-none">{selectedStudent.name}</p>
+            <p className="mt-1 text-xs text-parchment-500">{selectedStudent.trait}</p>
           </div>
+          <PixelBar
+            className="w-28 sm:w-40"
+            kind="heal"
+            height={8}
+            segments={20}
+            value={exchangeCount}
+            max={SESSION_EXCHANGE_LIMIT}
+            label="Lesson"
+            valueText={`${exchangeCount}/${SESSION_EXCHANGE_LIMIT}`}
+          />
         </div>
-      </div>
+      </header>
 
-      {/* Progress bar */}
-      <div className="h-1.5 bg-[#0f0c0c] shrink-0">
-        <div
-          className="h-full bg-[#da2d46] transition-all duration-500"
-          style={{ width: `${(exchangeCount / SESSION_EXCHANGE_LIMIT) * 100}%` }}
-        />
-      </div>
-
-      {/* Chat messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-        {history.map((msg, i) => (
-          <div key={i} className={`flex ${msg.role === 'player' ? 'justify-end' : 'justify-start'}`}>
-            {msg.role === 'student' && (
-              <div className="w-7 h-7 bg-[#0f0c0c] border-[2px] border-[#da2d46] flex items-center justify-center mr-2 shrink-0 mt-1 overflow-hidden">
-                <img src={selectedStudent.avatar} alt={selectedStudent.name} className="w-full h-full object-cover" />
-              </div>
-            )}
-            <div
-              className={`max-w-[80%] border-[3px] border-[#0f0c0c] px-3 py-2 shadow-[3px_3px_0px_0px_#0f0c0c] ${
-                msg.role === 'player'
-                  ? 'bg-[#da2d46] text-[#0f0c0c] -skew-x-2'
-                  : 'bg-[#e0e5ed] text-[#0f0c0c] skew-x-1'
-              }`}
-            >
+      <div ref={scrollRef} className="flex-1 overflow-y-auto">
+        <div className="max-w-3xl mx-auto px-3 py-4 flex flex-col gap-3">
+          {history.map((msg, i) => (
+            <div key={i} className={cn('flex items-end gap-2', msg.role === 'player' ? 'justify-end' : 'justify-start')}>
               {msg.role === 'student' && (
-                <p className="font-orbitron font-black text-[8px] text-[#da2d46] tracking-widest uppercase mb-1 -skew-x-1">
-                  {selectedStudent.name}
-                </p>
+                <span className="size-8 shrink-0 border-2 border-ink overflow-hidden">
+                  <img src={selectedStudent.avatar} alt="" className="w-full h-full object-cover" />
+                </span>
               )}
-              <p className={`font-space-mono text-xs leading-relaxed ${msg.role === 'player' ? 'skew-x-2 font-bold' : '-skew-x-1'}`}>
-                {msg.content}
-              </p>
+              <div className={cn('px-frame max-w-[80%] px-3 py-2', msg.role === 'player' ? 'bg-xp text-ink' : 'px-frame-parchment')} style={msg.role === 'player' ? { ['--frame-bg' as string]: 'var(--color-xp)' } : undefined}>
+                {msg.role === 'student' && <p className="mb-1 text-xs font-semibold text-wood-700">{selectedStudent.name}</p>}
+                <p className="text-sm leading-snug">{msg.content}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
 
-        {/* Typing indicator */}
-        {isTyping && (
-          <div className="flex justify-start items-center gap-2">
-            <div className="w-7 h-7 bg-[#0f0c0c] border-[2px] border-[#da2d46] flex items-center justify-center shrink-0 overflow-hidden">
-              <img src={selectedStudent.avatar} alt={selectedStudent.name} className="w-full h-full object-cover" />
+          {isTyping && (
+            <div className="flex items-end gap-2" aria-live="polite">
+              <span className="size-8 shrink-0 border-2 border-ink overflow-hidden">
+                <img src={selectedStudent.avatar} alt="" className="w-full h-full object-cover" />
+              </span>
+              <div className="px-frame px-frame-parchment flex items-center gap-1.5 px-4 py-3" aria-label={`${selectedStudent.name} is typing`}>
+                {[0, 1, 2].map(i => (
+                  <span key={i} className="size-2 bg-wood-500 animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />
+                ))}
+              </div>
             </div>
-            <div className="bg-[#e0e5ed] border-[3px] border-[#0f0c0c] px-4 py-2 shadow-[3px_3px_0px_0px_#0f0c0c] flex items-center gap-1.5">
-              {[0, 1, 2].map(i => (
-                <div
-                  key={i}
-                  className="w-2 h-2 bg-[#888ea1] rounded-full animate-bounce"
-                  style={{ animationDelay: `${i * 150}ms` }}
-                />
-              ))}
-            </div>
-          </div>
-        )}
+          )}
 
-        {/* Session complete */}
-        {sessionDone && !isTyping && (
-          <div className="flex justify-center pt-2">
-            <button
-              onClick={onSessionComplete}
-              className="px-6 py-3 bg-[#da2d46] border-[4px] border-[#0f0c0c] font-orbitron font-black text-sm tracking-widest text-[#0f0c0c] shadow-[6px_6px_0px_0px_#0f0c0c] hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_#0f0c0c] active:translate-y-1 active:shadow-none transition-all uppercase -skew-x-6"
-            >
-              <span className="skew-x-6 block">END SESSION (+30 XP)</span>
-            </button>
-          </div>
-        )}
+          {sessionDone && !isTyping && (
+            <div className="flex justify-center pt-2">
+              <PixelButton variant="primary" size="lg" onClick={onSessionComplete}>
+                Finish Lesson · +30 XP
+              </PixelButton>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Input bar */}
       {!sessionDone && (
-        <div className="relative z-10 border-t-[4px] border-[#0f0c0c] bg-[#0f0c0c] px-4 pt-4 pb-8 shrink-0">
-          <div className="flex gap-3 h-12">
+        <div className="shrink-0 bg-plum-900 border-t-[3px] border-ink">
+          <div className="max-w-3xl mx-auto px-3 pt-3 pb-6 flex gap-2">
             <input
               ref={inputRef}
               value={inputValue}
@@ -293,15 +203,17 @@ export function TeachableStudentScreen({
               onKeyDown={handleKeyDown}
               disabled={isTyping}
               placeholder={`Teach ${selectedStudent.name}...`}
-              className="flex-1 bg-[#2a2d43] border-[3px] border-[#888ea1] text-[#e0e5ed] font-space-mono text-sm px-4 py-2 focus:border-[#da2d46] focus:outline-none placeholder:text-[#888ea1] disabled:opacity-50"
+              className="flex-1 h-12 px-3 bg-plum-950 border-[3px] border-ink text-base text-parchment-100 placeholder:text-parchment-500 focus:border-gold-300 focus:outline-none disabled:opacity-50"
             />
-            <button
-              onClick={handleSend}
+            <PixelIconButton
+              variant="primary"
+              className="size-12"
+              icon={<Send />}
+              label="Send"
+              sound={null}
               disabled={!inputValue.trim() || isTyping}
-              className="w-14 h-full bg-[#da2d46] border-[3px] border-[#da2d46] flex items-center justify-center text-[#0f0c0c] shadow-[3px_3px_0px_0px_#da2d46] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#e0e5ed] transition-colors active:translate-y-0.5 active:shadow-none"
-            >
-              <Send size={20} className="stroke-[2.5px]" />
-            </button>
+              onClick={handleSend}
+            />
           </div>
         </div>
       )}

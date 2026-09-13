@@ -154,7 +154,7 @@ export function StringRhythm({ profile, notes, gameState, onLaneHit, activeLanes
   return (
     // Base container replaced with heavy border and solid background
     <div 
-      className="w-full h-full relative overflow-hidden bg-[#2a2d43] border-[6px] border-[#0f0c0c] touch-none select-none"
+      className="w-full h-full relative overflow-hidden bg-plum-800 border-[3px] border-ink touch-none select-none"
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchEnd}
@@ -171,8 +171,8 @@ export function StringRhythm({ profile, notes, gameState, onLaneHit, activeLanes
               <div 
                 className={`h-full border-l-[6px] md:border-l-[8px] transition-all duration-75
                   ${notesOnString.some(n => activeStrings.has(n.originalIdx)) 
-                    ? 'animate-vibrate-x border-[#f0dde0] opacity-100' 
-                    : 'border-[#0f0c0c] opacity-80'}
+                    ? 'animate-vibrate-x border-parchment-300 opacity-100' 
+                    : 'border-ink opacity-80'}
                 `}
               />
             </div>
@@ -207,13 +207,13 @@ export function StringRhythm({ profile, notes, gameState, onLaneHit, activeLanes
                     }}
                   >
                     {/* Fret Marker - Replaced circle with a heavy skewed tag */}
-                    <div className={`shrink-0 relative z-10 font-space-mono text-[10px] md:text-xs font-black leading-none p-1 w-12 h-12 md:w-16 md:h-16 flex flex-col items-center justify-center text-center -skew-x-6 border-[3px] md:border-[4px] border-[#0f0c0c] transition-all duration-75 ${
+                    <div className={`shrink-0 relative z-10  text-xs md:text-xs font-bold leading-none p-1 w-12 h-12 md:w-16 md:h-16 flex flex-col items-center justify-center text-center  border-[3px] md:border-[3px] border-ink transition-all duration-75 ${
                       isActive 
-                        ? 'bg-[#da2d46] text-[#0f0c0c] scale-110 shadow-none translate-y-1 translate-x-1' 
-                        : 'bg-[#2a2d43] text-[#e0e5ed] shadow-[4px_4px_0px_0px_#0f0c0c]'
+                        ? 'bg-gold-500 text-ink scale-110 translate-y-1' 
+                        : 'bg-plum-800 text-parchment-100 '
                     }`}>
                       
-                      <span className="pointer-events-none relative z-20 skew-x-6">{note.note}</span>
+                      <span className="pointer-events-none relative z-20">{note.note}</span>
 
                       {/* Approach "Circles" - Restyled as heavy square borders snapping inward */}
                       {fallingNotes.map(n => {
@@ -229,8 +229,8 @@ export function StringRhythm({ profile, notes, gameState, onLaneHit, activeLanes
                         return (
                           <div 
                             key={n.id}
-                            className={`absolute -inset-[2px] md:-inset-[4px] border-[4px] md:border-[6px] transition-colors pointer-events-none z-0 ${
-                              n.missed ? 'border-[#888ea1]' : isPerfectWindow ? 'border-[#f0dde0]' : 'border-[#da2d46]'
+                            className={`absolute -inset-[2px] md:-inset-[4px] border-[3px] md:border-[3px] transition-colors pointer-events-none z-0 ${
+                              n.missed ? 'border-plum-600' : isPerfectWindow ? 'border-parchment-100' : 'border-gold-300'
                             }`}
                             style={{ opacity, transform: `scale(${approachScale})` }}
                           />
@@ -246,15 +246,15 @@ export function StringRhythm({ profile, notes, gameState, onLaneHit, activeLanes
       </div>
 
       {!gameState.isPlaying && !gameState.isFinished && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#0f0c0c]/80 z-50 pointer-events-none backdrop-blur-sm">
+        <div className="absolute inset-0 flex items-center justify-center bg-plum-950/80 z-50 pointer-events-none">
           <div className="text-center flex flex-col items-center p-6">
-            <div className="bg-[#da2d46] border-[6px] border-[#0f0c0c] px-8 py-3 -skew-x-6 shadow-[8px_8px_0px_0px_#0f0c0c] mb-6">
-              <h2 className="font-orbitron font-black text-3xl md:text-4xl text-[#0f0c0c] skew-x-6 uppercase tracking-widest">
+            <div className="bg-gold-500 text-ink border-[3px] border-ink px-8 py-3 mb-6">
+              <h2 className="font-bold text-3xl md:text-4xl text-ink">
                 Sandbox Mode
               </h2>
             </div>
-            <p className="font-space-mono font-bold text-[#e0e5ed] text-sm md:text-base bg-[#2a2d43] border-[3px] border-[#0f0c0c] px-6 py-4 -skew-x-2 shadow-[4px_4px_0px_0px_#0f0c0c] max-w-sm">
-              <span className="skew-x-2 block">Swipe across the strings to play naturally. If you strum a string when a rhythm target aligns, you score!</span>
+            <p className="font-bold text-parchment-100 text-sm md:text-base bg-plum-800 border-[3px] border-ink px-6 py-4 max-w-sm">
+              <span className="block">Swipe across the strings to play naturally. If you strum a string when a rhythm target aligns, you score!</span>
             </p>
           </div>
         </div>

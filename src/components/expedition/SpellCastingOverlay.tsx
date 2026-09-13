@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Sparkles, Star, Zap, CircleDot, Wand2, Slash, Circle } from 'lucide-react';
+import { Sparkles, Star, Zap, Circle as CircleDot, Wand as Wand2, Close as Slash, Circle } from 'pixelarticons/react';
 import { audioEngine } from '../../services/audioSynth';
 import { type HeroProfile, type HarmonydexEntry } from '../../types/expedition';
 
@@ -299,29 +299,29 @@ export function SpellCastingOverlay({ hero, instrument, onComplete }: SpellCasti
       }}
     >
       {/* ── Overdrive Magic Circle Header ── */}
-      <div className="w-full bg-[#0f0c0c]/95 border-[2px] sm:border-[3px] border-[#facc15] shadow-[0_0_30px_rgba(250,204,21,0.4)] p-2.5 sm:p-3 mb-3 flex flex-col items-center text-center relative overflow-hidden backdrop-blur-md rounded-sm">
-        <div className="absolute inset-0 opacity-15 pointer-events-none bg-[radial-gradient(#facc15_1px,transparent_1px)] [background-size:16px_16px]" />
+      <div className="w-full bg-plum-950/95 border-[2px] sm:border-[3px] border-gold-300 p-2.5 sm:p-3 mb-3 flex flex-col items-center text-center relative overflow-hidden">
+        
         
         <div className="flex items-center gap-2 relative z-10">
-          <Wand2 className="w-4 h-4 sm:w-5 sm:h-5 text-[#facc15] animate-pulse" />
-          <span className="text-[#facc15] font-orbitron font-black text-xs sm:text-sm uppercase tracking-widest drop-shadow-[0_0_8px_#facc15]">
+          <Wand2 className="w-4 h-4 sm:w-5 sm:h-5 text-gold-300 animate-pulse" />
+          <span className="text-gold-300 font-bold text-xs sm:text-sm">
             {instrument.name.toUpperCase()} • {modeData.title}
           </span>
-          <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[#facc15] animate-pulse" />
+          <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-gold-300 animate-pulse" />
         </div>
         
-        <span className="text-slate-200 text-2xs sm:text-xs font-bold mt-1 uppercase tracking-wider bg-[#da2d46]/90 px-2.5 py-0.5 rounded-sm border border-[#facc15]/40 shadow-sm relative z-10 animate-bounce">
+        <span className="text-parchment-100 text-xs sm:text-xs font-bold mt-1 bg-plum-950 px-2.5 py-1 border-2 border-gold-300 relative z-10">
           {modeData.subtitle}
         </span>
 
         {/* Timer & Score Pill */}
         <div className="flex items-center gap-3 mt-2.5 w-full justify-center relative z-10">
-          <div className="px-3 py-1 bg-[#e0e5ed] text-[#0f0c0c] font-orbitron font-black text-xs sm:text-sm -skew-x-6 border border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] flex items-center gap-1">
+          <div className="px-3 py-1 bg-parchment-100 text-ink font-bold text-xs sm:text-sm border border-ink flex items-center gap-1">
             <span>⏱️</span>
             <span>{(timeLeft / 1000).toFixed(1)}S</span>
           </div>
-          <div className="px-3 py-1 bg-[#facc15] text-[#0f0c0c] font-orbitron font-black text-xs sm:text-sm -skew-x-6 border border-[#0f0c0c] shadow-[2px_2px_0px_0px_#0f0c0c] flex items-center gap-1">
-            <Zap className="w-3.5 h-3.5 fill-[#0f0c0c]" />
+          <div className="px-3 py-1 bg-gold-500 text-ink font-bold text-xs sm:text-sm border border-ink flex items-center gap-1">
+            <Zap className="w-3.5 h-3.5 fill-ink" />
             <span>POWER: {currentPoints}/{MAX_POINTS}</span>
           </div>
         </div>
@@ -330,21 +330,21 @@ export function SpellCastingOverlay({ hero, instrument, onComplete }: SpellCasti
       {/* ── Magic Circle Arena ── */}
       <div 
         ref={containerRef}
-        className="relative w-full aspect-square max-h-[46vh] bg-[#0c0f1d]/95 border-[3px] border-[#38bdf8]/60 shadow-[0_0_40px_rgba(56,189,248,0.3)] rounded-full flex items-center justify-center cursor-pointer overflow-hidden backdrop-blur-xl"
+        className="relative w-full aspect-square max-h-[46vh] bg-plum-950/95 border-[3px] border-xp/60 rounded-full flex items-center justify-center cursor-pointer overflow-hidden"
       >
         {/* Outer Rotating Sacred Geometry Ring */}
-        <div className="absolute inset-2 rounded-full border-[2px] border-dashed border-[#facc15]/30 animate-[spin_16s_linear_infinite] pointer-events-none" />
+        <div className="absolute inset-2 rounded-full border-[2px] border-dashed border-gold-300/30 animate-[spin_16s_linear_infinite] pointer-events-none" />
         {/* Inner Counter-Rotating Runes Ring */}
-        <div className="absolute inset-8 rounded-full border border-[#38bdf8]/40 animate-[spin_10s_linear_infinite_reverse] pointer-events-none flex items-center justify-center">
-          <div className="w-3/4 h-3/4 rounded-full border border-dotted border-[#da2d46]/30" />
+        <div className="absolute inset-8 rounded-full border border-xp/40 animate-[spin_10s_linear_infinite_reverse] pointer-events-none flex items-center justify-center">
+          <div className="w-3/4 h-3/4 rounded-full border border-dotted border-hp/30" />
         </div>
 
         {/* Center Core Pulse */}
         <div className="absolute flex flex-col items-center justify-center pointer-events-none">
           <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(250,204,21,0.4)_0%,transparent_70%)] animate-pulse flex items-center justify-center">
-            <ModeIcon className="w-8 h-8 sm:w-10 sm:h-10 text-[#facc15] drop-shadow-[0_0_12px_#facc15]" />
+            <ModeIcon className="w-8 h-8 sm:w-10 sm:h-10 text-gold-300" />
           </div>
-          <span className="font-orbitron font-bold text-2xs sm:text-xs text-[#38bdf8] uppercase tracking-widest mt-1 opacity-80">
+          <span className="font-bold text-xs sm:text-xs text-xp mt-1 opacity-80">
             {hero.name}
           </span>
         </div>
@@ -352,13 +352,13 @@ export function SpellCastingOverlay({ hero, instrument, onComplete }: SpellCasti
         {/* ── MODE 1: ORBIT RESONANCE RINGS & ORB ── */}
         {mode === 'orbit' && (
           <>
-            <div className="absolute w-[76%] h-[76%] rounded-full border-[2px] border-[#facc15]/40 pointer-events-none" />
+            <div className="absolute w-[76%] h-[76%] rounded-full border-[2px] border-gold-300/40 pointer-events-none" />
             <div 
               className="absolute top-1/2 left-1/2 w-0 h-0 pointer-events-none"
               style={{ transform: `rotate(${currentOrbitAngle}deg)` }}
             >
-              <div className="absolute -top-3 sm:-top-4 left-[38%] -translate-x-1/2 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-[#facc15] shadow-[0_0_20px_#facc15,0_0_40px_#ff8000] flex items-center justify-center border-2 border-white">
-                <div className="w-2 h-2 rounded-full bg-white animate-ping" />
+              <div className="absolute -top-3 sm:-top-4 left-[38%] -translate-x-1/2 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gold-500 flex items-center justify-center border-2 border-parchment-300">
+                <div className="w-2 h-2 rounded-full bg-parchment-100 animate-ping" />
               </div>
             </div>
 
@@ -381,16 +381,16 @@ export function SpellCastingOverlay({ hero, instrument, onComplete }: SpellCasti
                   <div
                     className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full flex items-center justify-center border-[2px] sm:border-[3px] transition-all duration-200 ${
                       r.lit
-                        ? 'bg-[#facc15] border-white scale-110 shadow-[0_0_25px_#facc15]'
+                        ? 'bg-gold-500 border-parchment-300 scale-110 '
                         : isAligned
-                        ? 'bg-[#da2d46]/80 border-[#facc15] scale-125 shadow-[0_0_30px_#da2d46] animate-pulse'
-                        : 'bg-[#1e2238]/90 border-[#38bdf8]/60 shadow-md opacity-80 hover:opacity-100'
+                        ? 'bg-hp/80 border-gold-300 scale-125 animate-pulse'
+                        : 'bg-plum-800/90 border-xp/60 shadow-md opacity-80 hover:opacity-100'
                     }`}
                   >
                     {r.lit ? (
-                      <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-[#0f0c0c] fill-[#0f0c0c]" />
+                      <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-ink fill-ink" />
                     ) : (
-                      <span className="font-orbitron font-black text-xs sm:text-sm text-white">
+                      <span className="font-bold text-xs sm:text-sm text-parchment-100">
                         {r.id + 1}
                       </span>
                     )}
@@ -404,7 +404,7 @@ export function SpellCastingOverlay({ hero, instrument, onComplete }: SpellCasti
         {/* ── MODE 2 & 3: LINEAR & CIRCLE STRIKE (THE RESTORED QTEs) ── */}
         {(mode === 'linear' || mode === 'circle') && (
           <>
-            <div className="absolute inset-0 opacity-15 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#38bdf8 2px, transparent 2px)', backgroundSize: '20px 20px' }} />
+
             {dots.map((dot) => {
               const isHit = hitIds.has(dot.id);
               const isSpawned = dot.id < spawnedCount;
@@ -420,8 +420,8 @@ export function SpellCastingOverlay({ hero, instrument, onComplete }: SpellCasti
                   }`}
                   style={{ left: `${dot.x}%`, top: `${dot.y}%` }}
                 >
-                  <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full border-2 border-[#38bdf8] flex items-center justify-center bg-[#151828]/90 shadow-[0_0_12px_#38bdf8]">
-                    <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-[#da2d46] shadow-[0_0_8px_#da2d46]" />
+                  <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full border-2 border-xp flex items-center justify-center bg-plum-900/90">
+                    <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-hp" />
                   </div>
                 </div>
               );
@@ -463,22 +463,22 @@ export function SpellCastingOverlay({ hero, instrument, onComplete }: SpellCasti
                   style={{ left: `${r.x}%`, top: `${r.y}%` }}
                 >
                   {isCurrentTarget && (
-                    <div className="absolute inset-0 -m-3 rounded-full border-2 border-[#facc15] animate-ping pointer-events-none" />
+                    <div className="absolute inset-0 -m-3 rounded-full border-2 border-gold-300 animate-ping pointer-events-none" />
                   )}
 
                   <div
                     className={`w-12 h-12 sm:w-15 sm:h-15 rounded-full flex items-center justify-center border-[2px] sm:border-[3px] transition-all duration-200 ${
                       r.lit
-                        ? 'bg-[#facc15] border-white scale-110 shadow-[0_0_25px_#facc15]'
+                        ? 'bg-gold-500 border-parchment-300 scale-110 '
                         : isCurrentTarget
-                        ? 'bg-[#da2d46] border-[#facc15] scale-125 shadow-[0_0_30px_#da2d46] animate-pulse'
-                        : 'bg-[#151828]/90 border-slate-600 opacity-60'
+                        ? 'bg-hp border-gold-300 scale-125 animate-pulse'
+                        : 'bg-plum-900/90 border-plum-600 opacity-60'
                     }`}
                   >
                     {r.lit ? (
-                      <Star className="w-6 h-6 text-[#0f0c0c] fill-[#0f0c0c]" />
+                      <Star className="w-6 h-6 text-ink fill-ink" />
                     ) : (
-                      <span className="font-orbitron font-black text-sm sm:text-base text-white">
+                      <span className="font-bold text-sm sm:text-base text-parchment-100">
                         {r.id + 1}
                       </span>
                     )}
@@ -491,13 +491,13 @@ export function SpellCastingOverlay({ hero, instrument, onComplete }: SpellCasti
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none flex flex-col items-center justify-center text-center z-20">
               <div className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border-2 transition-all duration-200 ${
                 isHolding
-                  ? 'bg-[#facc15]/95 border-white text-[#0f0c0c] scale-110 shadow-[0_0_35px_#facc15] animate-pulse font-black'
-                  : 'bg-[#0f0c0c]/90 border-[#facc15] text-[#facc15] scale-100 shadow-[0_0_15px_rgba(250,204,21,0.4)] animate-bounce font-bold'
+                  ? 'bg-gold-500/95 border-parchment-300 text-ink scale-110 animate-pulse font-bold'
+                  : 'bg-plum-950/90 border-gold-300 text-gold-300 scale-100 animate-bounce font-bold'
               }`}>
-                <span className="font-orbitron text-xs sm:text-sm tracking-wider uppercase flex items-center gap-1.5">
-                  <Star className={`w-4 h-4 ${isHolding ? 'fill-[#0f0c0c]' : 'fill-[#facc15]'}`} />
+                <span className="text-xs sm:text-sm flex items-center gap-1.5">
+                  <Star className={`w-4 h-4 ${isHolding ? 'fill-ink' : 'fill-gold-300'}`} />
                   {isHolding ? '⚡ CHANNELING... ⚡' : '✨ HOLD TO CHANNEL ✨'}
-                  <Star className={`w-4 h-4 ${isHolding ? 'fill-[#0f0c0c]' : 'fill-[#facc15]'}`} />
+                  <Star className={`w-4 h-4 ${isHolding ? 'fill-ink' : 'fill-gold-300'}`} />
                 </span>
               </div>
             </div>
@@ -511,7 +511,7 @@ export function SpellCastingOverlay({ hero, instrument, onComplete }: SpellCasti
             className="absolute -translate-x-1/2 -translate-y-full pointer-events-none animate-out fade-out slide-out-to-top duration-500 z-30"
             style={{ left: `${effect.x}%`, top: `${effect.y}%` }}
           >
-            <span className="font-orbitron font-black text-sm sm:text-base text-[#facc15] drop-shadow-[0_2px_4px_#0f0c0c] uppercase tracking-wider bg-[#0f0c0c]/80 px-2 py-0.5 rounded border border-[#facc15]">
+            <span className="font-bold text-sm sm:text-base text-gold-300 drop-shadow-[0_2px_4px_#0f0c0c] bg-plum-950/80 px-2 py-0.5 border border-gold-300">
               {effect.text}
             </span>
           </div>

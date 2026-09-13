@@ -120,8 +120,8 @@ export function WingSlamCounterMinigame({
   return (
     <div className="w-full relative z-50 flex flex-col items-center justify-center pointer-events-auto select-none animate-fadeIn">
       {/* Title Header */}
-      <div className="bg-[#da2d46] border-[4px] border-[#0f0c0c] px-6 py-2 shadow-[4px_4px_0px_0px_#0f0c0c] -skew-x-12 mb-6 animate-pulse">
-        <h3 className="font-orbitron font-black text-lg sm:text-2xl text-white uppercase tracking-wider text-center flex items-center gap-2">
+      <div className="bg-hp border-[3px] border-ink px-6 py-2 mb-6 animate-pulse">
+        <h3 className="font-bold text-lg sm:text-2xl text-parchment-100 text-center flex items-center gap-2">
           <span>⚡</span>
           <span>WINGS EXPOSED! COUNTER-ATTACK QTE!</span>
           <span>⚡</span>
@@ -129,22 +129,22 @@ export function WingSlamCounterMinigame({
       </div>
 
       {!isFinished ? (
-        <div className="flex flex-col items-center gap-6 max-w-md w-full bg-[#1e2238]/95 border-[4px] border-[#0f0c0c] p-6 shadow-[8px_8px_0px_0px_#0f0c0c] relative overflow-hidden">
+        <div className="flex flex-col items-center gap-6 max-w-md w-full bg-plum-800/95 border-[3px] border-ink p-6 relative overflow-hidden">
           {/* Progress Beat Indicator */}
-          <div className="flex items-center justify-between w-full pb-3 border-b-2 border-white/20">
-            <span className="font-orbitron font-bold text-xs uppercase text-[#facc15] tracking-widest">
+          <div className="flex items-center justify-between w-full pb-3 border-b-2 border-parchment-300/20">
+            <span className="font-bold text-xs text-gold-300">
               STRIKE {currentBeat} OF {MAX_BEATS}
             </span>
             <div className="flex items-center gap-2">
               {[1, 2, 3].map((num) => (
                 <div
                   key={num}
-                  className={`w-4 h-4 border-2 border-[#0f0c0c] transition-all ${
+                  className={`w-4 h-4 border-2 border-ink transition-all ${
                     num < currentBeat
-                      ? 'bg-[#facc15]'
+                      ? 'bg-gold-500'
                       : num === currentBeat
-                      ? 'bg-[#da2d46] animate-ping'
-                      : 'bg-[#0f0c0c]/60'
+                      ? 'bg-hp animate-ping'
+                      : 'bg-plum-950/60'
                   }`}
                 />
               ))}
@@ -154,14 +154,14 @@ export function WingSlamCounterMinigame({
           {/* Timing Circle / Target Zone */}
           <div className="relative w-44 h-44 sm:w-52 sm:h-52 flex items-center justify-center my-2">
             {/* Outer Static Target Ring */}
-            <div className="absolute inset-0 border-[6px] border-white/30 rounded-full" />
+            <div className="absolute inset-0 border-[3px] border-parchment-300/30 rounded-full" />
             
             {/* Precision Perfect Ring */}
-            <div className="absolute inset-6 border-[4px] border-[#facc15]/60 rounded-full border-dashed animate-spin-slow" />
+            <div className="absolute inset-6 border-[3px] border-gold-300/60 rounded-full border-dashed animate-spin-slow" />
 
             {/* Shrinking Strike Ring based on Progress */}
             <div
-              className="absolute rounded-full border-[6px] border-[#da2d46] shadow-[0_0_20px_#da2d46] transition-all duration-75"
+              className="absolute rounded-full border-[3px] border-hp transition-all duration-75"
               style={{
                 width: `${Math.max(25, progress)}%`,
                 height: `${Math.max(25, progress)}%`,
@@ -173,41 +173,41 @@ export function WingSlamCounterMinigame({
             <button
               onClick={handleStrike}
               disabled={beatResolvedRef.current}
-              className="relative z-10 w-28 h-28 sm:w-32 sm:h-32 bg-[#facc15] border-[4px] border-[#0f0c0c] rounded-full flex flex-col items-center justify-center shadow-[4px_4px_0px_0px_#0f0c0c] hover:scale-105 active:scale-95 transition-transform cursor-pointer font-orbitron font-black text-xl text-[#0f0c0c]"
+              className="px-btn px-btn-primary relative z-10 size-28 sm:size-32 flex-col gap-1 text-xl"
             >
               <span>STRIKE!</span>
-              <span className="text-2xs font-bold text-[#da2d46]">[SPACE]</span>
+              <span className="text-xs font-semibold text-wood-700">Space</span>
             </button>
           </div>
 
           {/* Feedback & Stats */}
           <div className="h-10 flex items-center justify-center">
             {feedback ? (
-              <span className="font-orbitron font-black text-base sm:text-lg uppercase tracking-wide text-white bg-[#0f0c0c] px-4 py-1 border-2 border-[#facc15] animate-bounce">
+              <span className="font-bold text-base sm:text-lg text-parchment-100 bg-plum-950 px-4 py-1 border-2 border-gold-300 animate-bounce">
                 {feedback}
               </span>
             ) : (
-              <span className="font-orbitron font-bold text-xs text-white/70 tracking-wider">
+              <span className="font-bold text-xs text-parchment-100/70">
                 TIMING: HIT AS RING SHRINKS TO CENTER
               </span>
             )}
           </div>
 
           {/* Current Accumulation */}
-          <div className="flex items-center gap-6 text-xs font-orbitron font-bold text-[#facc15]">
+          <div className="flex items-center gap-6 text-xs font-bold text-gold-300">
             <span>HITS: {hits}/{MAX_BEATS}</span>
             <span>TOTAL COUNTER DMG: {totalDamage}</span>
           </div>
         </div>
       ) : (
         /* Summary Banner */
-        <div className="max-w-md w-full bg-[#facc15] border-[4px] border-[#0f0c0c] p-6 shadow-[8px_8px_0px_0px_#0f0c0c] flex flex-col items-center justify-center gap-3 animate-bounce">
-          <span className="font-orbitron font-black text-2xl text-[#0f0c0c] uppercase">
+        <div className="max-w-md w-full bg-gold-500 border-[3px] border-ink p-6 flex flex-col items-center justify-center gap-3 animate-bounce">
+          <span className="font-bold text-2xl text-ink">
             {hits > 0 ? '⚡ COUNTER SUCCESSFUL! ⚡' : '❌ COUNTER MISSED! ❌'}
           </span>
-          <p className="font-orbitron font-bold text-sm text-[#0f0c0c] text-center">
-            DEALT <span className="text-lg font-black text-[#da2d46]">{totalDamage} HP</span> &{' '}
-            <span className="text-lg font-black text-[#da2d46]">{totalStagger} STAGGER</span> TO {bossName}!
+          <p className="font-bold text-sm text-ink text-center">
+            DEALT <span className="text-lg font-bold text-hp-light">{totalDamage} HP</span> &{' '}
+            <span className="text-lg font-bold text-hp-light">{totalStagger} STAGGER</span> TO {bossName}!
           </p>
         </div>
       )}

@@ -177,7 +177,7 @@ export function KorlongCutscene({ onComplete }: KorlongCutsceneProps) {
             {Array.from({ length: 18 }).map((_, i) => (
               <div 
                 key={i}
-                className="absolute bg-[#e0e5ed] rounded-full opacity-20"
+                className="absolute bg-parchment-100 rounded-full opacity-20"
                 style={{
                   width: `${i % 2 === 0 ? 4 : 2}px`,
                   height: `${i % 2 === 0 ? 4 : 2}px`,
@@ -194,7 +194,7 @@ export function KorlongCutscene({ onComplete }: KorlongCutsceneProps) {
         {phase >= 3 && phase <= 6 && (
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-start pt-[10%] px-4 md:px-12 pointer-events-none overflow-hidden">
             <div 
-              className="w-full max-w-4xl aspect-video md:aspect-[21/9] bg-[#0f0c0c] border-[6px] md:border-[10px] border-[#e0e5ed] relative overflow-hidden shadow-[16px_16px_0px_0px_#da2d46]"
+              className="w-full max-w-4xl aspect-video md:aspect-[21/9] bg-plum-950 border-[3px] md:border-[10px] border-parchment-300 relative overflow-hidden"
               style={{ animation: 'cs-panel-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards' }}
             >
               <div 
@@ -219,19 +219,19 @@ export function KorlongCutscene({ onComplete }: KorlongCutsceneProps) {
         {phase >= 3 && phase <= 6 && dialogueLine >= 0 && (
           <div className="absolute left-0 right-0 bottom-[12%] md:bottom-[15%] pointer-events-none flex flex-col items-center px-4 z-20">
             <div 
-              className="bg-[#da2d46] border-[4px] border-[#0f0c0c] px-3 py-1 -skew-x-6 mb-4 shadow-[6px_6px_0px_0px_#0f0c0c]"
+              className="bg-hp border-[3px] border-ink px-3 py-1 mb-4"
               style={{
                 opacity: dialogueVisible ? 1 : 0,
                 transition: 'opacity 0.2s ease',
               }}
             >
-              <span className="font-orbitron font-black text-[#0f0c0c] text-[10px] md:text-xs tracking-widest uppercase skew-x-6 block">
+              <span className="font-bold text-ink text-xs md:text-xs block">
                 [ ANCESTRAL TRANSMISSION ]
               </span>
             </div>
 
             <div
-              className="w-full max-w-lg bg-[#e0e5ed] border-[6px] border-[#0f0c0c] p-5 md:p-6 shadow-[12px_12px_0px_0px_#da2d46] relative -skew-x-2"
+              className="w-full max-w-lg bg-parchment-100 border-[3px] border-ink p-5 md:p-6 relative"
               style={{
                 opacity: dialogueVisible ? 1 : 0,
                 // Add shake animation specifically for the final impactful line
@@ -242,12 +242,12 @@ export function KorlongCutscene({ onComplete }: KorlongCutsceneProps) {
               }}
             >
               {/* Corner Screws */}
-              <div className="absolute top-2 left-2 w-2 h-2 bg-[#0f0c0c] rounded-full" />
-              <div className="absolute top-2 right-2 w-2 h-2 bg-[#0f0c0c] rounded-full" />
-              <div className="absolute bottom-2 left-2 w-2 h-2 bg-[#0f0c0c] rounded-full" />
-              <div className="absolute bottom-2 right-2 w-2 h-2 bg-[#0f0c0c] rounded-full" />
+              <div className="absolute top-2 left-2 w-2 h-2 bg-plum-950 rounded-full" />
+              <div className="absolute top-2 right-2 w-2 h-2 bg-plum-950 rounded-full" />
+              <div className="absolute bottom-2 left-2 w-2 h-2 bg-plum-950 rounded-full" />
+              <div className="absolute bottom-2 right-2 w-2 h-2 bg-plum-950 rounded-full" />
 
-              <p className="font-space-mono font-bold text-[#0f0c0c] text-sm md:text-base leading-relaxed tracking-widest text-center skew-x-2">
+              <p className="font-bold text-ink text-sm md:text-base leading-relaxed text-center">
                 "{ANCESTOR_LINES[dialogueLine]?.text}"
               </p>
             </div>
@@ -298,7 +298,7 @@ export function KorlongCutscene({ onComplete }: KorlongCutsceneProps) {
             {/* TITLE TEXT: The Slam */}
             <div className="relative z-10 text-center flex flex-col items-center">
               <h1
-                className="font-orbitron font-black text-[#e0e5ed] uppercase tracking-tighter"
+                className="font-bold text-parchment-100"
                 style={{
                   fontSize: 'clamp(4rem, 14vmin, 8rem)',
                   animation: 'cs-title-slam 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards',
@@ -310,10 +310,10 @@ export function KorlongCutscene({ onComplete }: KorlongCutsceneProps) {
               </h1>
               
               <div 
-                className="bg-[#0f0c0c] border-[3px] border-[#e0e5ed] px-4 py-1 mt-6 -skew-x-6 shadow-[6px_6px_0px_0px_#da2d46]"
+                className="bg-plum-950 border-[3px] border-parchment-300 px-4 py-1 mt-6"
                 style={{ opacity: 0, animation: 'cs-dialogue-fade-in 0.4s ease-out 0.3s forwards' }}
               >
-                <span className="font-space-mono text-[#e0e5ed] text-[10px] md:text-sm font-bold tracking-widest uppercase skew-x-6 block">
+                <span className="text-parchment-100 text-xs md:text-sm font-bold block">
                   EASTERN VISAYAS · LEGENDARY
                 </span>
               </div>
@@ -323,8 +323,8 @@ export function KorlongCutscene({ onComplete }: KorlongCutsceneProps) {
               className="absolute bottom-[15%] text-center z-10"
               style={{ animation: 'cs-xp-fade-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.6s both' }}
             >
-              <div className="bg-[#da2d46] border-[6px] border-[#0f0c0c] px-6 py-3 -skew-x-6 shadow-[10px_10px_0px_0px_#e0e5ed]">
-                <span className="font-orbitron font-black text-[#0f0c0c] text-sm md:text-xl tracking-widest uppercase skew-x-6 block">
+              <div className="bg-hp border-[3px] border-ink px-6 py-3">
+                <span className="font-bold text-ink text-sm md:text-xl block">
                   +100 XP — DATA ACQUIRED
                 </span>
               </div>
@@ -333,8 +333,8 @@ export function KorlongCutscene({ onComplete }: KorlongCutsceneProps) {
         )}
 
         {skipReady && phase < 7 && (
-          <div className="absolute top-6 right-6 font-space-mono font-bold text-[#888ea1] text-[10px] tracking-widest uppercase pointer-events-none border-[2px] border-[#888ea1] px-2 py-1 -skew-x-6 z-30 hover:bg-[#888ea1] hover:text-[#0f0c0c] transition-colors pointer-events-auto cursor-pointer" onClick={handleSkip}>
-            <span className="skew-x-6 block">TAP TO SKIP</span>
+          <div className="absolute top-6 right-6 font-bold text-parchment-500 text-xs pointer-events-none border-[2px] border-plum-600 px-2 py-1 z-30 hover:bg-plum-600 hover:text-ink transition-colors pointer-events-auto cursor-pointer" onClick={handleSkip}>
+            <span className="block">TAP TO SKIP</span>
           </div>
         )}
       </div>
